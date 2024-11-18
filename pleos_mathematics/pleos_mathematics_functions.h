@@ -49,7 +49,7 @@ namespace pleos {
     };
 
     // Returns the limit of a function in + infinity
-    scls::Set_Number function_limit_pi(Function_Studied current_function, std::string& redaction);
+    scls::Limit function_limit_pi(Function_Studied current_function, std::string& redaction);
     // Returns the set of roots of a function
     scls::Set_Number function_roots(Function_Studied current_function, std::string& redaction);
     // Returns the set of a positive function
