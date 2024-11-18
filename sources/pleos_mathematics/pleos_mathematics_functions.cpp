@@ -46,6 +46,62 @@ namespace pleos {
             // Start the search
             redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en + l'infini. ";
             scls::Polymonial polymonial = function_studied;
+
+            // Cut the formula by monomonial
+            redaction += " Comme cette forme est un simple polynôme, étudions les limites de chaque monôme.";
+            std::vector<scls::Complex> limits; std::vector<char> limits_special;
+            int monomonial_number = static_cast<int>(polymonial.monomonials().size());
+            // Special limits are -> 1: + infinity, -1: - infinity
+            for(int i = 0;i<monomonial_number;i++) {
+                scls::Complex current_limit = scls::Complex(0);
+                char special = 0;
+                // Check the limit
+                bool pi = polymonial.monomonials()[i].limit_pi_is_pi(current_function.function_unknown);
+                if(pi) {
+                    redaction += " Le monôme " + polymonial.monomonials()[i].to_std_string() + " a pour limite + infini.";
+                    special = 1;
+                } else {
+                    bool mi = polymonial.monomonials()[i].limit_pi_is_mi(current_function.function_unknown);
+                    if(mi){
+                        redaction += " Le monôme " + polymonial.monomonials()[i].to_std_string() + " a pour limite - infini.";
+                        special = -1;
+                    } else {
+                        redaction += " Le monôme " + polymonial.monomonials()[i].to_std_string() + " a pour limite " + polymonial.monomonials()[i].factor().to_std_string_simple() + ".";
+                        current_limit = polymonial.monomonials()[i].factor();
+                    }
+                }
+                limits.push_back(current_limit);
+                limits_special.push_back(special);
+            }
+
+            // Get the final limit
+            scls::Complex limit = scls::Complex(0);
+            char special = 0;
+            for(int i = 0;i<monomonial_number;i++) {
+                if(limits_special[i] == 0) {
+                    limit += limits[i];
+                } else {
+                    if(limits_special[i] == 1) {
+                        if(special == -1) {special = 2;break;}
+                        special = 1;
+                    } else if(limits_special[i] == -1) {
+                        if(special == 1) {special = 2;break;}
+                        special = -1;
+                    }
+                }
+            }
+
+            // Handle possible errors
+            if(special == 2) {
+                redaction += " Or, nous avons une forme indéterminée \"infini + ou - infini\".";
+            }
+
+            // Finish the redaction
+            redaction += " Par somme de limites, la limite de " + current_function.function_name + " est ";
+            if(special == 1) redaction += "+infini";
+            else if(special == -1) redaction += "-infini";
+            else redaction += limit.to_std_string_simple();
+            redaction += ".";
         }
 
         return to_return;
