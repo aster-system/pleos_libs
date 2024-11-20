@@ -48,7 +48,8 @@ namespace pleos {
         Studied_Type type = Studied_Type::ST_Sequence;
     };
 
-    // Returns the limit of a function in + infinity
+    // Returns the limit of a function / monomonial in + infinity
+    scls::Limit monomonial_limit_pi(scls::Monomonial current_monomonial, std::string unknown, std::string& redaction);
     scls::Limit function_limit_pi(Function_Studied current_function, std::string& redaction);
     // Returns the set of roots of a function
     scls::Set_Number function_roots(Function_Studied current_function, std::string& redaction);
