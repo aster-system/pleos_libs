@@ -51,7 +51,7 @@ namespace pleos {
     // Returns the image of a function
     scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
     // Returns the limit of a function / monomonial in + infinity
-    scls::Limit monomonial_limit_pi(scls::Monomonial current_monomonial, std::string unknown, std::string& redaction);
+    scls::Limit monomonial_limit(scls::Monomonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction);
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction);
     // Returns the set of roots of a function
     scls::Set_Number function_roots(Function_Studied current_function, std::string& redaction);

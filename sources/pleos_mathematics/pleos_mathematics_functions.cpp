@@ -49,37 +49,11 @@ namespace pleos {
     }
 
     // Returns the limit of a function in + infinity
-    scls::Limit monomonial_limit_pi(scls::Monomonial current_monomonial, std::string unknown, std::string& redaction) {
+    scls::Limit monomonial_limit(scls::Monomonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction) {
         // Check the limit for infinity
-        scls::Limit current_limit = scls::Limit();
-        bool pi = current_monomonial.limit_pi_is_pi(unknown);
-        if(pi) {
-            redaction += " Le monôme " + current_monomonial.to_std_string() + " a pour limite + infini.";
-            current_limit.set_pi();
-        } else {
-            bool mi = current_monomonial.limit_pi_is_mi(unknown);
-            if(mi){
-                redaction += " Le monôme " + current_monomonial.to_std_string() + " a pour limite - infini.";
-                current_limit.set_mi();
-            } else {
-                // Check the limit for 0
-                bool pz = current_monomonial.limit_pi_is_pz(unknown);
-                if(pz){
-                    redaction += " Le monôme " + current_monomonial.to_std_string() + " a pour limite 0+.";
-                    current_limit.set_pz();
-                } else {
-                    bool mz = current_monomonial.limit_pi_is_mz(unknown);
-                    if(mz){
-                        redaction += " Le monôme " + current_monomonial.to_std_string() + " a pour limite 0-.";
-                        current_limit.set_mz();
-                    } else {
-                        // Simple limite
-                        redaction += " Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_monomonial.factor().to_std_string_simple() + ".";
-                        current_limit = current_monomonial.factor().real();
-                    }
-                }
-            }
-        } return current_limit;
+        scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
+        redaction += "Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_limit.to_std_string() + ".";
+        return current_limit;
     }
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction) {
         // Create the redaction
@@ -97,8 +71,8 @@ namespace pleos {
             std::vector<scls::Limit> limits;
             int monomonial_number = static_cast<int>(polymonial.monomonials().size());
             for(int i = 0;i<monomonial_number;i++) {
-                scls::Limit result = monomonial_limit_pi(polymonial.monomonials().at(i), current_function.function_unknown, redaction);
-                limits.push_back(result);
+                scls::Limit result = monomonial_limit(polymonial.monomonials().at(i), needed_limit, current_function.function_unknown, redaction);
+                limits.push_back(result); redaction += " ";
             }
 
             // Get the final limit
