@@ -35,6 +35,19 @@ namespace pleos {
     //
     //******************
 
+    // Returns the image of a function
+    scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction) {
+        // Do the ccalculation
+        scls::Formula result = current_function.function_formula.replace_unknown(current_function.function_unknown, needed_value);
+
+        // Write the redaction
+        redaction += "Nous cherchons la valeur de " + current_function.function_name + "(" + needed_value.to_std_string() + ").";
+        redaction += " Pour cela, remplaceons " + current_function.function_unknown + " par " + needed_value.to_std_string() + " dans " + current_function.function_name + ".</br>";
+        redaction += current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + "</br>";
+        redaction += "Donc, " + current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + ".";
+        return result;
+    }
+
     // Returns the limit of a function in + infinity
     scls::Limit monomonial_limit_pi(scls::Monomonial current_monomonial, std::string unknown, std::string& redaction) {
         // Check the limit for infinity
@@ -68,7 +81,7 @@ namespace pleos {
             }
         } return current_limit;
     }
-    scls::Limit function_limit_pi(Function_Studied current_function, std::string& redaction) {
+    scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction) {
         // Create the redaction
         scls::Formula& function_studied = current_function.function_formula;
         scls::Limit to_return = scls::Limit();
@@ -76,7 +89,7 @@ namespace pleos {
         // Only one polymonial
         if(function_studied.is_simple_polymonial()) {
             // Start the search
-            redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en + l'infini.";
+            redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en " + needed_limit.to_std_string() + ".";
             scls::Polymonial polymonial = function_studied;
 
             // Cut the formula by monomonial
@@ -113,16 +126,16 @@ namespace pleos {
                 needed_function.function_formula = function_studied / needed_monomonial;
                 needed_function.function_name = current_function.function_name;
                 needed_function.function_number = current_function.function_number + 1;
-                scls::Limit result = function_limit_pi(needed_function, redaction);
+                scls::Limit result = function_limit(needed_function, needed_limit, redaction);
                 redaction += " Maintenant, calculons la limite de " + needed_monomonial.to_std_string() + ", qui est de +infini.";
                 if(result.value() > 0) {
-                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers +infini est +infini.";
+                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est +infini.";
                 } else {
-                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers +infini est -infini.";
+                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est -infini.";
                 }
             } else {
                 // Finish the redaction
-                redaction += " Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers +infini est ";
+                redaction += " Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est ";
                 if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI) redaction += "+infini";
                 else if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI) redaction += "-infini";
                 else {redaction += limit.to_std_string_simple();to_return = limit.real();}
