@@ -48,12 +48,43 @@ namespace pleos {
         return result;
     }
 
-    // Returns the limit of a function in + infinity
-    scls::Limit monomonial_limit(scls::Monomonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction) {
+    // Returns the limit of a function / polymonial in + infinity
+    scls::Limit polymonial_limit(scls::Polymonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction) {
         // Check the limit for infinity
         scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
         redaction += "Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_limit.to_std_string() + ".";
         return current_limit;
+    }
+    scls::Limit __function_limit_monomonials(Function_Studied current_function, scls::Polymonial polymonial, scls::Limit needed_limit, std::string& redaction) {
+        // Cut the formula by monomonial
+        redaction += " Comme cette forme est un simple polynôme, étudions les limites de chaque monôme.";
+        std::vector<scls::Limit> limits;
+        int monomonial_number = static_cast<int>(polymonial.monomonials().size());
+        for(int i = 0;i<monomonial_number;i++) {
+            scls::Limit result = polymonial_limit(polymonial.monomonials().at(i), needed_limit, current_function.function_unknown, redaction);
+            limits.push_back(result); redaction += " ";
+        }
+
+        // Get the final limit
+        scls::Complex limit = scls::Complex(0);
+        char special = 0;
+        for(int i = 0;i<monomonial_number;i++) {
+            if(limits[i].is_special()) {
+                if(limits[i].is_pi()) {
+                    if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI) {special = SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;break;}
+                    special = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;
+                } else if(limits[i].is_mi()) {
+                    if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI) {special = SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;break;}
+                    special = SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;
+                }
+            } else {
+                limit += limits[i].value();
+            }
+        }
+        scls::Limit final_limit;
+        if(special == 0){final_limit = limit.real();}
+        else{final_limit.set_special_value(special);}
+        return final_limit;
     }
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction) {
         // Create the redaction
@@ -62,41 +93,23 @@ namespace pleos {
 
         // Only one polymonial
         if(function_studied.is_simple_polymonial()) {
+            if(function_studied.denominator() != 0) {
+                // The limit contains a fraction
+                redaction += "Cette forme est une division, nous avons besoin des limites du numérateur et du dénominateur pour avoir sa limite.";
+            }
+
             // Start the search
             redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en " + needed_limit.to_std_string() + ".";
             scls::Polymonial polymonial = function_studied;
 
-            // Cut the formula by monomonial
-            redaction += " Comme cette forme est un simple polynôme, étudions les limites de chaque monôme.";
-            std::vector<scls::Limit> limits;
-            int monomonial_number = static_cast<int>(polymonial.monomonials().size());
-            for(int i = 0;i<monomonial_number;i++) {
-                scls::Limit result = monomonial_limit(polymonial.monomonials().at(i), needed_limit, current_function.function_unknown, redaction);
-                limits.push_back(result); redaction += " ";
-            }
-
-            // Get the final limit
-            scls::Complex limit = scls::Complex(0);
-            char special = 0;
-            for(int i = 0;i<monomonial_number;i++) {
-                if(limits[i].is_special()) {
-                    if(limits[i].is_pi()) {
-                        if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI) {special = SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;break;}
-                        special = SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI;
-                    } else if(limits[i].is_mi()) {
-                        if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI) {special = SCLS_MATH_NUMBER_LIMIT_ERROR_IPI;break;}
-                        special = SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI;
-                    }
-                } else {
-                    limit += limits[i].value();
-                }
-            }
+            // Handle the polymonial monomonial by monomonial
+            scls::Limit limit = __function_limit_monomonials(current_function, polymonial, needed_limit, redaction);
 
             // Handle possible errors
-            if(special == SCLS_MATH_NUMBER_LIMIT_ERROR_IPI && current_function.function_number <= 1) {
+            if(limit.is_error_ipi() && current_function.function_number <= 1) {
                 redaction += " Or, nous avons une forme indéterminée \"infini + ou - infini\".";
                 redaction += " Pour lever l'indétermination, factorisons toute la forme par le monôme du plus haut degré, et calculons sa limite. ";
-                Function_Studied needed_function; scls::Monomonial needed_monomonial = scls::Monomonial(scls::Complex(1), current_function.function_unknown, polymonial.degree(current_function.function_unknown));
+                Function_Studied needed_function; scls::Polymonial needed_monomonial = scls::Polymonial(scls::Complex(1), current_function.function_unknown, polymonial.degree(current_function.function_unknown));
                 needed_function.function_formula = function_studied / needed_monomonial;
                 needed_function.function_name = current_function.function_name;
                 needed_function.function_number = current_function.function_number + 1;
@@ -109,11 +122,7 @@ namespace pleos {
                 }
             } else {
                 // Finish the redaction
-                redaction += " Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est ";
-                if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_PI) redaction += "+infini";
-                else if(special == SCLS_MATH_NUMBER_LIMIT_SPECIAL_MI) redaction += "-infini";
-                else {redaction += limit.to_std_string_simple();to_return = limit.real();}
-                redaction += ".";
+                redaction += " Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est " + limit.to_std_string() + ".";
             }
         }
 
