@@ -29,5 +29,7 @@
 
 // Include the function part
 #include "pleos_mathematics/pleos_mathematics_functions.h"
+// Include the probability part
+#include "pleos_mathematics/pleos_mathematics_probabilities.h"
 
 #endif // PLEOS_MATHEMATICS

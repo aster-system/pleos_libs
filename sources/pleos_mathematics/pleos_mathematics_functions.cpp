@@ -24,7 +24,7 @@
 // You should have received a copy of the GNU General Public License along with PLEOS. If not, see <https://www.gnu.org/licenses/>.
 //
 
-// Include pleos_mathematics_functions.cpp
+// Include pleos_mathematics_functions.h
 #include "../../pleos_mathematics/pleos_mathematics_functions.h"
 
 // The namespace "pleos" is used to simplify the all.
