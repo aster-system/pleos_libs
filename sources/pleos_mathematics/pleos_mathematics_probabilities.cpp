@@ -35,6 +35,7 @@ namespace pleos {
         if(universe_partition == 0 && a_partitions.size() <= 0) {a_partitions.push_back(Probability_Universe_Partition());}
         Probability_Universe_Partition& used_partition = a_partitions[universe_partition];
 
+        // Create the event
         std::shared_ptr<Probability_Universe_Event> event = std::make_shared<Probability_Universe_Event>();
         event.get()->name = name; event.get()->probability = probability; event.get()->this_event = event;
         event.get()->partition_parent = universe_partition;

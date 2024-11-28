@@ -1,6 +1,6 @@
 //******************
 //
-// pleos_mathematics.h
+// pleos_mathematics_numbers.cpp
 //
 //******************
 // Presentation :
@@ -11,7 +11,7 @@
 // The software is made in french, because the main goal is France educational system.
 // For more information, see : https://aster-system.github.io/aster-system/projects/pleos.html.
 //
-// This file contains the hub to the PLEOS mathematics file.
+// This file contains the source code of pleos_mathematics_numbers.cpp.
 //
 //******************
 //
@@ -24,14 +24,18 @@
 // You should have received a copy of the GNU General Public License along with PLEOS. If not, see <https://www.gnu.org/licenses/>.
 //
 
-#ifndef PLEOS_MATHEMATICS
-#define PLEOS_MATHEMATICS
+// Include pleos_mathematics_numbers.h
+#include "../../pleos_mathematics/pleos_mathematics_numbers.h"
 
-// Include the function part
-#include "pleos_mathematics/pleos_mathematics_functions.h"
-// Include the division part
-#include "pleos_mathematics/pleos_mathematics_numbers.h"
-// Include the probability part
-#include "pleos_mathematics/pleos_mathematics_probabilities.h"
+// The namespace "pleos" is used to simplify the all.
+namespace pleos {
+    // Returns a division circle
+    // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
+    std::shared_ptr<scls::Image> division_circle() {
+        int width = 2000;
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width, width, scls::Color(255, 255, 255));
+        to_return.get()->draw_circle(width / 2, width / 2, 960, 0, 0, 0, 255, 10);
 
-#endif // PLEOS_MATHEMATICS
+        return to_return;
+    }
+}
