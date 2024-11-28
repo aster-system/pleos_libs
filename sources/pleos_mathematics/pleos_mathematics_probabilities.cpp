@@ -35,9 +35,10 @@ namespace pleos {
         if(universe_partition == 0 && a_partitions.size() <= 0) {a_partitions.push_back(Probability_Universe_Partition());}
         Probability_Universe_Partition& used_partition = a_partitions[universe_partition];
 
-        Probability_Universe_Event event;
-        event.name = name; event.probability = probability;
-        used_partition.events.push_back(std::make_shared<Probability_Universe_Event>(event));
+        std::shared_ptr<Probability_Universe_Event> event = std::make_shared<Probability_Universe_Event>();
+        event.get()->name = name; event.get()->probability = probability; event.get()->this_event = event;
+        event.get()->partition_parent = universe_partition;
+        used_partition.events.push_back(event);
     };
 
     // Add an event conditionally to the universe
@@ -46,15 +47,47 @@ namespace pleos {
         if(a_partitions.size() <= 1) {a_partitions.push_back(Probability_Universe_Partition());}
         Probability_Universe_Partition& used_partition = a_partitions[a_partitions.size() - 1];
 
-        Probability_Universe_Event event;
-        event.name = name; event.probability_condition = probability; event.condition_used = condition;
-        // Add the event
-        std::shared_ptr<Probability_Universe_Event> to_add = std::make_shared<Probability_Universe_Event>(event);
-        used_partition.events.push_back(to_add);
-        if(!condition.get()->contains_conditions_from_this_one(to_add.get())) {
-            condition.get()->conditions_from_this_one.push_back(to_add);
-        }
+        // Create the condition
+        Probability_Universe_Event::Probability_Universe_Event_Condition event_condition;
+        event_condition.event_parent = condition;
+        event_condition.probability = probability;
+        std::shared_ptr<Probability_Universe_Event> event = used_partition.event(name);
+        if(event == 0) {
+            // Create the event
+            std::shared_ptr<Probability_Universe_Event> event = std::make_shared<Probability_Universe_Event>();
+            event.get()->name = name; event.get()->conditions_used.push_back(event_condition);
+            event.get()->partition_parent = 1; event.get()->this_event = event;
+            // Add the event
+            used_partition.events.push_back(event);
+
+            // Add the information to the parent
+            if(!condition.get()->contains_conditions_from_this_one(event.get())) {
+                condition.get()->conditions_from_this_one.push_back(event);
+            }
+        } else {event->conditions_used.push_back(event_condition);};
     }
+
+    // Create a case of the tree
+    void Probability_Universe::Probability_Universe_Tree::create_case(std::shared_ptr<Probability_Universe_Event> needed_event) {
+        // Create the event
+        scls::Fraction needed_probability = needed_event.get()->probability;
+        std::string needed_text = needed_event.get()->name + std::string(" -> ");
+        if(needed_event.get()->is_opposed()) {needed_text = std::string("!") + needed_text;}
+        needed_text += scls::format_number_to_text(needed_probability.to_double());
+        std::shared_ptr<scls::Image> image = a_generator.image_shared_ptr(needed_text, style);
+        a_cases.push_back(image);
+
+        // Add the possible others events
+        for(int i = 0;i<static_cast<int>(needed_event.get()->conditions_from_this_one.size());i++) {
+            bool contains = false;
+            std::shared_ptr<Probability_Universe_Event> current = needed_event.get()->conditions_from_this_one[i];
+            for(int j = 0;j<static_cast<int>(a_other_layer_conditions.size());j++) {if(a_other_layer_conditions[j].get()==current.get()){contains=true;break;}}
+            if(!contains) {
+                // Add condition to study
+                a_other_layer_conditions.push_back(current);
+            }
+        }
+    };
 
     // Returns a redacted description of this universe
     std::string Probability_Universe::description() {
@@ -81,57 +114,54 @@ namespace pleos {
     }
 
     // Create a tree of probability
-    std::shared_ptr<scls::Image> Probability_Universe::tree(int universe_partition) {
+    std::shared_ptr<scls::Image> Probability_Universe::tree(int universe_partition, std::shared_ptr<Probability_Universe_Event> condition) {
         // Get the good partition
         Probability_Universe_Partition& used_partition = a_partitions[universe_partition];
+        std::vector<std::shared_ptr<Probability_Universe_Event>> used_events = used_partition.events;
+        std::shared_ptr<Probability_Universe_Tree> final_tree = std::make_shared<Probability_Universe_Tree>();
 
         // Define the graphics settings
-        int first_layer_y_separation = 50;
+        int first_layer_y_separation = 0;
 
         // Create the first layer of probability
-        // Create the needed generator
-        scls::Text_Image_Generator generator;
-        scls::Text_Style style; style.font_size = 50;
         // Create the needed images for the first layer
-        std::vector<std::shared_ptr<scls::Image>> first_layer;
-        std::vector<std::shared_ptr<Probability_Universe_Event>> other_layer_conditions;
-        int first_layer_height = 0;
-        if(used_partition.events.size() == 1) {
-            // Create the event
-            scls::Fraction needed_probability = used_partition.events[0].get()->probability;
-            std::string needed_text = used_partition.events[0].get()->name + std::string(" -> ");
-            needed_text += scls::format_number_to_text(needed_probability.to_double());
-            std::shared_ptr<scls::Image> image = generator.image_shared_ptr(needed_text, style);
-            first_layer.push_back(image); first_layer_height += image.get()->height() + first_layer_y_separation;
-            // Create the not event
-            needed_probability = scls::Fraction(1) - used_partition.events[0].get()->probability;
-            needed_text = std::string("!") + used_partition.events[0].get()->name + std::string(" -> ");
-            needed_text += scls::format_number_to_text(needed_probability.to_double());
-            image = generator.image_shared_ptr(needed_text, style);
-            first_layer.push_back(image); first_layer_height += image.get()->height();
-
-            // Add the possible others events
-            for(int i = 0;i<static_cast<int>(used_partition.events[0].get()->conditions_from_this_one.size());i++) {
-                bool contains = false;
-                std::shared_ptr<Probability_Universe_Event> current = used_partition.events[0].get()->conditions_from_this_one[i];
-                for(int j = 0;j<static_cast<int>(other_layer_conditions.size());j++) {if(other_layer_conditions[j].get()==current.get()){contains=true;break;}}
-                if(!contains) {
-                    // Add condition to study
-                    other_layer_conditions.push_back(current);
-                }
-            }
+        int first_layer_height = 100;
+        if(used_events.size() == 1) {
+            // Create the needed cases
+            final_tree.get()->create_case(used_events[0]);
+            final_tree.get()->create_case(used_events[0].get()->opposed_event());
         }
         // Create the other layers
-
+        std::vector<std::shared_ptr<scls::Image>> first_layer = final_tree.get()->cases();
+        std::vector<std::shared_ptr<Probability_Universe_Event>> other_layer_conditions = final_tree.get()->other_layer_conditions();
+        std::vector<std::shared_ptr<scls::Image>> other_layers;
+        int other_layers_height = 0;
+        for(int i = 0;i<static_cast<int>(other_layer_conditions.size());i++) {
+            std::shared_ptr<Probability_Universe_Event> current = other_layer_conditions[i];
+            std::shared_ptr<scls::Image> current_image = tree(current.get()->partition_parent, std::shared_ptr<Probability_Universe_Event>());
+            other_layers.push_back(current_image); other_layers_height += current_image.get()->height();
+        }
 
         // Create and return the image
+        int final_height = other_layers_height;
+        if(first_layer_height > final_height) final_height = first_layer_height;
         int first_lines_width = 100;
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(1000, first_layer_height, scls::Color(255, 255, 255));
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(1000, final_height, scls::Color(255, 255, 255));
         // Draw the first layer
+        int current_x = 0;
         int current_y = 0;
         for(int i = 0;i<static_cast<int>(first_layer.size());i++) {
             to_return.get()->paste(first_layer[i].get(), first_lines_width, current_y);
             current_y += first_layer[i].get()->height() + first_layer_y_separation;
+            if(current_x < first_layer[i].get()->width()) current_x = first_layer[i].get()->width();
+            first_layer[i].reset();
+        } current_x += first_lines_width;
+        // Draw the second layer
+        current_y = 0;
+        for(int i = 0;i<static_cast<int>(other_layers.size());i++) {
+            to_return.get()->paste(other_layers[i].get(), current_x, current_y);
+            current_y += other_layers[i].get()->height() + first_layer_y_separation;
+            other_layers[i].reset();
         }
 
         return to_return;
