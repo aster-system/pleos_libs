@@ -29,6 +29,8 @@
 
 // Include the function part
 #include "pleos_mathematics/pleos_mathematics_functions.h"
+// Include the matrices part
+#include "pleos_mathematics/pleos_mathematics_matrices.h"
 // Include the division part
 #include "pleos_mathematics/pleos_mathematics_numbers.h"
 // Include the probability part

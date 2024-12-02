@@ -39,9 +39,71 @@ namespace pleos {
     //
     //******************
 
-    class Matrices {
+    template<typename E = scls::Fraction>
+    class Matrice {
         // Class representating a matrice
+    public:
+        // Class representating the dimension of a matrice
+        class Matrice_Dimension {
+        public:
+            // Matrice_Dimension  constructor
+            Matrice_Dimension(){};
+
+            // Add a dimension
+            inline void add_dimension(unsigned int dimension) {a_dimensions.insert(a_dimensions.begin(), dimension);};
+            // Returns the number of dimension in the matricce dimension
+            inline int dimension_number() const {return a_dimensions.size();};
+
+            // Convert to an integer
+            inline operator int() const {return a_dimensions.at(0);};
+        private:
+            // Each dimensions of the matrice
+            std::vector<unsigned int> a_dimensions;
+        };
+
+        // Matrice constructor
+        Matrice(int dimension):a_elements(std::vector<std::shared_ptr<E>>(dimension)){};
+        Matrice(int dimension, int sub_dimension):a_matrices(std::vector<std::shared_ptr<Matrice<E>>>(dimension)){
+            for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                a_matrices[i] = std::make_shared<Matrice<E>>(sub_dimension);
+            }
+        };
+
+        // Returns an element in the matrice
+        inline E at(int indice) const {return *(a_elements[indice].get());};
+        // Returns if thie matrice contains an another matrice
+        inline bool contains_matrices() const {return a_matrices.size() > 0;};
+        // Returns a matrice in the matrice
+        inline Matrice* matrice_at(int indice) const {return a_matrices[indice].get();};
+        // Set the value at a certain position
+        inline void set(int indice, E element) {a_elements[indice] = std::make_shared<E>(element);};
+        // Size of the matrice
+        inline int size() const {return a_elements.size();};
+
+        // Returns the dimension of the matrice
+        Matrice_Dimension dimension() {
+            Matrice_Dimension to_return;
+            if(contains_matrices()) {
+                to_return = a_matrices[0].get()->dimension();
+            } to_return.add_dimension(size());
+            return to_return;
+        }
+
+        // Multiply this matrice by another matrice
+        template<typename F>
+        void __multiply(Matrice<F> other) {
+
+        };
+
+        // Access operators
+        inline E& operator[](int indice) {return *a_elements[indice].get();};
+
+    private:
+        // Elements in the matrice
+        std::vector<std::shared_ptr<E>> a_elements;
+        // Matrices in the matrice
+        std::vector<std::shared_ptr<Matrice>> a_matrices;
     };
 }
 
-#endif PLEOS_MATHEMATICS_MATRICES
+#endif // PLEOS_MATHEMATICS_MATRICES
