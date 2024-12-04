@@ -28,10 +28,12 @@
 #define PLEOS_PHYSIC_ELECTROMAGNETISM
 
 // Include SCLS Graphic Benoit
-#include "../../../scls-graphic-benoit/scls_graphic.h"
+#include "pleos_physic_core.h"
 
 #define PLEOS_PHYSIC_ELECTROSTATIC_CONSTANT (8.988e9)
 #define PLEOS_PHYSIC_ELECTRICAL_CHARGE ((1.0)/(6.24150962e18))
+// In Teslas meter / amperes
+#define PLEOS_PHYSIC_VACUUM_PERMEABILITY ((1.2566)/(1e6))
 #define PLEOS_PHYSIC_VACUUM_PERMITTIVITY ((1.0)/(8.85418782e12))
 
 // The namespace "pleos" is used to simplify the all.
@@ -43,17 +45,18 @@ namespace pleos {
     //
     //******************
 
-    class Electrical_Charge : public scls::Transform_Object_3D {
+    class Electrical_Charge : public Physic_Object {
         // Class representating a electrical charge
     public:
 
         // Electrical_Charge constructor
-        Electrical_Charge(double charge):a_charge(charge){};
+        Electrical_Charge(double charge):Electrical_Charge(){a_charge=charge;};
         Electrical_Charge(scls::Fraction charge):Electrical_Charge(charge.to_double()){};
-        Electrical_Charge(){};
+        Electrical_Charge():Physic_Object(){};
 
         // Radius of the produced field in meters
         double force_field_produced(double distance);
+        inline double force_field_produced(Electrical_Charge *other_charge){return force_field_produced(distance(other_charge->attached_transform()->position())) * std::abs(other_charge->a_charge);};
         // Volume of the particule
         inline double volume() const {return ((4.0 * SCLS_PI * a_width * a_width * a_width)/3.0);};
 

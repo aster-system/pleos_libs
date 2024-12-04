@@ -1,6 +1,6 @@
 //******************
 //
-// pleos_physic_electromagnetism.cpp
+// pleos_physic_core.cpp
 //
 //******************
 // Presentation :
@@ -11,7 +11,7 @@
 // The software is made in french, because the main goal is France educational system.
 // For more information, see : https://aster-system.github.io/aster-system/projects/pleos.html.
 //
-// This file contains the source code of pleos_physic_electromagnetism.h.
+// This file contains the source code of pleos_physic_core.h.
 //
 //******************
 //
@@ -24,11 +24,14 @@
 // You should have received a copy of the GNU General Public License along with PLEOS. If not, see <https://www.gnu.org/licenses/>.
 //
 
-// Include pleos_physic_electromagnetism.h
-#include "../../pleos_physic/pleos_physic_electromagnetism.h"
+// Include pleos_physic_core.h
+#include "../../pleos_physic/pleos_physic_core.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
-    // Radius of the produced field in meters
-    double Electrical_Charge::force_field_produced(double distance) {return std::abs((PLEOS_PHYSIC_ELECTROSTATIC_CONSTANT * a_charge) / (distance * distance));}
+    // Simulate the physic of the object
+    void Physic_Object::simulate_physic(double delta_time) {
+        // Handle the velocity
+        attached_transform()->move_xyz(velocity() * delta_time);
+    }
 }
