@@ -30,5 +30,5 @@
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
     // Radius of the produced field in meters
-    double Electrical_Charge::force_field_produced(double distance) {return std::abs((PLEOS_PHYSIC_ELECTROSTATIC_CONSTANT * a_charge) / (distance * distance));}
+    double Electrical_Charge::force_field_produced(double distance) {if(distance==0){return 0;}return std::abs((PLEOS_PHYSIC_ELECTROSTATIC_CONSTANT * a_charge) / (distance * distance));}
 }

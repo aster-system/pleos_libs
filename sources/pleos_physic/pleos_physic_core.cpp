@@ -32,6 +32,8 @@ namespace pleos {
     // Simulate the physic of the object
     void Physic_Object::simulate_physic(double delta_time) {
         // Handle the velocity
-        attached_transform()->move_xyz(velocity() * delta_time);
+        if(!x_fixed()) {attached_transform()->move_x(velocity().x() * delta_time);}
+        if(!y_fixed()) {attached_transform()->move_y(velocity().y() * delta_time);}
+        if(!z_fixed()) {attached_transform()->move_z(velocity().z() * delta_time);}
     }
 }

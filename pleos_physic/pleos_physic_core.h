@@ -76,11 +76,24 @@ namespace pleos {
         void simulate_physic(double delta_time);
 
         // Getters and setters
+        inline scls::Vector_3D fixed_vector() const {return scls::Vector_3D(a_x_fixed, a_y_fixed, a_z_fixed);};
         inline double mass() const {return a_mass;};
+        inline void set_fixed(bool new_fixed){a_x_fixed = new_fixed;a_y_fixed=new_fixed;a_z_fixed=new_fixed;};
         inline void set_mass(double new_mass) {a_mass = new_mass;};
-        inline scls::Vector_3D velocity() {return a_velocity;};
+        inline bool set_x_fixed(bool new_x_fixed) {a_x_fixed = new_x_fixed;};
+        inline bool set_y_fixed(bool new_y_fixed) {a_y_fixed = new_y_fixed;};
+        inline bool set_z_fixed(bool new_z_fixed) {a_z_fixed = new_z_fixed;};
+        inline scls::Vector_3D velocity() const {return a_velocity;};
+        inline bool x_fixed() const {return a_x_fixed;};
+        inline bool y_fixed() const {return a_y_fixed;};
+        inline bool z_fixed() const {return a_z_fixed;};
 
     private:
+        // If the X / Y / Z axis is fixxed
+        bool a_x_fixed = false;
+        bool a_z_fixed = false;
+        bool a_y_fixed = false;
+
         // Mass of the object in kg
         double a_mass = 1;
         // Velocity of the object
