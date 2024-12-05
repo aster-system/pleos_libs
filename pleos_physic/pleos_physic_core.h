@@ -76,8 +76,10 @@ namespace pleos {
         void simulate_physic(double delta_time);
 
         // Getters and setters
+        inline scls::Vector_3D acceleration() const {return a_acceleration;};
         inline scls::Vector_3D fixed_vector() const {return scls::Vector_3D(a_x_fixed, a_y_fixed, a_z_fixed);};
         inline double mass() const {return a_mass;};
+        inline void set_acceleration(scls::Vector_3D new_acceleration) {a_acceleration = new_acceleration;};
         inline void set_fixed(bool new_fixed){a_x_fixed = new_fixed;a_y_fixed=new_fixed;a_z_fixed=new_fixed;};
         inline void set_mass(double new_mass) {a_mass = new_mass;};
         inline bool set_x_fixed(bool new_x_fixed) {a_x_fixed = new_x_fixed;};
@@ -94,6 +96,8 @@ namespace pleos {
         bool a_z_fixed = false;
         bool a_y_fixed = false;
 
+        // Acceleration of the object
+        scls::Vector_3D a_acceleration;
         // Mass of the object in kg
         double a_mass = 1;
         // Velocity of the object

@@ -104,6 +104,49 @@ namespace pleos {
         // Matrices in the matrice
         std::vector<std::shared_ptr<Matrice>> a_matrices;
     };
+
+    //******************
+    //
+    // The "Matrices_GUI" class
+    //
+    //******************
+
+    template<typename E = scls::Fraction>
+    class Matrice_GUI : public scls::GUI_Object {
+        // Class representating a GUI way to handle a matrice
+    public:
+        // Matrice_GUI constructor
+        Matrice_GUI(scls::_Window_Advanced_Struct& window, std::string name, scls::GUI_Object* parent):scls::GUI_Object(window, name, parent) {
+            set_border_width_in_pixel(1); set_height_in_pixel(200); set_width_in_scale(scls::Fraction(1));
+
+            // Create a title
+            a_title = *new_object<scls::GUI_Text>(name + "-title");
+            a_title.get()->attach_top_in_parent();
+            a_title.get()->set_font_size(40);
+            a_title.get()->set_height_in_pixel(40);
+            a_title.get()->set_text("Matrice");
+            a_title.get()->set_texture_alignment(scls::T_Fit);
+            a_title.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+            a_title.get()->set_width_in_scale(scls::Fraction(2, 3));
+
+            // Create the first case for the matrice
+            std::shared_ptr<scls::GUI_Text_Input> a_current_case = *new_object<scls::GUI_Text_Input>(name + "-case_1");
+            a_current_case.get()->attach_left_in_parent();
+            a_current_case.get()->attach_bottom_of_object_in_parent(a_title);
+            a_current_case.get()->set_border_width_in_pixel(1);
+            a_current_case.get()->set_font_size(30);
+            a_current_case.get()->set_height_in_pixel(30);
+            a_current_case.get()->set_texture_alignment(scls::T_Fit);
+            a_current_case.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+            a_current_case.get()->set_width_in_scale(scls::Fraction(1, 15));
+        };
+
+    private:
+        // Cases for the matrice
+        std::vector<std::shared_ptr<scls::GUI_Text_Input>> a_cases;
+        // Title of the object
+        std::shared_ptr<scls::GUI_Text> a_title;
+    };
 }
 
 #endif // PLEOS_MATHEMATICS_MATRICES
