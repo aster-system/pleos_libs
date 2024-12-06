@@ -80,6 +80,20 @@ namespace pleos {
         // Size of the matrice
         inline int size() const {return a_elements.size();};
 
+        // Returns the matrice to std::string
+        std::string to_std_string() {
+            std::string to_return = "";
+            // Add the sub-matrices
+            if(a_matrices.size() > 0) {
+                for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                    to_return += a_matrices[i].to_std_string();
+                    if(i != a_matrices.size() - 1) {to_return += ", ";}
+                }
+            }
+            to_return = std::string("(") + to_return + std::string(")");
+            return to_return;
+        };
+
         // Returns the dimension of the matrice
         Matrice_Dimension dimension() {
             Matrice_Dimension to_return;
@@ -111,7 +125,7 @@ namespace pleos {
     //
     //******************
 
-    template<typename E = scls::Fraction>
+    template<typename E = scls::Formula>
     class Matrice_GUI : public scls::GUI_Object {
         // Class representating a GUI way to handle a matrice
     public:
@@ -130,20 +144,127 @@ namespace pleos {
             a_title.get()->set_width_in_scale(scls::Fraction(2, 3));
 
             // Create the first case for the matrice
-            std::shared_ptr<scls::GUI_Text_Input> a_current_case = *new_object<scls::GUI_Text_Input>(name + "-case_1");
-            a_current_case.get()->attach_left_in_parent();
-            a_current_case.get()->attach_bottom_of_object_in_parent(a_title);
+            std::shared_ptr<scls::GUI_Text_Input> a_current_case = *new_object<scls::GUI_Text_Input>(name + "-case_0_0");
             a_current_case.get()->set_border_width_in_pixel(1);
             a_current_case.get()->set_font_size(30);
             a_current_case.get()->set_height_in_pixel(30);
             a_current_case.get()->set_texture_alignment(scls::T_Fit);
             a_current_case.get()->set_x_in_object_scale(scls::Fraction(1, 2));
             a_current_case.get()->set_width_in_scale(scls::Fraction(1, 15));
+            a_cases.push_back(std::vector<std::shared_ptr<scls::GUI_Text_Input>>(1, a_current_case));
+
+            // Create the button to add others cases for the matrice
+            // Vertically
+            a_add_case_column = *new_object<scls::GUI_Text>(name + "-add_case_vertically");
+            a_add_case_column.get()->attach_left_in_parent(10);
+            a_add_case_column.get()->set_border_width_in_pixel(1);
+            a_add_case_column.get()->overflighted_style()->cursor = GLFW_HAND_CURSOR;
+            a_add_case_column.get()->set_font_size(30);
+            a_add_case_column.get()->set_height_in_pixel(30);
+            a_add_case_column.get()->set_text("Ajouter une colonne");
+            a_add_case_column.get()->set_texture_alignment(scls::T_Fit);
+            a_add_case_column.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+            a_add_case_column.get()->set_width_in_scale(scls::Fraction(1, 5));
+            // Horizontally
+            a_add_case_line = *new_object<scls::GUI_Text>(name + "-add_case_horizontally");
+            a_add_case_line.get()->attach_right_of_object_in_parent(a_add_case_column, 10);
+            a_add_case_line.get()->set_border_width_in_pixel(1);
+            a_add_case_line.get()->overflighted_style()->cursor = GLFW_HAND_CURSOR;
+            a_add_case_line.get()->set_font_size(30);
+            a_add_case_line.get()->set_height_in_pixel(30);
+            a_add_case_line.get()->set_text("Ajouter une ligne");
+            a_add_case_line.get()->set_texture_alignment(scls::T_Fit);
+            a_add_case_line.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+            a_add_case_line.get()->set_width_in_scale(scls::Fraction(1, 5));
+            place_matrices();
         };
 
+        // Add a column of case
+        void add_cases_column() {
+            std::vector<std::shared_ptr<scls::GUI_Text_Input>> to_add;
+            for(int i = 0;i<static_cast<int>(a_cases[0].size());i++) {
+                // Create the first case for the matrice
+                std::shared_ptr<scls::GUI_Text_Input> a_current_case = *new_object<scls::GUI_Text_Input>(name() + "-case_" + std::to_string(a_cases.size()) + "_" + std::to_string(i));
+                a_current_case.get()->set_border_width_in_pixel(1);
+                a_current_case.get()->set_font_size(30);
+                a_current_case.get()->set_height_in_pixel(30);
+                a_current_case.get()->set_texture_alignment(scls::T_Fit);
+                a_current_case.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+                a_current_case.get()->set_width_in_scale(scls::Fraction(1, 15));
+                to_add.push_back(a_current_case);
+            } a_cases.push_back(to_add);
+            place_matrices();
+        };
+        // Add a line of case
+        void add_cases_line() {
+            for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
+                // Create the first case for the matrice
+                std::shared_ptr<scls::GUI_Text_Input> a_current_case = *new_object<scls::GUI_Text_Input>(name() + "-case_" + std::to_string(i) + "_" + std::to_string(a_cases[i].size()));
+                a_current_case.get()->set_border_width_in_pixel(1);
+                a_current_case.get()->set_font_size(30);
+                a_current_case.get()->set_height_in_pixel(30);
+                a_current_case.get()->set_texture_alignment(scls::T_Fit);
+                a_current_case.get()->set_x_in_object_scale(scls::Fraction(1, 2));
+                a_current_case.get()->set_width_in_scale(scls::Fraction(1, 15));
+                a_cases[i].push_back(a_current_case);
+            } place_matrices();
+        };
+        // Place the cases in the matrice
+        void place_matrices(){
+            // Place the first matrice
+            std::shared_ptr<scls::GUI_Text_Input> a_current_case = a_cases[0][0];
+            a_current_case.get()->attach_left_in_parent();
+            a_current_case.get()->attach_bottom_of_object_in_parent(a_title);
+            // Place the matrices column first case
+            for(int i = 1;i<static_cast<int>(a_cases.size());i++) {
+                a_current_case = a_cases[i][0];
+                a_current_case.get()->attach_bottom_of_object_in_parent(a_title);
+                a_current_case.get()->attach_right_of_object_in_parent(a_cases[i - 1][0]);
+            }
+            // Place the matrices line first
+            for(int j = 1;j<static_cast<int>(a_cases[0].size());j++) {
+                a_current_case = a_cases[0][j];
+                a_current_case.get()->attach_bottom_of_object_in_parent(a_cases[0][j - 1]);
+                a_current_case.get()->attach_left_in_parent();
+            }
+            // Place the matrices cases by cases
+            for(int i = 1;i<static_cast<int>(a_cases.size());i++) {
+                for(int j = 1;j<static_cast<int>(a_cases[i].size());j++) {
+                    a_current_case = a_cases[i][j];
+                    a_current_case.get()->attach_bottom_of_object_in_parent(a_cases[i][j - 1]);
+                    a_current_case.get()->attach_right_of_object_in_parent(a_cases[i - 1][j]);
+                }
+            }
+            // Place the buttons
+            a_current_case = a_cases[0][a_cases[0].size() - 1];
+            a_add_case_column.get()->attach_bottom_of_object_in_parent(a_current_case, 10);
+            a_add_case_line.get()->attach_bottom_of_object_in_parent(a_current_case, 10);
+        };
+        // Update the events
+        virtual void update_event() {
+            scls::GUI_Object::update_event();
+
+            // Add a column of case
+            if(a_add_case_column.get()->is_clicked_during_this_frame(GLFW_MOUSE_BUTTON_LEFT)) {
+                add_cases_column();
+            }
+            // Add a line of case
+            if(a_add_case_line.get()->is_clicked_during_this_frame(GLFW_MOUSE_BUTTON_LEFT)) {
+                add_cases_line();
+            }
+        };
+
+        // Returns the needed matrice
+        Matrice<E> matrice() const {
+            Matrice<E> to_return(a_cases.size(), a_cases.at(0).size());
+            return to_return;
+        }
     private:
+        // Button to add a column/line of cases int the matrice
+        std::shared_ptr<scls::GUI_Text> a_add_case_column;
+        std::shared_ptr<scls::GUI_Text> a_add_case_line;
         // Cases for the matrice
-        std::vector<std::shared_ptr<scls::GUI_Text_Input>> a_cases;
+        std::vector<std::vector<std::shared_ptr<scls::GUI_Text_Input>>> a_cases;
         // Title of the object
         std::shared_ptr<scls::GUI_Text> a_title;
     };
