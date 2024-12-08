@@ -62,6 +62,7 @@ namespace pleos {
 
         // Getters and setters
         inline double charge() const {return a_charge;};
+        inline void set_charge(double new_charge) {a_charge = new_charge;};
 
     private:
         // Charge of the particule in Coulomb

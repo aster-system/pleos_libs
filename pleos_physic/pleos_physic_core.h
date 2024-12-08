@@ -82,6 +82,7 @@ namespace pleos {
         inline void set_acceleration(scls::Vector_3D new_acceleration) {a_acceleration = new_acceleration;};
         inline void set_fixed(bool new_fixed){a_x_fixed = new_fixed;a_y_fixed=new_fixed;a_z_fixed=new_fixed;};
         inline void set_mass(double new_mass) {a_mass = new_mass;};
+        inline void set_velocity(scls::Vector_3D new_velocity){a_velocity = new_velocity;};
         inline bool set_x_fixed(bool new_x_fixed) {a_x_fixed = new_x_fixed;};
         inline bool set_y_fixed(bool new_y_fixed) {a_y_fixed = new_y_fixed;};
         inline bool set_z_fixed(bool new_z_fixed) {a_z_fixed = new_z_fixed;};
