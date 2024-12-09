@@ -50,9 +50,12 @@ namespace pleos {
             Matrice_Dimension(){};
 
             // Add a dimension
-            inline void add_dimension(unsigned int dimension) {a_dimensions.insert(a_dimensions.begin(), dimension);};
+            inline void add_dimension(unsigned int dimension) {a_dimensions.push_back(dimension);};
             // Returns the number of dimension in the matricce dimension
             inline int dimension_number() const {return a_dimensions.size();};
+            // Returns the first/last dimension
+            inline unsigned int first_dimension() const {return a_dimensions[0];};
+            inline unsigned int last_dimension() const {return a_dimensions[a_dimensions.size() - 1];};
 
             // Convert to an integer
             inline operator int() const {return a_dimensions.at(0);};
@@ -62,8 +65,12 @@ namespace pleos {
         };
 
         // Matrice constructor
-        Matrice(int dimension):a_elements(std::vector<std::shared_ptr<E>>(dimension)){};
-        Matrice(int dimension, int sub_dimension):a_matrices(std::vector<std::shared_ptr<Matrice<E>>>(dimension)){
+        Matrice(int dimension):a_elements(std::vector<std::shared_ptr<E>>(dimension)) {
+            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                a_elements[i] = std::make_shared<E>();
+            }
+        };
+        Matrice(int sub_dimension, int dimension):a_matrices(std::vector<std::shared_ptr<Matrice<E>>>(dimension)){
             for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
                 a_matrices[i] = std::make_shared<Matrice<E>>(sub_dimension);
             }
@@ -77,8 +84,9 @@ namespace pleos {
         inline Matrice* matrice_at(int indice) const {return a_matrices[indice].get();};
         // Set the value at a certain position
         inline void set(int indice, E element) {a_elements[indice] = std::make_shared<E>(element);};
+        inline void set(int indice_1, int indice_2, E element) {matrice_at(indice_2)->set(indice_1, element);};
         // Size of the matrice
-        inline int size() const {return a_elements.size();};
+        inline int size() const {if(contains_matrices()) {return a_matrices.size();} return a_elements.size();};
 
         // Returns the matrice to std::string
         std::string to_std_string() {
@@ -86,11 +94,16 @@ namespace pleos {
             // Add the sub-matrices
             if(a_matrices.size() > 0) {
                 for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
-                    to_return += a_matrices[i].to_std_string();
+                    to_return += a_matrices[i].get()->to_std_string();
                     if(i != a_matrices.size() - 1) {to_return += ", ";}
                 }
-            }
-            to_return = std::string("(") + to_return + std::string(")");
+            } else {
+                // Add the elements
+                for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                    to_return += a_elements[i].get()->to_std_string();
+                    if(i != a_elements.size() - 1) {to_return += ", ";}
+                }
+            } to_return = std::string("(") + to_return + std::string(")");
             return to_return;
         };
 
@@ -103,14 +116,93 @@ namespace pleos {
             return to_return;
         }
 
+        // Add this matrice by another matrice
+        void __add(Matrice<E> other) {
+            if(other.dimension() == dimension()) {
+                // Add the matrices
+                for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                    a_matrices[i].get()->__add(*other.a_matrices[i].get());
+                }
+                // Add the elements
+                for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                    (*a_elements[i].get()) += (*other.a_elements[i].get());
+                }
+            }
+        };
         // Multiply this matrice by another matrice
-        template<typename F>
-        void __multiply(Matrice<F> other) {
+        void __multiply(Matrice<E> other) {
+            if(dimension().dimension_number() == 2 && other.dimension().dimension_number() <= dimension().dimension_number()) {
+                Matrice_Dimension dim_1 = dimension();
+                Matrice_Dimension dim_2 = other.dimension();
+                if(other.dimension().last_dimension() == dimension().first_dimension()) {
+                    // Create the final matrice
+                    Matrice<E> final_matrice(other.dimension().first_dimension(), dimension().last_dimension());
+                    int same_dimension = other.dimension().last_dimension();
+                    // Multiply as a single dimension matrice
+                    for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                        for(int j = 0;j<static_cast<int>(other.matrice_at(0)->size());j++) {
+                            // Add the elements
+                            E current_value;
+                            for(int k = 0;k<same_dimension;k++) {
+                                current_value += matrice_at(i)->at(k) * other.matrice_at(k)->at(j);
+                                std::cout << matrice_at(i)->at(k).to_std_string() << " * " << other.matrice_at(k)->at(j).to_std_string() << " + ";
+                            } std::cout << std::endl;
+                            final_matrice.set(j, i, current_value);
+                        }
+                    }
+                    // Set the final value
+                    *this = final_matrice;
+                }
+            }
+            else if(other.dimension().dimension_number() == 1 && dimension().dimension_number() == other.dimension()) {
+                // Multiply by a single dimension matrice
+                // Get the total of elements
+                E total_product = *other.a_elements[0].get();
+                for(int i = 1;i<static_cast<int>(a_elements.size());i++) {
+                    total_product *= *other.a_elements[i].get();
+                }
+                for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
 
+                }
+                // Multiply the elements
+                for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                    (*a_elements[i].get()) *= total_product;
+                }
+            }
+            else if(dimension().dimension_number() == 1 && other.dimension().last_dimension() == 1 && dimension() == other.dimension().first_dimension()) {
+                // Multiply as a single dimension matrice
+                E final_value;
+                for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                    // Add the elements
+                    final_value += other.matrice_at(i)->at(0) * (*a_elements[i].get());
+                }
+                // Set the final value
+                Matrice<E> final_matrice(1);
+                final_matrice[0] = final_value;
+                *this = final_matrice;
+            }
+        };
+        // Multiply this matrice by a value of the matrice
+        void __multiply(E other) {
+            // Multiply the matrices
+            for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                a_matrices[i].get()->__multiply(other);
+            }
+            // Multiply the elements
+            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                (*a_elements[i].get()) *= (other);
+            }
         };
 
         // Access operators
         inline E& operator[](int indice) {return *a_elements[indice].get();};
+        // Operate with others matrices
+        inline Matrice<E> operator+(Matrice<E> other) {Matrice<E> to_return=*this;to_return.__add(other);return to_return;};
+        inline Matrice<E>& operator+=(Matrice<E> other) {__add(other);return *this;};
+        inline Matrice<E>& operator*=(Matrice<E> other) {__multiply(other);return *this;};
+        // Operate with E
+        inline Matrice<E> operator*(E other) {Matrice<E> to_return=*this;to_return.__multiply(other);return to_return;};
+        inline Matrice<E>& operator*=(E other) {__multiply(other);return *this;};
 
     private:
         // Elements in the matrice
