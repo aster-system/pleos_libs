@@ -39,12 +39,91 @@ namespace pleos {
     //******************
 
     template <typename E>
-    class Stack {
+    class List {
+        // Class representating a list
+    public:
+
+        // List constructor
+        List(){};
+
+        // Returns a case of the list
+        std::shared_ptr<scls::Image> case_image(int element, scls::Text_Image_Generator& generator, scls::Text_Style& current_style) {
+            // Create the text
+            std::shared_ptr<scls::Image> to_add = generator.image_shared_ptr(a_elements[element].to_std_string(), current_style);
+
+            // Create the final image
+            return to_add;
+        };
+        // Returns the list in an image
+        std::shared_ptr<scls::Image> image() {
+            // Get each needed images for elements
+            scls::Text_Style current_style; current_style.font_size = 70;
+            std::vector<std::shared_ptr<scls::Image>> elements_image;
+            scls::Text_Image_Generator generator;
+            int max_height = 0;
+            int total_width = a_border_width;
+            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                std::shared_ptr<scls::Image> to_add = case_image(i, generator, current_style);
+                total_width += to_add.get()->width(); elements_image.push_back(to_add);
+                if(max_height < to_add.get()->height()){max_height = to_add.get()->height() + a_inline_border_width;}
+            } max_height += a_border_width * 2;
+            max_height = 72; total_width = 300;
+
+            // Create the final image
+            int current_x = a_border_width;
+            std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(total_width, max_height, scls::Color(255, 255, 255, 255));
+            // Draw the border
+            to_return.get()->fill_rect(0, 0, to_return.get()->width(), a_border_width, scls::Color(0, 0, 0));
+            //to_return.get()->fill_rect(0, 0, a_border_width, to_return.get()->height(), scls::Color(0, 0, 0));
+            to_return.get()->fill_rect(0, to_return.get()->height() - a_border_width, to_return.get()->width(), a_border_width, scls::Color(0, 0, 0));
+            // Draw the elements
+            for(int i = 0;i<static_cast<int>(elements_image.size());i++) {
+                std::shared_ptr<scls::Image> current_image = elements_image[i];
+                // Paste the image
+                int current_y = to_return.get()->height() / 2.0 - current_image.get()->height() / 2.0;
+                to_return.get()->paste(current_image.get(), current_x, current_y);
+                current_x += current_image.get()->width();
+                to_return.get()->fill_rect(current_x, 0, a_inline_border_width, to_return.get()->height(), scls::Color(0, 0, 0));
+                current_x += a_inline_border_width;
+            } return to_return;
+        };
+
+        // Getters and setters
+        inline std::vector<E>& elements() {return a_elements;};
+
+    protected:
+        // Apparence elements
+        // Width of the border
+        int a_border_width = 4;
+        // Width of the innder border
+        int a_inline_border_width = 2;
+
+    private:
+        // Elements in the list
+        std::vector<E> a_elements;
+    };
+
+    template <typename E>
+    class Queue : public List<E> {
+        // Class representating a queue
+    public:
+
+        // Queue constructor
+        Queue():List<E>(){};
+
+        // Adds an element
+        inline void add(E element){List<E>::elements().insert(List<E>::elements().begin(), element);};
+        // Removes an element
+        inline E pop() {E to_return = List<E>::elements()[List<E>::elements().size() - 1];List<E>::elements().erase(List<E>::elements().end() - 1);return to_return;}
+    };
+
+    template <typename E>
+    class Stack : public List<E> {
         // Class representating a stack
     public:
 
         // Stack constructor
-        Stack(){};
+        Stack():List<E>(){};
 
         // Returns the stack in an image
         std::shared_ptr<scls::Image> image() {
@@ -55,8 +134,8 @@ namespace pleos {
             scls::Text_Image_Generator generator;
             int max_width = 0;
             int total_height = border_width;
-            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
-                std::shared_ptr<scls::Image> to_add = generator.image_shared_ptr(a_elements[i].to_std_string(), current_style);
+            for(int i = 0;i<static_cast<int>(List<E>::elements().size());i++) {
+                std::shared_ptr<scls::Image> to_add = List<E>::case_image(i, generator, current_style);
                 total_height += to_add.get()->height(); elements_image.push_back(to_add);
                 if(max_width < to_add.get()->width()){max_width = to_add.get()->width() + inline_border_width;}
             } max_width += border_width * 2;
@@ -81,13 +160,9 @@ namespace pleos {
             } return to_return;
         };
         // Adds an element
-        inline void pile_up(E element){a_elements.push_back(element);};
+        inline void pile_up(E element){List<E>::elements().push_back(element);};
         // Removes an element
-        inline E unstack() {E to_return = a_elements[a_elements.size() - 1];a_elements.erase(a_elements.end() - 1);return to_return;}
-
-    private:
-        // Elements in the stack
-        std::vector<E> a_elements;
+        inline E unstack() {E to_return = List<E>::elements()[List<E>::elements().size() - 1];List<E>::elements().erase(List<E>::elements().end() - 1);return to_return;}
     };
 }
 
