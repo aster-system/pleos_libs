@@ -65,14 +65,14 @@ namespace pleos {
         };
 
         // Matrice constructor
-        Matrice(int dimension):a_elements(std::vector<std::shared_ptr<E>>(dimension)) {
+        Matrice(std::string name, int dimension):a_elements(std::vector<std::shared_ptr<E>>(dimension)),a_name(name) {
             for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
                 a_elements[i] = std::make_shared<E>();
             }
         };
-        Matrice(int sub_dimension, int dimension):a_matrices(std::vector<std::shared_ptr<Matrice<E>>>(dimension)){
+        Matrice(std::string name, int sub_dimension, int dimension):a_matrices(std::vector<std::shared_ptr<Matrice<E>>>(dimension)),a_name(name){
             for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
-                a_matrices[i] = std::make_shared<Matrice<E>>(sub_dimension);
+                a_matrices[i] = std::make_shared<Matrice<E>>(name + "_" + std::to_string(i), sub_dimension);
             }
         };
 
@@ -88,6 +88,9 @@ namespace pleos {
         // Size of the matrice
         inline int size() const {if(contains_matrices()) {return a_matrices.size();} return a_elements.size();};
 
+        // Returns the name of the matrice
+        inline std::string name() const {return a_name;};
+        inline void set_name(std::string new_name) {a_name = new_name;};
         // Returns the matrice to std::string
         std::string to_std_string() {
             std::string to_return = "";
@@ -136,7 +139,7 @@ namespace pleos {
                 Matrice_Dimension dim_2 = other.dimension();
                 if(other.dimension().last_dimension() == dimension().first_dimension()) {
                     // Create the final matrice
-                    Matrice<E> final_matrice(other.dimension().first_dimension(), dimension().last_dimension());
+                    Matrice<E> final_matrice(name() + " * " + other.name(), other.dimension().first_dimension(), dimension().last_dimension());
                     int same_dimension = other.dimension().last_dimension();
                     // Multiply as a single dimension matrice
                     for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
@@ -145,9 +148,7 @@ namespace pleos {
                             E current_value;
                             for(int k = 0;k<same_dimension;k++) {
                                 current_value += matrice_at(i)->at(k) * other.matrice_at(k)->at(j);
-                                std::cout << matrice_at(i)->at(k).to_std_string() << " * " << other.matrice_at(k)->at(j).to_std_string() << " + ";
-                            } std::cout << std::endl;
-                            final_matrice.set(j, i, current_value);
+                            } final_matrice.set(j, i, current_value);
                         }
                     }
                     // Set the final value
@@ -177,7 +178,7 @@ namespace pleos {
                     final_value += other.matrice_at(i)->at(0) * (*a_elements[i].get());
                 }
                 // Set the final value
-                Matrice<E> final_matrice(1);
+                Matrice<E> final_matrice(name() + " * " + other.name(), 1);
                 final_matrice[0] = final_value;
                 *this = final_matrice;
             }
@@ -199,6 +200,7 @@ namespace pleos {
         // Operate with others matrices
         inline Matrice<E> operator+(Matrice<E> other) {Matrice<E> to_return=*this;to_return.__add(other);return to_return;};
         inline Matrice<E>& operator+=(Matrice<E> other) {__add(other);return *this;};
+        inline Matrice<E> operator*(Matrice<E> other) {Matrice<E> to_return=*this;to_return.__multiply(other);return to_return;};
         inline Matrice<E>& operator*=(Matrice<E> other) {__multiply(other);return *this;};
         // Operate with E
         inline Matrice<E> operator*(E other) {Matrice<E> to_return=*this;to_return.__multiply(other);return to_return;};
@@ -209,6 +211,8 @@ namespace pleos {
         std::vector<std::shared_ptr<E>> a_elements;
         // Matrices in the matrice
         std::vector<std::shared_ptr<Matrice>> a_matrices;
+        // Name of the matrice
+        std::string a_name = "";
     };
 
     //******************
@@ -351,12 +355,18 @@ namespace pleos {
             Matrice<E> to_return(a_cases.size(), a_cases.at(0).size());
             return to_return;
         }
+
+        // Getters and setters
+        inline void set_name(std::string new_name) {a_matrice_name = new_name;a_title.get()->set_text("Matrice " + new_name);};
+        inline void set_name(char new_name) {std::string needed_name;needed_name+=new_name;set_name(needed_name);};
     private:
         // Button to add a column/line of cases int the matrice
         std::shared_ptr<scls::GUI_Text> a_add_case_column;
         std::shared_ptr<scls::GUI_Text> a_add_case_line;
         // Cases for the matrice
         std::vector<std::vector<std::shared_ptr<scls::GUI_Text_Input>>> a_cases;
+        // Name of the matrice
+        std::string a_matrice_name = "";
         // Title of the object
         std::shared_ptr<scls::GUI_Text> a_title;
     };
