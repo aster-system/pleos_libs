@@ -75,11 +75,27 @@ namespace pleos {
                 a_matrices[i] = std::make_shared<Matrice<E>>(name + "_" + std::to_string(i), sub_dimension);
             }
         };
+        Matrice():Matrice("", 0){};
+        // Copy constructor
+        Matrice(const Matrice& other):Matrice(other.name(), 0){other.copy_value(this);};
 
         // Returns an element in the matrice
         inline E at(int indice) const {return *(a_elements[indice].get());};
         // Returns if thie matrice contains an another matrice
         inline bool contains_matrices() const {return a_matrices.size() > 0;};
+        // Copy the value of the matrice into another matrice
+        inline void copy_value(Matrice* other) const {
+            // Copy the elements
+            other->a_elements = std::vector<std::shared_ptr<E>>(a_elements.size());
+            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                other->a_elements[i] = std::make_shared<E>(*(a_elements.at(i).get()));
+            }
+            // Copy the matrices
+            other->a_matrices = std::vector<std::shared_ptr<Matrice>>(a_matrices.size());
+            for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                other->a_matrices[i] = std::make_shared<Matrice>(*(a_matrices.at(i).get()));
+            }
+        };
         // Returns a matrice in the matrice
         inline Matrice* matrice_at(int indice) const {return a_matrices[indice].get();};
         // Set the value at a certain position
@@ -130,6 +146,17 @@ namespace pleos {
                 for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
                     (*a_elements[i].get()) += (*other.a_elements[i].get());
                 }
+            }
+        };
+        // Divide this matrice by a value of the matrice
+        void __divide(E other) {
+            // Multiply the matrices
+            for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
+                a_matrices[i].get()->__divide(other);
+            }
+            // Multiply the elements
+            for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
+                (*a_elements[i].get()) /= (other);
             }
         };
         // Multiply this matrice by another matrice
@@ -205,6 +232,7 @@ namespace pleos {
         // Operate with E
         inline Matrice<E> operator*(E other) {Matrice<E> to_return=*this;to_return.__multiply(other);return to_return;};
         inline Matrice<E>& operator*=(E other) {__multiply(other);return *this;};
+        inline Matrice<E>& operator/=(E other) {__divide(other);return *this;};
 
     private:
         // Elements in the matrice
