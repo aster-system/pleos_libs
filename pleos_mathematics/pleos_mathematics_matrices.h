@@ -380,7 +380,12 @@ namespace pleos {
 
         // Returns the needed matrice
         Matrice<E> matrice() const {
-            Matrice<E> to_return(a_cases.size(), a_cases.at(0).size());
+            Matrice<E> to_return(a_matrice_name, a_cases.size(), a_cases.at(0).size());
+            for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
+                for(int j = 0;j<static_cast<int>(a_cases[i].size());j++) {
+                    to_return.matrice_at(j)->set(i, E::from_std_string(a_cases[i][j].get()->text()));
+                }
+            }
             return to_return;
         }
 
