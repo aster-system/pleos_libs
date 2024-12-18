@@ -35,16 +35,87 @@ namespace pleos {
     //
     //******************
 
+    // Returns the derivation of a function
+    scls::Formula function_derivation_monomonial(scls::__Monomonial current_monomonial, std::string& redaction) {
+        // Do the calculation
+        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown("x");
+        scls::Formula result;
+        if(needed_unknown != 0) {
+            // Basic exponential form
+            scls::Fraction new_exponent = needed_unknown->exponent().real() - 1;
+            if(new_exponent != 0) {
+                result = scls::__Monomonial(needed_unknown->exponent() * current_monomonial.factor(), "x", new_exponent);
+            } else {
+                result = current_monomonial.factor().real();
+            }
+        }
+
+        // Write the redaction
+        redaction += "La forme dérivée de la forme " + current_monomonial.to_std_string() + " est " + result.to_std_string() + ". ";
+
+        return result;
+    }
+    scls::Formula function_derivation_polymonial(Function_Studied current_function, std::string& redaction) {
+        // Do the calculation
+        scls::Formula result;
+
+        // Write the redaction
+        scls::Polymonial needed_polymonial = current_function.function_formula.to_polymonial();
+        redaction += "Or, cette fonction n'est qu'un simple polymône. ";
+        redaction += "Pour étudier sa dérivée, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
+        // Study each monomonials
+        for(int i = 0;i<static_cast<int>(needed_polymonial.monomonials().size());i++) {
+            result += function_derivation_monomonial(needed_polymonial.monomonials()[i], redaction);
+        }
+        redaction += "Donc, la forme dérivée de " + needed_polymonial.to_std_string() + " est " + result.to_std_string() + ". ";
+
+        return result;
+    }
+    scls::Formula function_derivation(Function_Studied current_function, std::string& redaction) {
+        // Do the calculation
+        scls::Formula result;
+
+        // Write the redaction
+        redaction += "Nous cherchons la dérivée de la fonction " + current_function.function_name + "(" + current_function.function_unknown + "). ";
+        if(current_function.function_formula.is_simple_polymonial()) {
+            // The function is a simple polymonial
+            result = function_derivation_polymonial(current_function, redaction);
+        } else if(current_function.function_formula.applied_function() == "") {
+            // The function is more complicated
+            std::string function_name = current_function.function_name + "_";
+            scls::Formula needed_added_element = current_function.function_formula.added_element();
+            redaction += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function.function_unknown + ") = " + needed_added_element.to_std_string() + ". ";
+            Function_Studied fs; fs.function_formula = needed_added_element;
+            fs.function_number = current_function.function_number + 1; fs.function_unknown = current_function.function_unknown;
+            scls::Formula added_element_derivate = function_derivation(fs, redaction);
+
+            // Calculate the denominator
+            scls::Formula* needed_denominator = current_function.function_formula.denominator();
+            redaction += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function.function_unknown + ") = " + needed_denominator->to_std_string() + ". ";
+            fs.function_formula = *needed_denominator;
+            fs.function_number = current_function.function_number + 1; fs.function_unknown = current_function.function_unknown;
+            scls::Formula denominator_derivate = function_derivation(fs, redaction);
+
+            // Do the division
+            result = ((added_element_derivate * (*needed_denominator)) - (needed_added_element * denominator_derivate)) / ((*needed_denominator) * (*needed_denominator));
+            std::cout << "P " << added_element_derivate.to_std_string() << " " << needed_denominator->to_std_string() << " " << (added_element_derivate * (*needed_denominator)).to_std_string() << " " << (needed_added_element * denominator_derivate).to_std_string() << " " << std::endl;
+            redaction += "Finalement, appliquons la formule de division de formes dérivées. ";
+            redaction += "Au final, la dérivé de " + current_function.function_name + " est " + current_function.function_name + "' tel que " + current_function.function_name + "'(" + current_function.function_unknown + ") = " + result.to_std_string() + ". ";
+        }
+
+        return result;
+    }
+
     // Returns the image of a function
     scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction) {
         // Do the ccalculation
         scls::Formula result = current_function.function_formula.replace_unknown(current_function.function_unknown, needed_value);
 
         // Write the redaction
-        redaction += "Nous cherchons la valeur de " + current_function.function_name + "(" + needed_value.to_std_string() + ").";
-        redaction += " Pour cela, remplaceons " + current_function.function_unknown + " par " + needed_value.to_std_string() + " dans " + current_function.function_name + ".</br>";
+        redaction += "Nous cherchons la valeur de " + current_function.function_name + "(" + needed_value.to_std_string() + "). ";
+        redaction += "Pour cela, remplaceons " + current_function.function_unknown + " par " + needed_value.to_std_string() + " dans " + current_function.function_name + ".</br>";
         redaction += current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + "</br>";
-        redaction += "Donc, " + current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + ".";
+        redaction += "Donc, " + current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + ". ";
         return result;
     }
 
@@ -52,12 +123,12 @@ namespace pleos {
     scls::Limit polymonial_limit(scls::Polymonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction) {
         // Check the limit for infinity
         scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
-        redaction += "Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_limit.to_std_string() + ".";
+        redaction += "Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_limit.to_std_string() + ". ";
         return current_limit;
     }
     scls::Limit __function_limit_monomonials(Function_Studied current_function, scls::Polymonial polymonial, scls::Limit needed_limit, std::string& redaction) {
         // Cut the formula by monomonial
-        redaction += " Comme cette forme est un simple polynôme, étudions les limites de chaque monôme.";
+        redaction += "Comme cette forme est un simple polynôme, étudions les limites de chaque monôme. ";
         std::vector<scls::Limit> limits;
         int monomonial_number = static_cast<int>(polymonial.monomonials().size());
         for(int i = 0;i<monomonial_number;i++) {
@@ -95,34 +166,34 @@ namespace pleos {
         if(function_studied.is_simple_polymonial()) {
             if(function_studied.denominator() != 0) {
                 // The limit contains a fraction
-                redaction += "Cette forme est une division, nous avons besoin des limites du numérateur et du dénominateur pour avoir sa limite.";
+                redaction += "Cette forme est une division, nous avons besoin des limites du numérateur et du dénominateur pour avoir sa limite. ";
             }
 
             // Start the search
-            redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en " + needed_limit.to_std_string() + ".";
+            redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en " + needed_limit.to_std_string() + ". ";
             scls::Polymonial polymonial = function_studied;
 
             // Handle the polymonial monomonial by monomonial
-            scls::Limit limit = __function_limit_monomonials(current_function, polymonial, needed_limit, redaction);
+            to_return = __function_limit_monomonials(current_function, polymonial, needed_limit, redaction);
 
             // Handle possible errors
-            if(limit.is_error_ipi() && current_function.function_number <= 1) {
-                redaction += " Or, nous avons une forme indéterminée \"infini + ou - infini\".";
-                redaction += " Pour lever l'indétermination, factorisons toute la forme par le monôme du plus haut degré, et calculons sa limite. ";
+            if(to_return.is_error_ipi() && current_function.function_number <= 1) {
+                redaction += "Or, nous avons une forme indéterminée \"infini + ou - infini\". ";
+                redaction += "Pour lever l'indétermination, factorisons toute la forme par le monôme du plus haut degré, et calculons sa limite. ";
                 Function_Studied needed_function; scls::Polymonial needed_monomonial = scls::Polymonial(scls::Complex(1), current_function.function_unknown, polymonial.degree(current_function.function_unknown));
                 needed_function.function_formula = function_studied / needed_monomonial;
                 needed_function.function_name = current_function.function_name;
                 needed_function.function_number = current_function.function_number + 1;
                 scls::Limit result = function_limit(needed_function, needed_limit, redaction);
-                redaction += " Maintenant, calculons la limite de " + needed_monomonial.to_std_string() + ", qui est de +infini.";
+                redaction += "Maintenant, calculons la limite de " + needed_monomonial.to_std_string() + ", qui est de +infini. ";
                 if(result.value() > 0) {
-                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est +infini.";
+                    redaction += "Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est +infini. ";
                 } else {
-                    redaction += " Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est -infini.";
+                    redaction += "Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est -infini. ";
                 }
             } else {
                 // Finish the redaction
-                redaction += " Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est " + limit.to_std_string() + ".";
+                redaction += "Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est " + to_return.to_std_string() + ". ";
             }
         }
 

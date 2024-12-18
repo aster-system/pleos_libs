@@ -48,6 +48,8 @@ namespace pleos {
         Studied_Type type = Studied_Type::ST_Sequence;
     };
 
+    // Returns the derivation of a function
+    scls::Formula function_derivation(Function_Studied current_function, std::string& redaction);
     // Returns the image of a function
     scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
     // Returns the limit of a function / polymonial in + infinity
