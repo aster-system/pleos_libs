@@ -34,7 +34,7 @@
 namespace pleos {
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
-    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, int modulo, int point_number);
+    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number);
 }
 
 #endif PLEOS_MATHEMATICS_NUMBERS

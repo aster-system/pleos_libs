@@ -31,14 +31,14 @@
 namespace pleos {
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
-    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, int modulo, int point_number) {
+    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number) {
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(image_width, image_width, scls::Color(255, 255, 255));
         to_return.get()->draw_circle(image_width / 2, image_width / 2, circle_radius, 0, 0, 0, 255, 10);
 
         // Draw the text
         scls::Text_Image_Generator generator;
         scls::Text_Style style; style.font_size = 24;
-        std::shared_ptr<scls::Image> needed_text = generator.image_shared_ptr("Modulo : " + std::to_string(modulo) + "</br>Points : " + std::to_string(point_number), style);
+        std::shared_ptr<scls::Image> needed_text = generator.image_shared_ptr("Modulo : " + scls::format_number_to_text(modulo) + "</br>Points : " + std::to_string(point_number), style);
 
         // Draw the lines
         scls::Color point_color(0, 0, 0);
@@ -47,7 +47,7 @@ namespace pleos {
             int current_x = static_cast<double>(image_width) / 2.0 + points.get()->points[i].x() * static_cast<double>(circle_radius * 2);
             int current_y = static_cast<double>(image_width) / 2.0 + points.get()->points[i].z() * static_cast<double>(circle_radius * 2);
 
-            int final_modulo = (i * modulo) % point_number;
+            int final_modulo = static_cast<int>(i * modulo) % point_number;
             int final_x = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].x() * static_cast<double>(circle_radius * 2);
             int final_y = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].z() * static_cast<double>(circle_radius * 2);
 
