@@ -48,6 +48,8 @@ namespace pleos {
         Studied_Type type = Studied_Type::ST_Sequence;
     };
 
+    // Returns the definition set of a function
+    scls::Set_Number function_definition_set(Function_Studied current_function, std::string& redaction);
     // Returns the derivation of a function
     scls::Formula function_derivation(Function_Studied current_function, std::string& redaction);
     // Returns the image of a function
