@@ -164,10 +164,10 @@ namespace pleos {
             if(dimension().dimension_number() == 2 && other.dimension().dimension_number() <= dimension().dimension_number()) {
                 Matrice_Dimension dim_1 = dimension();
                 Matrice_Dimension dim_2 = other.dimension();
-                if(other.dimension().last_dimension() == dimension().first_dimension()) {
+                if(dim_1.first_dimension() == dim_2.last_dimension()) {
                     // Create the final matrice
-                    Matrice<E> final_matrice(name() + " * " + other.name(), other.dimension().first_dimension(), dimension().last_dimension());
-                    int same_dimension = other.dimension().last_dimension();
+                    Matrice<E> final_matrice(name() + " * " + other.name(), dim_2.first_dimension(), dim_1.last_dimension());
+                    int same_dimension = dimension().first_dimension();
                     // Multiply as a single dimension matrice
                     for(int i = 0;i<static_cast<int>(a_matrices.size());i++) {
                         for(int j = 0;j<static_cast<int>(other.matrice_at(0)->size());j++) {
