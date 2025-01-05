@@ -54,9 +54,15 @@ namespace pleos {
         Electrical_Charge(scls::Fraction charge):Electrical_Charge(charge.to_double()){};
         Electrical_Charge():Physic_Object(){};
 
-        // Radius of the produced field in meters
-        double force_field_produced(double distance);
-        inline double force_field_produced(Electrical_Charge *other_charge){return force_field_produced(distance(other_charge->attached_transform()->position())) * std::abs(other_charge->a_charge);};
+        // Radius of the electrical field in meters
+        double electrical_field_force(double distance);
+        inline double electrical_field_force(scls::Vector_3D other_position){return electrical_field_force(distance(other_position));};
+        inline double electrical_field_force(Electrical_Charge *other_charge){return electrical_field_force(distance(other_charge->attached_transform()->position())) * std::abs(other_charge->a_charge);};
+        // Radius of the magnetic field in V/m
+        static scls::Vector_3D magnetical_field_force(scls::Vector_3D magnetic_field_effect, Electrical_Charge *other_charge);
+        // Orientation of the magnetical field
+        double magnetical_orientation(scls::Vector_3D referential);
+        inline double magnetical_orientation(){return magnetical_orientation(scls::Vector_3D(0, 0, 0));};
         // Volume of the particule
         inline double volume() const {return ((4.0 * SCLS_PI * a_width * a_width * a_width)/3.0);};
 

@@ -48,6 +48,10 @@ namespace pleos {
         inline double distance(scls::Vector_3D point){return attached_transform()->distance(point);};
         inline double distance(__Transform_Container* container){return attached_transform()->distance(container->attached_transform()->position());};
 
+        // Handle rotation
+        inline void rotate(scls::Vector_3D rotation){a_attached_transform.get()->rotate(rotation);};
+        inline void rotate_y(double rotation){a_attached_transform.get()->rotate_y(rotation);};
+
         // Handle position
         inline void set_x(double new_x){attached_transform()->set_x(new_x);};
         inline void set_y(double new_y){attached_transform()->set_y(new_y);};
@@ -59,6 +63,7 @@ namespace pleos {
 
         // Getters and setters
         inline scls::Transform_Object_3D* attached_transform() {return a_attached_transform.get();};
+        inline scls::Vector_3D rotation()const{return a_attached_transform.get()->rotation();}
     private:
         // Transformation of the object
         std::shared_ptr<scls::Transform_Object_3D> a_attached_transform;
