@@ -243,6 +243,59 @@ namespace pleos {
         std::string a_name = "";
     };
 
+    // Converts a fraction matrice to an image
+    static std::shared_ptr<scls::Image> matrice_to_image(Matrice<scls::Fraction> matrice, scls::Text_Image_Generator* generator) {
+        // Asserts
+        if(matrice.dimension().dimension_number() > 2){return std::shared_ptr<scls::Image>();}
+
+        if(matrice.dimension().dimension_number() == 1) {
+            // For a one dimension matrice
+            std::vector<std::shared_ptr<scls::Image>> images = std::vector<std::shared_ptr<scls::Image>>();
+            scls::Text_Style style;
+            // Create each images
+            int max_height = 0;
+            int number = matrice.dimension();
+            int total_width = 0;
+            for(int i = 0;i<number;i++) {
+                // Get each images
+                std::shared_ptr<scls::Image> current_image = generator->image_shared_ptr(matrice.at(i), style);
+                images.push_back(current_image);
+                if(max_height < current_image.get()->height()){max_height = current_image.get()->height();}
+                total_width += current_image.get()->width();
+            }
+
+            // Include the separation
+            int image_end_size = 40; scls::Text_Style style_end = style; style_end.font_size = image_end_size;
+            int image_start_size = 40;scls::Text_Style style_start = style; style_start.font_size = image_end_size;
+            std::shared_ptr<scls::Image> image_start = generator->image_shared_ptr("(", style_start);
+            std::shared_ptr<scls::Image> image_end = generator->image_shared_ptr(")", style_end);
+            int separation_width = style.font_size;
+            total_width += (static_cast<int>(images.size()) - 1) * separation_width + image_start.get()->width() + image_end.get()->width();
+            if(image_end.get()->height() > max_height){max_height = image_end.get()->height();}
+            if(image_start.get()->height() > max_height){max_height = image_start.get()->height();}
+
+            // Create the final image
+            int current_x = 0; int current_y = 0;
+            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, max_height, style.background_color);
+            final_image.get()->paste(image_start.get(), current_x, current_y);
+            current_x += image_start.get()->width();
+            // Draw each fractions
+            for(int i = 0;i<static_cast<int>(images.size());i++){
+                current_y = 0;
+                final_image.get()->paste(images[i].get(), current_x, current_y);
+                current_x += images[i].get()->width();
+                // Draw the separation
+                if(i < static_cast<int>(images.size()) - 1) {
+                    current_x += separation_width;
+                }
+            }
+            final_image.get()->paste(image_end.get(), current_x, current_y);
+            return final_image;
+        } else {
+
+        }
+    };
+
     //******************
     //
     // The "Matrices_GUI" class
