@@ -291,8 +291,57 @@ namespace pleos {
             }
             final_image.get()->paste(image_end.get(), current_x, current_y);
             return final_image;
-        } else {
+        }
+        else {
+            // For a two dimension matrice
+            std::vector<std::vector<std::shared_ptr<scls::Image>>> images = std::vector<std::vector<std::shared_ptr<scls::Image>>>();
+            scls::Text_Style style;
+            // Create each images
+            int number = matrice.dimension().first_dimension();
+            int number_dimensions = matrice.dimension().last_dimension();
+            std::vector<int> max_height = std::vector<int>(number);
+            std::vector<int> max_width = std::vector<int>(number_dimensions);
+            for(int i = 0;i<number;i++) {
+                // Get each sub-matrices
+                std::vector<std::shared_ptr<scls::Image>> current_matrice;
+                for(int j = 0;j<number_dimensions;j++) {
+                    // Get each images
+                    int x = j; int y = i;
+                    std::shared_ptr<scls::Image> current_image = generator->image_shared_ptr(matrice.matrice_at(x)->at(y), style);
+                    if(max_height[y] < current_image.get()->height()){max_height[y] = current_image.get()->height();}
+                    if(max_width[x] < current_image.get()->width()){max_width[x] = current_image.get()->width();}
+                    current_matrice.push_back(current_image);
+                }
+                images.push_back(current_matrice);
+            }
 
+            // Create the formating
+            int separation_width = style.font_size;
+
+            // Create the final image
+            int total_height = 0; for(int i = 0;i<static_cast<int>(max_height.size());i++){total_height+=max_height[i];}
+            int total_width = 0; for(int i = 0;i<static_cast<int>(max_width.size());i++){total_width+=max_width[i];}
+            total_width += (static_cast<int>(max_width.size()) - 1) * separation_width;
+            int current_x = 0; int current_y = 0;
+            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, total_height, style.background_color);
+            //final_image.get()->paste(image_start.get(), current_x, current_y);
+            //current_x += image_start.get()->width();
+            // Draw each fractions
+            for(int i = 0;i<static_cast<int>(images.size());i++){
+                for(int j = 0;j<static_cast<int>(images[i].size());j++){
+                    int needed_x = current_x + ((max_width[j] / 2) - (images[i][j].get()->width() / 2));
+                    final_image.get()->paste(images[i][j].get(), needed_x, current_y);
+                    current_x += max_width[j];
+                    // Draw the separation
+                    if(j < static_cast<int>(images.size()) - 1) {
+                        current_x += separation_width;
+                    }
+                }
+                current_x = 0;
+                current_y += max_height[i];
+            }
+            //final_image.get()->paste(image_end.get(), current_x, current_y);
+            return final_image;
         }
     };
 
