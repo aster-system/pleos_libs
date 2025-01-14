@@ -69,6 +69,23 @@ namespace pleos {
 
     // Returns the interval of an sequence
     scls::Interval sequence_variation(Function_Studied current_function, std::string& redaction);
+
+    //******************
+    //
+    // Graphic handling
+    //
+    //******************
+
+    class Graphic : public scls::GUI_Object {
+        // Class representating a graphic for one (or a lot) of functions
+
+    public:
+        // Graphic constructor
+        Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent);
+
+        // Needed fragment shader for the background
+        static std::string fragment_shader_background();
+    };
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

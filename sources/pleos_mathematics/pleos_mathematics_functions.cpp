@@ -424,4 +424,42 @@ namespace pleos {
 
         return scls::Interval(0, 0);
     }
+
+    //******************
+    //
+    // Graphic handling
+    //
+    //******************
+
+    // Graphic constructor
+    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){
+        std::shared_ptr<scls::VAO>* needed_vao = window.vao_shared_ptr("function_background");
+        if(needed_vao == 0) {
+            scls::Shader_Program shader = scls::Shader_Program(scls::Shader_Program::get_default_hud_vertex_shader(), fragment_shader_background());
+            window.add_shader_program("function_background", shader);
+            needed_vao = window.new_vao_shared_ptr("function_background", "gui_default", "function_background");
+        }
+        // Set the VAO
+        if(needed_vao != 0){set_vao(*needed_vao);}
+    }
+
+    // Needed fragment shader for the background
+    std::string Graphic::fragment_shader_background() {
+        std::string to_return = "#version 330 core\n";
+        to_return += "in vec2 tex_pos;"; // Uniform / in/out variables
+        to_return += "out vec4 FragColor;";
+        to_return += "uniform vec4 background_color;";
+        to_return += "uniform vec4 border_color;";
+        to_return += "uniform vec4 border_width;";
+        to_return += "uniform vec4 object_extremum;";
+        to_return += "uniform vec4 object_rect;";
+        to_return += "uniform sampler2D texture_0;";
+        to_return += "uniform bool texture_binded;";
+        to_return += "uniform vec4 texture_rect;\n";
+        to_return += "void main(){";
+        to_return += "vec2 current_pos = tex_pos;vec4 final_color = vec4(1, 1, 1, 1);";
+        to_return += "if(int(current_pos.x * object_rect.z) % 25 == 0) {final_color = vec4(0, 0, 0, 1);}";
+        to_return += "FragColor = final_color;}";
+        return to_return;
+    }
 }
