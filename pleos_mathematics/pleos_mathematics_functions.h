@@ -80,11 +80,80 @@ namespace pleos {
         // Class representating a graphic for one (or a lot) of functions
 
     public:
+
+        // Needed fragment shader for the function
+        static std::string graphic_function_fragment_shader(scls::Formula needed_formula);
+
+        // Base of the graphic
+        struct __Graphic_Base {int a_function_number = 0;double a_middle_x = 0;double a_middle_y = 0;double a_pixel_by_case_x = 100;double a_pixel_by_case_y = 100;};
+
+        //******************
+        //
+        // The Graphic_Function handling
+        //
+        //******************
+
+        class Graphic_Function {
+            // Class representating a function for a graphic
+
+        public:
+
+            // Graphic_Function constructor
+            Graphic_Function(scls::Formula formula);
+
+            // Getters and setters
+            inline scls::Formula formula(){return a_formula;};
+            inline double middle_x() const {return a_graphic_base.get()->a_middle_x;};
+            inline double middle_y() const {return a_graphic_base.get()->a_middle_y;};
+            inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
+            inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
+            inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
+
+        private:
+            // Formula of the function
+            scls::Formula a_formula;
+            // Datas about the plane
+            std::shared_ptr<__Graphic_Base> a_graphic_base;
+        };
+
+        //******************
+        //
+        // Graphic handling
+        //
+        //******************
+
         // Graphic constructor
         Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent);
 
-        // Needed fragment shader for the background
-        static std::string fragment_shader_background();
+        // Function called after creation
+        virtual void after_creation();
+        // Renders the object
+        virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
+        // Updates the object
+        virtual void update();
+
+        // Adds a function to the graphic
+        void add_function(scls::Formula needed_formula);
+        // Returns the image of the graphic
+        std::shared_ptr<scls::Image> to_image();
+
+        // Getters and setters
+        inline double middle_x() const {return a_graphic_base.get()->a_middle_x;};
+        inline double middle_y() const {return a_graphic_base.get()->a_middle_y;};
+        inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
+        inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
+
+    private:
+        // Private functions to draw the image
+        double graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image);
+        double graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
+        double pixel_x_to_graphic_x(double x, std::shared_ptr<scls::Image>& needed_image);
+        double pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image);
+
+        // Loaded function
+        std::vector<std::shared_ptr<Graphic_Function>> a_functions;
+        // Datas about the plane
+        std::shared_ptr<__Graphic_Base> a_graphic_base = std::make_shared<__Graphic_Base>();
     };
 }
 

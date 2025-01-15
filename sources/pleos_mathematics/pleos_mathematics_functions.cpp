@@ -432,34 +432,108 @@ namespace pleos {
     //******************
 
     // Graphic constructor
-    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){
-        std::shared_ptr<scls::VAO>* needed_vao = window.vao_shared_ptr("function_background");
-        if(needed_vao == 0) {
-            scls::Shader_Program shader = scls::Shader_Program(scls::Shader_Program::get_default_hud_vertex_shader(), fragment_shader_background());
-            window.add_shader_program("function_background", shader);
-            needed_vao = window.new_vao_shared_ptr("function_background", "gui_default", "function_background");
-        }
-        // Set the VAO
-        if(needed_vao != 0){set_vao(*needed_vao);}
+    Graphic::Graphic_Function::Graphic_Function(scls::Formula formula):a_formula(formula){}
+
+    // Graphic constructor
+    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){}
+
+    // Adds a function to the graphic
+    void Graphic::add_function(scls::Formula needed_formula) {
+        // Create the function
+        std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(needed_formula);
+
+        a_graphic_base.get()->a_function_number++;
     }
 
-    // Needed fragment shader for the background
-    std::string Graphic::fragment_shader_background() {
+    // Function called after creation
+    void Graphic::after_creation(){for(int i = 0;i<static_cast<int>(2);i++) {add_function(scls::string_to_formula(std::to_string(i + 1) + std::string("x*x")));}}
+
+    // Needed fragment shader for the function
+    std::string Graphic::graphic_function_fragment_shader(scls::Formula needed_formula) {
         std::string to_return = "#version 330 core\n";
         to_return += "in vec2 tex_pos;"; // Uniform / in/out variables
         to_return += "out vec4 FragColor;";
         to_return += "uniform vec4 background_color;";
         to_return += "uniform vec4 border_color;";
         to_return += "uniform vec4 border_width;";
+        to_return += "uniform vec2 middle_position;";
         to_return += "uniform vec4 object_extremum;";
         to_return += "uniform vec4 object_rect;";
+        to_return += "uniform vec2 pixel_by_base;";
         to_return += "uniform sampler2D texture_0;";
         to_return += "uniform bool texture_binded;";
         to_return += "uniform vec4 texture_rect;\n";
+
+        // Function
+        std::string needed_glsl = needed_formula.to_polymonial().to_glsl();
+        to_return += needed_glsl;
+        to_return += "float foo(float x){return poly(x);}\n";
+
         to_return += "void main(){";
-        to_return += "vec2 current_pos = tex_pos;vec4 final_color = vec4(1, 1, 1, 1);";
-        to_return += "if(int(current_pos.x * object_rect.z) % 25 == 0) {final_color = vec4(0, 0, 0, 1);}";
+        to_return += scls::Shader_Program::default_gui_extremum_handling();
+        to_return += "vec2 current_pos = tex_pos;vec4 final_color = vec4(1, 1, 1, 0);";
+        to_return += "float height_multiplier = (object_rect.w / pixel_by_base.y);float width_multiplier = (object_rect.z / pixel_by_base.x);";
+        to_return += "float x_1 = ((current_pos.x - 0.5) + middle_position.x) * width_multiplier;";
+        to_return += "float x_2 = x_1 + (width_multiplier/object_rect.z);";
+
+        // Function
+        to_return += "float y_1 = foo(x_1);float y_2 = foo(x_2);if(y_1 > y_2){y_1+=height_multiplier/object_rect.w;}else{y_2+=height_multiplier/object_rect.w;}";
+        to_return += "float p = (((current_pos.y - 0.5) + middle_position.y)) * height_multiplier;";
+        to_return += "if((y_1 >= p && y_2 <= p) || (y_1 <= p && y_2 >= p)){final_color = vec4(1, 0, 0, 1);}";
         to_return += "FragColor = final_color;}";
         return to_return;
+    }
+
+    // Render the object
+    void Graphic::render(glm::vec3 scale_multiplier) {texture()->set_image(to_image());scls::GUI_Object::render(scale_multiplier);}
+
+    // Returns the image of the graphic
+    double Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x()) * (pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
+    double Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y()) * (pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
+    double Graphic::pixel_x_to_graphic_x(double x, std::shared_ptr<scls::Image>& needed_image){return ((x - needed_image.get()->width() / 2.0) / pixel_by_case_x());}
+    double Graphic::pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image){return ((y - needed_image.get()->height() / 2.0) / pixel_by_case_y());}
+    std::shared_ptr<scls::Image> Graphic::to_image() {
+        // Create the image
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
+
+        // Draw the basic lines
+        // Horizontal lines
+        double current_y = pixel_y_to_graphic_y(0, to_return);
+        current_y = floor(current_y);
+        double needed_y = graphic_y_to_pixel_y(current_y, to_return);
+        while(needed_y < to_return.get()->width()) {
+            int needed_height = 1;
+            if(current_y == 0){needed_height = 2;};
+            to_return.get()->fill_rect(0, needed_y, to_return.get()->width(), needed_height, scls::Color(0, 0, 0));
+            current_y++;
+            needed_y = graphic_y_to_pixel_y(current_y, to_return);
+        }
+        // Vertical lines
+        double current_x = pixel_x_to_graphic_x(0, to_return);
+        current_x = ceil(current_x);
+        double needed_x = graphic_x_to_pixel_x(current_x, to_return);
+        while(needed_x < to_return.get()->width()) {
+            int needed_width = 1;
+            if(current_x == 0){needed_width = 2;};
+            to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), scls::Color(0, 0, 0));
+            current_x++;
+            needed_x = graphic_x_to_pixel_x(current_x, to_return);
+        }
+
+        return to_return;
+    }
+
+    // Updates the object
+    void Graphic::update() {
+        GUI_Object::update();
+
+        // Move the plane
+        if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (window_struct().delta_time() * 0.5);}
+        if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (window_struct().delta_time() * 0.5);}
+        if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (window_struct().delta_time() * 0.5);}
+        if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (window_struct().delta_time() * 0.5);}
+        // Zoom or unzoom
+        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (window_struct().delta_time() * 50);a_graphic_base.get()->a_pixel_by_case_y -= (window_struct().delta_time() * 50);}
+        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (window_struct().delta_time() * 50);a_graphic_base.get()->a_pixel_by_case_y += (window_struct().delta_time() * 50);}
     }
 }
