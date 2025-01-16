@@ -85,7 +85,7 @@ namespace pleos {
         static std::string graphic_function_fragment_shader(scls::Formula needed_formula);
 
         // Base of the graphic
-        struct __Graphic_Base {int a_function_number = 0;double a_middle_x = 0;double a_middle_y = 0;double a_pixel_by_case_x = 100;double a_pixel_by_case_y = 100;};
+        struct __Graphic_Base {int a_function_number = 0;scls::Fraction a_middle_x = 0;scls::Fraction a_middle_y = 0;double a_pixel_by_case_x = 100;double a_pixel_by_case_y = 100;};
 
         //******************
         //
@@ -103,8 +103,8 @@ namespace pleos {
 
             // Getters and setters
             inline scls::Formula formula(){return a_formula;};
-            inline double middle_x() const {return a_graphic_base.get()->a_middle_x;};
-            inline double middle_y() const {return a_graphic_base.get()->a_middle_y;};
+            inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
+            inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
             inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
             inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
             inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
@@ -138,16 +138,16 @@ namespace pleos {
         std::shared_ptr<scls::Image> to_image();
 
         // Getters and setters
-        inline double middle_x() const {return a_graphic_base.get()->a_middle_x;};
-        inline double middle_y() const {return a_graphic_base.get()->a_middle_y;};
+        inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
+        inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
         inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
         inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
 
     private:
         // Private functions to draw the image
-        double graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image);
-        double graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
-        double pixel_x_to_graphic_x(double x, std::shared_ptr<scls::Image>& needed_image);
+        int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image);
+        int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
+        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image);
         double pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image);
 
         // Loaded function
