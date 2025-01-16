@@ -447,7 +447,11 @@ namespace pleos {
     }
 
     // Function called after creation
-    void Graphic::after_creation(){for(int i = 0;i<static_cast<int>(2);i++) {add_function(scls::string_to_formula(std::to_string(i + 1) + std::string("x*x")));}}
+    void Graphic::after_creation(){
+        for(int i = 0;i<static_cast<int>(10);i++) {
+            add_function(scls::string_to_formula(std::to_string(i + 1) + std::string("x*x")));
+        }
+    }
 
     // Needed fragment shader for the function
     std::string Graphic::graphic_function_fragment_shader(scls::Formula needed_formula) {
@@ -489,10 +493,10 @@ namespace pleos {
     void Graphic::render(glm::vec3 scale_multiplier) {texture()->set_image(to_image());scls::GUI_Object::render(scale_multiplier);}
 
     // Returns the image of the graphic
-    int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * pixel_by_case_x() + (needed_image.get()->width() / 2.0);};
-    int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * pixel_by_case_y() + (needed_image.get()->height() / 2.0);};
-    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((x - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(pixel_by_case_x()));}
-    double Graphic::pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image){return middle_y().to_double() + ((y - needed_image.get()->height() / 2.0) / pixel_by_case_y());}
+    int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
+    int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * floor(pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
+    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((x - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
+    double Graphic::pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image){return middle_y().to_double() + ((y - needed_image.get()->height() / 2.0) / floor(pixel_by_case_y()));}
     std::shared_ptr<scls::Image> Graphic::to_image() {
         // Create the image
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
@@ -505,7 +509,7 @@ namespace pleos {
         while(needed_y < to_return.get()->width()) {
             int needed_height = 1;
             if(current_y == 0){needed_height = 2;};
-            to_return.get()->fill_rect(0, needed_y, to_return.get()->width(), needed_height, scls::Color(0, 0, 0));
+            to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, scls::Color(0, 0, 0));
             current_y++;
             needed_y = graphic_y_to_pixel_y(current_y, to_return);
         }
@@ -521,21 +525,32 @@ namespace pleos {
             needed_x = graphic_x_to_pixel_x(current_x, to_return);
         }
 
-        // Draw the functions
-        scls::Fraction image;
+        // Get the datas for the drawing
+        scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
         scls::Fraction multiplier = scls::Fraction(1, pixel_by_case_x());
-        scls::Fraction start = pixel_x_to_graphic_x(0, to_return);
+        std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
+        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
+        // Draw the functions
         for(int i = 0;i<static_cast<int>(a_functions.size());i++) {
+            // Get the values
+            scls::Formula needed_formula = a_functions[i].get()->formula();
+            std::vector<scls::Formula> needed_pos = std::vector<scls::Formula>(to_return.get()->width() + 1);
+            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){needed_pos[i] = needed_formula.to_polymonial().replace_unknown("x", scls::Formula(screen_pos[i]));}
+            std::vector<int> needed_y = std::vector<int>(to_return.get()->width() + 1);
+            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
+                scls::Fraction value = needed_pos[i].to_polymonial().known_monomonial().factor().real();
+                needed_y[i] = graphic_y_to_pixel_y(value.to_double(), to_return);
+            }
+
             // Draw each pixel
-            image = start;
+            int width = 3;
             for(int j = 0;j<static_cast<int>(to_return.get()->width());j++) {
-                image += multiplier;
-                scls::Formula value_formula = a_functions[i].get()->formula().replace_unknown("x", scls::Formula(image));
-                scls::Fraction value = value_formula.to_polymonial().known_monomonial().factor().real();
-                int y = graphic_y_to_pixel_y(value.to_double(), to_return);
+                int y_1 = to_return.get()->height() - needed_y[j];
+                int y_2 = to_return.get()->height() - needed_y[j + 1];
                 // Draw the point
-                if(y < to_return.get()->height() && y >= 0) {
-                    to_return.get()->set_pixel_directly((j + y * to_return.get()->width()) * to_return.get()->components(), 255, 0, 0, 1);
+                int needed_height = std::abs(needed_y[j] - needed_y[j + 1]);
+                if(y_1 < to_return.get()->height() && y_1 >= 0 && y_2 < to_return.get()->height() && y_2 >= 0) {
+                    to_return.get()->fill_rect(j - width / 2.0, std::min(y_1, y_2) - width / 2.0, width, needed_height + width, scls::Color(255, 0, 0));
                 }
             }
         }
@@ -554,7 +569,8 @@ namespace pleos {
         if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);}
         if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);}
         // Zoom or unzoom
-        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (window_struct().delta_time() * 50);a_graphic_base.get()->a_pixel_by_case_y -= (window_struct().delta_time() * 50);}
-        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (window_struct().delta_time() * 50);a_graphic_base.get()->a_pixel_by_case_y += (window_struct().delta_time() * 50);}
+        double zoom_speed = 10;
+        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);}
+        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);}
     }
 }
