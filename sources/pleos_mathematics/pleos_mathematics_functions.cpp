@@ -447,11 +447,7 @@ namespace pleos {
     }
 
     // Function called after creation
-    void Graphic::after_creation(){
-        for(int i = 0;i<static_cast<int>(10);i++) {
-            add_function(scls::string_to_formula(std::to_string(i + 1) + std::string("x*x")));
-        }
-    }
+    void Graphic::after_creation(){}
 
     // Needed fragment shader for the function
     std::string Graphic::graphic_function_fragment_shader(scls::Formula needed_formula) {
@@ -535,7 +531,7 @@ namespace pleos {
             // Get the values
             scls::Formula needed_formula = a_functions[i].get()->formula();
             std::vector<scls::Formula> needed_pos = std::vector<scls::Formula>(to_return.get()->width() + 1);
-            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){needed_pos[i] = needed_formula.to_polymonial().replace_unknown("x", scls::Formula(screen_pos[i]));}
+            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){needed_pos[i] = needed_formula.replace_unknown("x", scls::Formula(screen_pos[i]));}
             std::vector<int> needed_y = std::vector<int>(to_return.get()->width() + 1);
             for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
                 scls::Fraction value = needed_pos[i].to_polymonial().known_monomonial().factor().real();

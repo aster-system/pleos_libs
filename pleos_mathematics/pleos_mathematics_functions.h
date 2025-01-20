@@ -134,6 +134,8 @@ namespace pleos {
 
         // Adds a function to the graphic
         void add_function(scls::Formula needed_formula);
+        // Resets the object
+        inline void reset(){a_functions.clear();};
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image();
 
