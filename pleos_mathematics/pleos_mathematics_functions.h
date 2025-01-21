@@ -46,10 +46,14 @@ namespace pleos {
         std::string function_unknown = "x";
         // Type of the studied function
         Studied_Type type = Studied_Type::ST_Sequence;
+
+        // Studied things
+        // Definition set of the function
+        std::shared_ptr<scls::Set_Number> definition_set;
     };
 
     // Returns the definition set of a function
-    scls::Set_Number function_definition_set(Function_Studied current_function, std::string& redaction);
+    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction);
     // Returns the derivation of a function
     scls::Formula function_derivation(Function_Studied current_function, std::string& redaction);
     // Returns the image of a function
@@ -99,10 +103,11 @@ namespace pleos {
         public:
 
             // Graphic_Function constructor
-            Graphic_Function(scls::Formula formula);
+            Graphic_Function(std::shared_ptr<Function_Studied> function_studied);
 
             // Getters and setters
-            inline scls::Formula formula(){return a_formula;};
+            inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set.get();};
+            inline scls::Formula& formula(){return a_function_studied.get()->function_formula;};
             inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
             inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
             inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
@@ -111,7 +116,7 @@ namespace pleos {
 
         private:
             // Formula of the function
-            scls::Formula a_formula;
+            std::shared_ptr<Function_Studied> a_function_studied;
             // Datas about the plane
             std::shared_ptr<__Graphic_Base> a_graphic_base;
         };
@@ -133,7 +138,7 @@ namespace pleos {
         virtual void update();
 
         // Adds a function to the graphic
-        void add_function(scls::Formula needed_formula);
+        void add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
         inline void reset(){a_functions.clear();};
         // Returns the image of the graphic

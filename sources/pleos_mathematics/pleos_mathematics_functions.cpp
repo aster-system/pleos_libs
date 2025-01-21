@@ -36,22 +36,40 @@ namespace pleos {
     //******************
 
     // Returns the definition set of a function
-    scls::Set_Number function_definition_set(Function_Studied current_function, std::string& redaction) {
+    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction) {
         // Create the redaction
-        scls::Formula& function_studied = current_function.function_formula;
-        redaction += "Nous cherchons l'ensemble de définition maximale de la forme " + function_studied.to_std_string() + ". ";
-        scls::Set_Number to_return = scls::Set_Number();
+        scls::Formula& function_studied = current_function->function_formula;
+        scls::Set_Number to_return = scls::Set_Number::set_real();
 
-        // Redaction part
-        if(function_studied.denominator() != 0) {
-            redaction += "Cette forme contient un dénominateur global " + function_studied.denominator()->to_std_string() + ". ";
-            redaction += "Donc, elle n'est pas définie pour " + function_studied.denominator()->to_std_string() + " = 0. ";
-            Function_Studied fs; fs.function_formula = *function_studied.denominator();
-            fs.function_number = current_function.function_number + 1; fs.function_unknown = current_function.function_unknown;
-            scls::Set_Number denominator_null = function_roots(fs, redaction);
-            redaction += "Donc, la forme " + function_studied.to_std_string() + " n'est pas définie pour x appartenant à " + denominator_null.to_std_string() + ". ";
+        // Do the redaction
+        if(redaction != 0) {
+            (*redaction) += "Nous cherchons l'ensemble de définition maximale de la forme " + function_studied.to_std_string() + ". ";
         }
 
+        // Fraction part
+        std::shared_ptr<scls::Set_Number> denominator_null;
+        if(function_studied.denominator() != 0) {
+            Function_Studied fs; fs.function_formula = *function_studied.denominator();
+            fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
+            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(fs, s));}
+            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(fs, *redaction));}
+            scls::Fraction needed_value = denominator_null.get()->numbers().at(0).real();
+
+            // TEMPORARY SET THE INTERVAL
+            to_return = scls::Set_Number();
+            scls::Interval interval = scls::Interval(needed_value - 1, needed_value);interval.set_start_infinite(true);to_return.add_interval(interval);
+            interval = scls::Interval(needed_value, needed_value + 1);interval.set_end_infinite(true);to_return.add_interval(interval);
+
+            // Do the redaction
+            if(redaction != 0) {
+                (*redaction) += "Cette forme contient un dénominateur global " + function_studied.denominator()->to_std_string() + ". ";
+                (*redaction) += "Donc, elle n'est pas définie pour " + function_studied.denominator()->to_std_string() + " = 0. ";
+                (*redaction) += "Donc, la forme " + function_studied.to_std_string() + " n'est pas définie pour x appartenant à " + denominator_null.get()->to_std_string() + ". ";
+            }
+        }
+
+        // Return the result
+        current_function->definition_set = std::make_shared<scls::Set_Number>(to_return);
         return to_return;
     }
 
@@ -432,15 +450,15 @@ namespace pleos {
     //******************
 
     // Graphic constructor
-    Graphic::Graphic_Function::Graphic_Function(scls::Formula formula):a_formula(formula){}
+    Graphic::Graphic_Function::Graphic_Function(std::shared_ptr<Function_Studied> function_studied):a_function_studied(function_studied){}
 
     // Graphic constructor
     Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){}
 
     // Adds a function to the graphic
-    void Graphic::add_function(scls::Formula needed_formula) {
+    void Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {
         // Create the function
-        std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(needed_formula);
+        std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);
         a_functions.push_back(new_function);
 
         a_graphic_base.get()->a_function_number++;
@@ -524,29 +542,63 @@ namespace pleos {
         // Get the datas for the drawing
         scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
         scls::Fraction multiplier = scls::Fraction(1, pixel_by_case_x());
+        struct Needed_Pos {scls::Formula pos;scls::Formula previous_pos;bool previous_pos_used = false;};
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
         for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
         // Draw the functions
         for(int i = 0;i<static_cast<int>(a_functions.size());i++) {
             // Get the values
             scls::Formula needed_formula = a_functions[i].get()->formula();
-            std::vector<scls::Formula> needed_pos = std::vector<scls::Formula>(to_return.get()->width() + 1);
-            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){needed_pos[i] = needed_formula.replace_unknown("x", scls::Formula(screen_pos[i]));}
-            std::vector<int> needed_y = std::vector<int>(to_return.get()->width() + 1);
+            std::vector<Needed_Pos> needed_pos = std::vector<Needed_Pos>(to_return.get()->width() + 1);
+            // Get each values of the function
+            scls::Formula last_pos;
+            for(int j = 0;j<static_cast<int>(to_return.get()->width()) + 1;j++){
+                // Get the needed pos
+                Needed_Pos to_add;
+                if(a_functions[i].get()->definition_set()->is_in(screen_pos[j])) {
+                    to_add.pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j]));
+                }
+                else {
+                    to_add.pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j] - scls::Fraction(1, 1000)));
+                }
+                needed_pos[j] = to_add;
+
+                // Check according to the last value
+                if(j > 0 && !a_functions[i].get()->definition_set()->is_in(scls::Interval(screen_pos[j - 1], screen_pos[j]))) {
+                    needed_pos[j - 1].pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j - 1] + scls::Fraction(1, 1000)));
+                    needed_pos[j].previous_pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j] - scls::Fraction(1, 1000)));
+                    needed_pos[j].previous_pos_used = true;
+                }
+
+                // Finalise the creation
+                last_pos = to_add.pos;
+            }
+
+            // Adapt each values to the screen
+            struct Needed_Pos_Screen {int pos;int previous_pos;bool previous_pos_used = false;};
+            std::vector<Needed_Pos_Screen> needed_y = std::vector<Needed_Pos_Screen>(to_return.get()->width() + 1);
             for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
-                scls::Fraction value = needed_pos[i].to_polymonial().known_monomonial().factor().real();
-                needed_y[i] = graphic_y_to_pixel_y(value.to_double(), to_return);
+                scls::Fraction value = needed_pos[i].pos.to_polymonial().known_monomonial().factor().real();
+                needed_y[i].pos = graphic_y_to_pixel_y(value.to_double(), to_return);
+                // Check the previous pos
+                if(needed_pos[i].previous_pos_used) {
+                    value = needed_pos[i].previous_pos.to_polymonial().known_monomonial().factor().real();
+                    needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
+                    needed_y[i].previous_pos_used = true;
+                }
             }
 
             // Draw each pixel
             int width = 3;
             for(int j = 0;j<static_cast<int>(to_return.get()->width());j++) {
-                int y_1 = to_return.get()->height() - needed_y[j];
-                int y_2 = to_return.get()->height() - needed_y[j + 1];
+                int y_1 = to_return.get()->height() - needed_y[j].pos;
+                int y_2 = to_return.get()->height() - needed_y[j + 1].pos;
+                if(needed_y[j + 1].previous_pos_used){y_1 = to_return.get()->height() - needed_y[j + 1].previous_pos;}
                 // Draw the point
-                int needed_height = std::abs(needed_y[j] - needed_y[j + 1]);
-                if(y_1 < to_return.get()->height() && y_1 >= 0 && y_2 < to_return.get()->height() && y_2 >= 0) {
-                    to_return.get()->fill_rect(j - width / 2.0, std::min(y_1, y_2) - width / 2.0, width, needed_height + width, scls::Color(255, 0, 0));
+                int needed_height = std::abs(y_1 - y_2);
+                int needed_y = std::min(y_1, y_2) - width / 2.0;
+                if(needed_y < to_return.get()->height() && needed_y >= -needed_height) {
+                    to_return.get()->fill_rect(j - width / 2.0, needed_y, width, needed_height + width, scls::Color(255, 0, 0));
                 }
             }
         }
