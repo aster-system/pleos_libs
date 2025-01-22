@@ -77,4 +77,4 @@ namespace pleos {
     };
 }
 
-#endif PLEOS_MATHEMATICS_GEOMETRY
+#endif // PLEOS_MATHEMATICS_GEOMETRY

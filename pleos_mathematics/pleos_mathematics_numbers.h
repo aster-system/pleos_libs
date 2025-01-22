@@ -37,4 +37,4 @@ namespace pleos {
     std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number);
 }
 
-#endif PLEOS_MATHEMATICS_NUMBERS
+#endif // PLEOS_MATHEMATICS_NUMBERS

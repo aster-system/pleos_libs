@@ -136,6 +136,7 @@ namespace pleos {
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
         virtual void update();
+        virtual void update_texture(){texture()->set_image(to_image());};
 
         // Adds a function to the graphic
         void add_function(std::shared_ptr<Function_Studied> function_studied);

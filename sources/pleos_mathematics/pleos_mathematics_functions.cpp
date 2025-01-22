@@ -453,7 +453,7 @@ namespace pleos {
     Graphic::Graphic_Function::Graphic_Function(std::shared_ptr<Function_Studied> function_studied):a_function_studied(function_studied){}
 
     // Graphic constructor
-    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){}
+    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){update_texture();}
 
     // Adds a function to the graphic
     void Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {
@@ -504,7 +504,7 @@ namespace pleos {
     }
 
     // Render the object
-    void Graphic::render(glm::vec3 scale_multiplier) {texture()->set_image(to_image());scls::GUI_Object::render(scale_multiplier);}
+    void Graphic::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
 
     // Returns the image of the graphic
     int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
@@ -521,9 +521,10 @@ namespace pleos {
         current_y = floor(current_y);
         double needed_y = graphic_y_to_pixel_y(current_y, to_return);
         while(needed_y < to_return.get()->width()) {
+            scls::Color needed_color = scls::Color(0, 0, 0);
             int needed_height = 1;
-            if(current_y == 0){needed_height = 2;};
-            to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, scls::Color(0, 0, 0));
+            if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
+            to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, needed_color);
             current_y++;
             needed_y = graphic_y_to_pixel_y(current_y, to_return);
         }
@@ -532,9 +533,10 @@ namespace pleos {
         current_x = ceil(current_x);
         int needed_x = graphic_x_to_pixel_x(current_x, to_return);
         while(needed_x < to_return.get()->width()) {
+            scls::Color needed_color = scls::Color(0, 0, 0);
             int needed_width = 1;
-            if(current_x == 0){needed_width = 2;};
-            to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), scls::Color(0, 0, 0));
+            if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
+            to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), needed_color);
             current_x++;
             needed_x = graphic_x_to_pixel_x(current_x, to_return);
         }
@@ -611,14 +613,18 @@ namespace pleos {
         GUI_Object::update();
 
         // Move the plane
+        bool modified = false;
         scls::Fraction speed = scls::Fraction(1, 50);
-        if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (speed);}
-        if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (speed);}
-        if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);}
-        if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);}
+        if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (speed);modified = true;}
+        if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (speed);modified = true;}
+        if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);modified = true;}
+        if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);modified = true;}
         // Zoom or unzoom
         double zoom_speed = 10;
-        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);}
-        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);}
+        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);modified = true;}
+        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);modified = true;}
+        if(modified){update_texture();}
+
+        if(window_struct().key_pressed("p")){to_image().get()->save_png("tests/function.png");}
     }
 }
