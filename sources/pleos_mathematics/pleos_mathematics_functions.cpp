@@ -509,6 +509,7 @@ namespace pleos {
     // Returns the image of the graphic
     int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
     int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * floor(pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
+    int Graphic::graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return needed_image.get()->height() - graphic_y_to_pixel_y(y, needed_image);};
     scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((x - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
     double Graphic::pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image){return middle_y().to_double() + ((y - needed_image.get()->height() / 2.0) / floor(pixel_by_case_y()));}
     std::shared_ptr<scls::Image> Graphic::to_image() {
@@ -603,6 +604,24 @@ namespace pleos {
                     to_return.get()->fill_rect(j - width / 2.0, needed_y, width, needed_height + width, scls::Color(255, 0, 0));
                 }
             }
+        }
+
+        // Draw the vectors
+        for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {
+            std::shared_ptr<Vector> current_vector = a_vectors[i];
+            double needed_x = graphic_x_to_pixel_x(current_vector.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(current_vector.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            to_return.get()->draw_line(graphic_x_to_pixel_x(0, to_return), graphic_y_to_pixel_y_inversed(0, to_return), needed_x, needed_y, scls::Color(255, 0, 0), 2);
+        }
+        // Draw the circles
+        for(int i = 0;i<static_cast<int>(a_circles.size());i++) {
+            std::shared_ptr<Circle> current_circle = a_circles[i];
+            Vector center = current_circle.get()->center();
+            double radius = current_circle.get()->radius().to_polymonial().known_monomonial().factor().real().to_double();
+            radius = radius * pixel_by_case_x();
+            double needed_x = graphic_x_to_pixel_x(center.x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            to_return.get()->draw_circle(needed_x, needed_y, radius, scls::Color(255, 0, 0), 2);
         }
 
         return to_return;

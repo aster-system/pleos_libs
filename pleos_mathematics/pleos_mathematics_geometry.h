@@ -47,11 +47,14 @@ namespace pleos {
         Vector(std::string name):a_name(name){};
         Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
 
+        // Returns the mesured angle between to vector
+        scls::Formula angle(Vector* needed_vector, std::string* redaction);
+        inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0);};
         // Returns the introduction of the vector
         inline std::string introduction() const {return std::string("Nous avons le vecteur ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string() + std::string(";") + y()->to_std_string() + std::string(").");};
         // Returns the norm of the vector (and the redaction if needed)
-        scls::Formula norm(std::string* redaction) const;
-        inline scls::Formula norm() const {return norm(0);};
+        scls::Formula norm(std::string* redaction);
+        inline scls::Formula norm() {return norm(0);};
 
         // Returns the possible known coordinates
         inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
@@ -74,6 +77,36 @@ namespace pleos {
         std::vector<std::shared_ptr<scls::Formula>> a_coordinates;
         // Name of the vector
         std::string a_name;
+
+        // Last norm of the vector
+        scls::Formula a_last_norm; bool a_last_norm_calculated = false;
+    };
+
+    //******************
+    //
+    // The "Circle" class
+    //
+    //******************
+
+    class Circle {
+        // Class representating a geometrical circle
+    public:
+        // Circle constructor
+        Circle(std::string name, Vector center, scls::Formula radius):a_center(center),a_name(name),a_radius(radius){};
+
+       // Returns the radius of the circle
+        virtual scls::Formula radius(){return a_radius;};
+
+        // Getters and setters
+        inline Vector center() const {return a_center;};
+        inline std::string name() const {return a_name;};
+    private:
+        // Center of the circle
+        Vector a_center;
+        // Name of the circle
+        std::string a_name = std::string();
+        // Radius of the circle
+        scls::Formula a_radius;
     };
 }
 

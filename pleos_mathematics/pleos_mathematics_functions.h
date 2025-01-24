@@ -28,7 +28,7 @@
 #define PLEOS_MATHEMATICS_FUNCTIONS
 
 // Include SCLS Graphic Benoit
-#include "../../../scls-graphic-benoit/scls_graphic.h"
+#include "pleos_mathematics_geometry.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -145,6 +145,11 @@ namespace pleos {
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image();
 
+        // Adds a circle to the graphic
+        inline void add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));};
+        // Adds a vector to the graphic
+        inline void add_vector(std::string circle_name, Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
+
         // Getters and setters
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
@@ -155,6 +160,7 @@ namespace pleos {
         // Private functions to draw the image
         int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image);
         int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
+        int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image);
         scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image);
         double pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image);
 
@@ -162,6 +168,11 @@ namespace pleos {
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;
         // Datas about the plane
         std::shared_ptr<__Graphic_Base> a_graphic_base = std::make_shared<__Graphic_Base>();
+
+        // Geometrical objects
+        std::vector<std::shared_ptr<Circle>> a_circles;
+        // Geometrical vectors
+        std::vector<std::shared_ptr<Vector>> a_vectors;
     };
 }
 

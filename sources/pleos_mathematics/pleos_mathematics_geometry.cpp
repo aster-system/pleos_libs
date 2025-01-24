@@ -35,8 +35,27 @@ namespace pleos {
     //
     //******************
 
+    // Returns the mesured angle between to vector
+    scls::Formula Vector::angle(Vector* needed_vector, std::string* redaction) {
+        // Start the redaction
+        if(redaction != 0) {
+            (*redaction) += std::string("Nous cherchons l'angle entre le vecteur ") + name() + std::string(" et le vecteur ") + needed_vector->name() + std::string(". ");
+        }
+
+        // Get the needed norm
+        if(!a_last_norm_calculated){norm(redaction);}
+        scls::Formula needed_norm = a_last_norm;
+
+        // Start the redaction
+        if(redaction != 0) {
+            (*redaction) += std::string("Nous savons que la norme de ") + name() + std::string(" est ") + needed_norm.to_std_string() + std::string(". ");
+        }
+
+        return 0;
+    }
+
     // Returns the norm of the vector (and the redaction if needed)
-    scls::Formula Vector::norm(std::string* redaction) const {
+    scls::Formula Vector::norm(std::string* redaction) {
         // Start the redaction
         if(redaction != 0) {
             (*redaction) += std::string("Nous cherchons la norme du vecteur ") + name() + std::string(". ");
@@ -45,15 +64,15 @@ namespace pleos {
         // Do the calculation
         scls::Formula to_return;
         for(int i = 0;i<static_cast<int>(a_coordinates.size());i++) {to_return += (*a_coordinates[i].get()) * (*a_coordinates[i].get());}
+        to_return.set_applied_function<scls::__Sqrt_Function>();
 
         // Returns the needed result
         if(redaction != 0) {
-            if(to_return.is_simple_monomonial()) {
-                double value = to_return.to_polymonial().known_monomonial().factor().real().to_double();
-                value = std::sqrt(value);
-                (*redaction) += std::string("La norme du vecteur ") + name() + std::string(" est donc ") + scls::format_number_to_text(value) + std::string(".");
-            }
+            double value = to_return.applied_function()->real_value(&to_return);
+            (*redaction) += std::string("La norme du vecteur ") + name() + std::string(" est donc ") + scls::format_number_to_text(value) + std::string(".");
         }
+        a_last_norm = to_return;
+        a_last_norm_calculated = true;
         return to_return;
     }
 }
