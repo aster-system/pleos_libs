@@ -47,6 +47,18 @@ namespace pleos {
         // Type of the studied function
         Studied_Type type = Studied_Type::ST_Sequence;
 
+        // Returns the introduction for this function
+        inline std::string introduction() const {return std::string("Nous avons la fonction ") + name() + std::string(" tel que ") + name() + std::string("(") + function_unknown + std::string(") = ") + function_formula.to_std_string() + std::string(" .");};
+
+        // Connected object to this vector
+        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
+        inline void set_formula(scls::Formula formula){function_formula = formula;};
+        // Name of the function
+        inline std::string name() const {return function_name;};
+        inline void set_name(std::string new_name){function_name = new_name;};
+
         // Studied things
         // Definition set of the function
         std::shared_ptr<scls::Set_Number> definition_set;
@@ -57,7 +69,7 @@ namespace pleos {
     // Returns the derivation of a function
     scls::Formula function_derivation(Function_Studied current_function, std::string& redaction);
     // Returns the image of a function
-    scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
+    scls::__Formula_Base::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
     // Returns the limit of a function / polymonial in + infinity
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction);
     // Returns the set of roots of a function
@@ -135,7 +147,7 @@ namespace pleos {
         // Renders the object
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
-        virtual void update();
+        virtual void update_event();
         virtual void update_texture(){texture()->set_image(to_image());};
 
         // Adds a function to the graphic
@@ -148,7 +160,7 @@ namespace pleos {
         // Adds a circle to the graphic
         inline void add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));};
         // Adds a vector to the graphic
-        inline void add_vector(std::string circle_name, Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
+        inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
 
         // Getters and setters
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
@@ -162,7 +174,7 @@ namespace pleos {
         int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
         int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image);
         scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image);
-        double pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image);
+        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image);
 
         // Loaded function
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;

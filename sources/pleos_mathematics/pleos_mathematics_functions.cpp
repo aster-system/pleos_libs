@@ -68,6 +68,11 @@ namespace pleos {
             }
         }
 
+        // Finish the redaction
+        if(redaction != 0 && to_return == scls::Set_Number::set_real()) {
+            (*redaction) += "Or, cette fonction ne contient aucune forme pouvant amener à une valeur interdite. Donc, elle est définie sur l'ensemble des réels. ";
+        }
+
         // Return the result
         current_function->definition_set = std::make_shared<scls::Set_Number>(to_return);
         return to_return;
@@ -144,9 +149,9 @@ namespace pleos {
     }
 
     // Returns the image of a function
-    scls::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction) {
+    scls::__Formula_Base::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction) {
         // Do the ccalculation
-        scls::Formula result = current_function.function_formula.replace_unknown(current_function.function_unknown, needed_value);
+        scls::__Formula_Base::Formula result = current_function.function_formula.replace_unknown(current_function.function_unknown, needed_value);
 
         // Write the redaction
         redaction += "Nous cherchons la valeur de " + current_function.function_name + "(" + needed_value.to_std_string() + "). ";
@@ -406,8 +411,8 @@ namespace pleos {
     scls::Interval sequence_variation(Function_Studied current_function_studied, std::string& redaction) {
         std::string& needed_unknown = current_function_studied.function_unknown;
         scls::Formula& current_function = current_function_studied.function_formula;
-        scls::Formula function_plus = scls::replace_unknown(current_function, needed_unknown, needed_unknown + " + 1");
-        scls::Formula function_difference = function_plus - current_function;
+        scls::__Formula_Base::Formula function_plus = scls::replace_unknown(current_function, needed_unknown, needed_unknown + " + 1");
+        scls::__Formula_Base::Formula function_difference = function_plus - current_function;
 
         // Create the redaction
         redaction += "La forme " + current_function_studied.function_name + "(" + needed_unknown + "+1) peut s'écrire " + function_plus.to_std_string() + ". ";
@@ -416,7 +421,7 @@ namespace pleos {
 
         // Create the needed function studied
         Function_Studied fs;
-        fs.function_formula = function_difference;
+        fs.function_formula = *function_difference.formula_base();
         fs.function_name = current_function_studied.function_name;
         fs.function_number = 1;
         scls::Set_Number result = function_sign(fs, redaction);
@@ -510,15 +515,15 @@ namespace pleos {
     int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
     int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * floor(pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return needed_image.get()->height() - graphic_y_to_pixel_y(y, needed_image);};
-    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((x - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
-    double Graphic::pixel_y_to_graphic_y(double y, std::shared_ptr<scls::Image>& needed_image){return middle_y().to_double() + ((y - needed_image.get()->height() / 2.0) / floor(pixel_by_case_y()));}
+    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((scls::Fraction(x) - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
+    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return middle_y() + ((scls::Fraction(needed_image.get()->height(), 2) - scls::Fraction(y)) / scls::Fraction(floor(pixel_by_case_y())));}
     std::shared_ptr<scls::Image> Graphic::to_image() {
         // Create the image
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
 
         // Draw the basic lines
         // Horizontal lines
-        double current_y = pixel_y_to_graphic_y(0, to_return);
+        double current_y = pixel_y_to_graphic_y(to_return.get()->height(), to_return).to_double();
         current_y = floor(current_y);
         double needed_y = graphic_y_to_pixel_y(current_y, to_return);
         while(needed_y < to_return.get()->width()) {
@@ -545,7 +550,7 @@ namespace pleos {
         // Get the datas for the drawing
         scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
         scls::Fraction multiplier = scls::Fraction(1, pixel_by_case_x());
-        struct Needed_Pos {scls::Formula pos;scls::Formula previous_pos;bool previous_pos_used = false;};
+        struct Needed_Pos {scls::__Formula_Base::Formula pos;scls::__Formula_Base::Formula previous_pos;bool previous_pos_used = false;};
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
         for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
         // Draw the functions
@@ -554,7 +559,7 @@ namespace pleos {
             scls::Formula needed_formula = a_functions[i].get()->formula();
             std::vector<Needed_Pos> needed_pos = std::vector<Needed_Pos>(to_return.get()->width() + 1);
             // Get each values of the function
-            scls::Formula last_pos;
+            scls::__Formula_Base::Formula last_pos;
             for(int j = 0;j<static_cast<int>(to_return.get()->width()) + 1;j++){
                 // Get the needed pos
                 Needed_Pos to_add;
@@ -628,8 +633,8 @@ namespace pleos {
     }
 
     // Updates the object
-    void Graphic::update() {
-        GUI_Object::update();
+    void Graphic::update_event() {
+        GUI_Object::update_event();
 
         // Move the plane
         bool modified = false;
@@ -642,8 +647,18 @@ namespace pleos {
         double zoom_speed = 10;
         if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);modified = true;}
         if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);modified = true;}
-        if(modified){update_texture();}
 
+        // Handle clicks
+        if(is_clicked_during_this_frame(GLFW_MOUSE_BUTTON_LEFT)) {
+            double needed_x = window_struct().mouse_x() - x_in_absolute_pixel();
+            double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
+            scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
+            scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
+            add_vector(Vector("a", movement_x, movement_y));
+            modified = true;
+        }
+
+        if(modified){update_texture();}
         if(window_struct().key_pressed("p")){to_image().get()->save_png("tests/function.png");}
     }
 }
