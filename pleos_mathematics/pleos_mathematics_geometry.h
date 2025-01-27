@@ -64,6 +64,14 @@ namespace pleos {
         inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
         inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
 
+        // Operators methods
+        void __add(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__add(value.a_coordinates[i].get());}};
+
+        // Operators
+        // With Vector
+        Vector& operator+=(Vector value){__add(value);return *this;};
+        Vector operator+(Vector value){Vector new_value(*this);new_value.__add(value);return new_value;};
+
         // Getters and setters
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::string name() const {return a_name;};
@@ -98,11 +106,24 @@ namespace pleos {
         virtual scls::Formula radius(){return a_radius;};
 
         // Getters and setters
+        inline scls::Color border_color() const {return a_border_color;};
+        inline int border_radius() const {return a_border_radius;};
         inline Vector center() const {return a_center;};
+        inline scls::Color color() const {return a_color;};
         inline std::string name() const {return a_name;};
+        inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
+        inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
+        inline void set_center(Vector new_center){a_center = new_center;};
+        inline void set_color(scls::Color new_color) {a_color = new_color;};
     private:
+        // Color of the border of the circle
+        scls::Color a_border_color;
+        // Radius of the border
+        int a_border_radius = 0;
         // Center of the circle
         Vector a_center;
+        // Color of the circle
+        scls::Color a_color;
         // Name of the circle
         std::string a_name = std::string();
         // Radius of the circle

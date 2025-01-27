@@ -158,7 +158,7 @@ namespace pleos {
         std::shared_ptr<scls::Image> to_image();
 
         // Adds a circle to the graphic
-        inline void add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));};
+        inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));return &a_circles[a_circles.size() - 1];};
         // Adds a vector to the graphic
         inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
 

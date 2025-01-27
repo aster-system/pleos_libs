@@ -626,7 +626,7 @@ namespace pleos {
             radius = radius * pixel_by_case_x();
             double needed_x = graphic_x_to_pixel_x(center.x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            to_return.get()->draw_circle(needed_x, needed_y, radius, scls::Color(255, 0, 0), 2);
+            to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
         }
 
         return to_return;
