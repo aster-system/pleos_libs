@@ -30,6 +30,11 @@
 // Include SCLS Graphic Benoit
 #include "pleos_mathematics_geometry.h"
 
+// Possibles operations at click
+#define PLEOS_OPERATION_NOTHING 0
+#define PLEOS_OPERATION_VECTOR 100
+#define PLEOS_OPERATION_POINT 101
+
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
     // Possible studied type
@@ -157,22 +162,31 @@ namespace pleos {
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image();
 
+        // Handle circles
         // Adds a circle to the graphic
         inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));return &a_circles[a_circles.size() - 1];};
-        // Adds a vector to the graphic
-        inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
+
+        // Handle points
+        // Adds a points to the graphic
+        inline void add_point(Vector needed_point){a_points.push_back(std::make_shared<Vector>(needed_point));};
+
+        // Handle vectors
+        // Adds a vector to the graphic
+        inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
 
         // Getters and setters
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
+        inline int operation_at_click() const {return a_operation_at_click;};
         inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
         inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
+        inline void set_operation_at_click(int new_operation_at_click) {a_operation_at_click = new_operation_at_click;};
 
     private:
         // Private functions to draw the image
@@ -190,9 +204,13 @@ namespace pleos {
         // Things to draw
         bool a_draw_base = true;
         bool a_draw_sub_bases = true;
+        // Operation to do at click
+        int a_operation_at_click = PLEOS_OPERATION_NOTHING;
 
         // Geometrical objects
         std::vector<std::shared_ptr<Circle>> a_circles;
+        // Geometrical point
+        std::vector<std::shared_ptr<Vector>> a_points;
         // Geometrical vectors
         std::vector<std::shared_ptr<Vector>> a_vectors;
     };

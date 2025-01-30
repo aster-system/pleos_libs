@@ -652,12 +652,15 @@ namespace pleos {
 
         // Handle clicks
         if(is_clicked_during_this_frame(GLFW_MOUSE_BUTTON_LEFT)) {
-            double needed_x = window_struct().mouse_x() - x_in_absolute_pixel();
-            double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
-            scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
-            scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
-            add_vector(Vector("a", movement_x, movement_y));
-            modified = true;
+            if(operation_at_click() == PLEOS_OPERATION_VECTOR) {
+                // Add a vector
+                double needed_x = window_struct().mouse_x() - x_in_absolute_pixel();
+                double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
+                scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
+                scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
+                add_vector(Vector("a", movement_x, movement_y));
+                modified = true;
+            }
         }
 
         if(modified){update_texture();}
