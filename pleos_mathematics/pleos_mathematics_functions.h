@@ -161,12 +161,18 @@ namespace pleos {
         inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));return &a_circles[a_circles.size() - 1];};
         // Adds a vector to the graphic
         inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
+        // Removes circle from the graphic
+        inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
 
         // Getters and setters
+        inline bool draw_base() const {return a_draw_base;};
+        inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
         inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
         inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
+        inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
+        inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
 
     private:
         // Private functions to draw the image
@@ -180,6 +186,10 @@ namespace pleos {
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;
         // Datas about the plane
         std::shared_ptr<__Graphic_Base> a_graphic_base = std::make_shared<__Graphic_Base>();
+
+        // Things to draw
+        bool a_draw_base = true;
+        bool a_draw_sub_bases = true;
 
         // Geometrical objects
         std::vector<std::shared_ptr<Circle>> a_circles;

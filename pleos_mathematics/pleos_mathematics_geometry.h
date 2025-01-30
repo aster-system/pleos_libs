@@ -46,6 +46,10 @@ namespace pleos {
         // Vector constructor
         Vector(std::string name):a_name(name){};
         Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
+        Vector():Vector(""){};
+
+        // Returns a copy of this vector
+        Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(std::make_shared<scls::Formula>(a_coordinates[i].get()->formula_copy()));}return to_return;};
 
         // Returns the mesured angle between to vector
         scls::Formula angle(Vector* needed_vector, std::string* redaction);
@@ -65,12 +69,21 @@ namespace pleos {
         inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
 
         // Operators methods
+        // With Fractions
+        void __multiply(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_coordinates.size());i++){a_coordinates[i].get()->__multiply(value);}};
+        // With Vector
         void __add(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__add(value.a_coordinates[i].get());}};
+        void __substract(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__substract(value.a_coordinates[i].get());}};
 
         // Operators
+        // With Fractions
+        Vector operator*=(scls::Fraction value){__multiply(value);return *this;};
+        Vector operator*(scls::Fraction value) const {Vector new_value(vector_copy());new_value.__multiply(value);return new_value;};
         // With Vector
         Vector& operator+=(Vector value){__add(value);return *this;};
-        Vector operator+(Vector value){Vector new_value(*this);new_value.__add(value);return new_value;};
+        Vector operator+(Vector value) const {Vector new_value(vector_copy());new_value.__add(value);return new_value;};
+        Vector& operator-=(Vector value){__substract(value);return *this;};
+        Vector operator-(Vector value) const {Vector new_value(vector_copy());new_value.__substract(value);return new_value;};
 
         // Getters and setters
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};

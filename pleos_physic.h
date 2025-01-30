@@ -29,5 +29,7 @@
 
 // Include the electromagnetism part
 #include "pleos_physic/pleos_physic_electromagnetism.h"
+// Include the matter part
+#include "pleos_physic/pleos_physic_matter.h"
 
 #endif // PLEOS_PHYSIC

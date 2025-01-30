@@ -522,29 +522,31 @@ namespace pleos {
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
 
         // Draw the basic lines
-        // Horizontal lines
-        double current_y = pixel_y_to_graphic_y(to_return.get()->height(), to_return).to_double();
-        current_y = floor(current_y);
-        double needed_y = graphic_y_to_pixel_y(current_y, to_return);
-        while(needed_y < to_return.get()->width()) {
-            scls::Color needed_color = scls::Color(0, 0, 0);
-            int needed_height = 1;
-            if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
-            to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, needed_color);
-            current_y++;
-            needed_y = graphic_y_to_pixel_y(current_y, to_return);
-        }
-        // Vertical lines
-        double current_x = pixel_x_to_graphic_x(0, to_return).to_double();
-        current_x = ceil(current_x);
-        int needed_x = graphic_x_to_pixel_x(current_x, to_return);
-        while(needed_x < to_return.get()->width()) {
-            scls::Color needed_color = scls::Color(0, 0, 0);
-            int needed_width = 1;
-            if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
-            to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), needed_color);
-            current_x++;
-            needed_x = graphic_x_to_pixel_x(current_x, to_return);
+        if(draw_base() || draw_sub_bases()) {
+            // Horizontal lines
+            double current_y = pixel_y_to_graphic_y(to_return.get()->height(), to_return).to_double();
+            current_y = floor(current_y);
+            double needed_y = graphic_y_to_pixel_y(current_y, to_return);
+            while(needed_y < to_return.get()->width()) {
+                scls::Color needed_color = scls::Color(0, 0, 0);
+                int needed_height = 1;
+                if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
+                to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, needed_color);
+                current_y++;
+                needed_y = graphic_y_to_pixel_y(current_y, to_return);
+            }
+            // Vertical lines
+            double current_x = pixel_x_to_graphic_x(0, to_return).to_double();
+            current_x = ceil(current_x);
+            int needed_x = graphic_x_to_pixel_x(current_x, to_return);
+            while(needed_x < to_return.get()->width()) {
+                scls::Color needed_color = scls::Color(0, 0, 0);
+                int needed_width = 1;
+                if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
+                to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), needed_color);
+                current_x++;
+                needed_x = graphic_x_to_pixel_x(current_x, to_return);
+            }
         }
 
         // Get the datas for the drawing
