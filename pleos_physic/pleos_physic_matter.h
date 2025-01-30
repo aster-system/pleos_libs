@@ -48,8 +48,17 @@ namespace pleos {
             scls::Fraction angle = 0;
             // Attached circle of the electron
             std::shared_ptr<Circle> circle;
+            // Returns the center of the electron
+            inline Vector center() const {return circle.get()->center();};
             // Distance to the nucleus
             scls::Fraction distance = 0;
+
+            // Energy in the electron
+            scls::Fraction energy = scls::Fraction(0);
+            // If the electron has a photon in it or not
+            bool has_photon = false;
+            // If the electron has a photon attached in it or not
+            bool has_photon_attached = false;
         };
         // Struct representating a single photon
         struct Photon {
@@ -57,6 +66,8 @@ namespace pleos {
             std::shared_ptr<Circle> circle;
             // Time of the creation of the photo
             long long creation_time = 0;
+            // Attached electron
+            std::shared_ptr<Electron> electron;
             // Position of the end
             Vector end_position;
             // Position of the start

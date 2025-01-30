@@ -164,6 +164,92 @@ namespace pleos {
         // Removes an element
         inline E unstack() {E to_return = List<E>::elements()[List<E>::elements().size() - 1];List<E>::elements().erase(List<E>::elements().end() - 1);return to_return;}
     };
+
+    //******************
+    //
+    // Tree structures
+    //
+    //******************
+
+    template <typename E>
+    class Tree {
+        // Class representating a tree
+    public:
+        // Tree constructor
+        Tree(){};
+
+        // Returns a sub-tree in the tree
+        inline Tree<E>* sub_tree(int n){while(static_cast<int>(a_nodes.size()) <= n){a_nodes.push_back(std::make_shared<Tree>());}return a_nodes[n].get();};
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<Tree>>& nodes() {return a_nodes;};
+        inline void set_value(E new_value){a_value = std::make_shared<E>(new_value);};
+        inline E* value() const {return a_value.get();};
+
+        // Returns the tree in an image
+        std::shared_ptr<scls::Image> image() {
+            std::shared_ptr<scls::Image> to_return;
+            if(a_nodes.size() <= 0) {
+                // The tree has no children
+                to_return = image_value();
+            }
+            else {
+                // Get the needed children images
+                int max_height = 0;
+                int total_width = 0;
+                std::vector<std::shared_ptr<scls::Image>> children_images;
+                for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = a_nodes[i].get()->image();
+                    children_images.push_back(current_image);
+                    // Get the datas about the image
+                    if(current_image.get()->height() > max_height){max_height = current_image.get()->height();}
+                    total_width += current_image.get()->width();
+                }
+                // Get the value image
+                std::shared_ptr<scls::Image> value_image = image_value();
+                if(value_image.get()->width() > total_width){total_width = value_image.get()->width();}
+
+                // Draw the final image
+                int node_to__node_separation = 20;
+                int root_to_node_separation = 30;
+                int total_height = max_height + value_image.get()->height() + root_to_node_separation;
+                total_width = total_width + (children_images.size() - 1) * node_to__node_separation;
+                to_return = std::make_shared<scls::Image>(total_width, total_height, scls::Color(255, 255, 255));
+
+                // Draw the links
+                int base_x = to_return.get()->width() / 2;
+                int base_y = value_image.get()->height();
+                int current_x = 0;
+                int current_y = base_y + root_to_node_separation;
+                scls::Color link_color = scls::Color(0, 0, 0); int link_width = 2;
+                for(int i = 0;i<static_cast<int>(children_images.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = children_images[i];
+                    to_return.get()->draw_line(base_x - link_width / 2, base_y, current_x + current_image.get()->width() / 2, current_y, link_color, link_width);
+                    current_x += current_image.get()->width() + node_to__node_separation;
+                }
+
+                // Paste the value
+                to_return.get()->paste(value_image.get(), to_return.get()->width() / 2 - value_image.get()->width() / 2, 0);
+                // Paste the children
+                current_x = 0;
+                current_y = value_image.get()->height() + root_to_node_separation;
+                for(int i = 0;i<static_cast<int>(children_images.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = children_images[i];
+                    to_return.get()->paste(current_image.get(), current_x, current_y);
+                    current_x += current_image.get()->width() + node_to__node_separation;
+                }
+            } return to_return;
+        };
+        // Returns the value into an image
+        template <typename X = E> std::enable_if<!std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get());return to_return;};
+        template <typename X = E> std::enable_if<std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {scls::Text_Style style;style.alignment_horizontal=scls::H_Center;std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get(), style);return to_return;};
+
+    private:
+        // Nodes in the tree
+        std::vector<std::shared_ptr<Tree>> a_nodes;
+        // Value of the root of the tree
+        std::shared_ptr<E> a_value;
+    };
 }
 
 #endif // PLEOS_IT_DATA_STRUCTURE
