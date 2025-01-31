@@ -54,6 +54,8 @@ namespace pleos {
         // Returns the mesured angle between to vector
         scls::Formula angle(Vector* needed_vector, std::string* redaction);
         inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0);};
+        // Returns the complex number form of the vector (and the redaction if needed)
+        scls::Formula complex_number(std::string* redaction);
         // Returns the introduction of the vector
         inline std::string introduction() const {return std::string("Nous avons le vecteur ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string() + std::string(";") + y()->to_std_string() + std::string(").");};
         // Returns the norm of the vector (and the redaction if needed)
