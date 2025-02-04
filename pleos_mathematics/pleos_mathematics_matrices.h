@@ -244,14 +244,13 @@ namespace pleos {
     };
 
     // Converts a fraction matrice to an image
-    static std::shared_ptr<scls::Image> matrice_to_image(Matrice<scls::Fraction> matrice, scls::Text_Image_Generator* generator) {
+    static std::shared_ptr<scls::Image> matrice_to_image(Matrice<scls::Fraction> matrice, scls::Text_Image_Generator* generator, scls::Text_Style style) {
         // Asserts
         if(matrice.dimension().dimension_number() > 2){return std::shared_ptr<scls::Image>();}
 
         if(matrice.dimension().dimension_number() == 1) {
             // For a one dimension matrice
             std::vector<std::shared_ptr<scls::Image>> images = std::vector<std::shared_ptr<scls::Image>>();
-            scls::Text_Style style;
             // Create each images
             int max_height = 0;
             int number = matrice.dimension();
@@ -295,7 +294,6 @@ namespace pleos {
         else {
             // For a two dimension matrice
             std::vector<std::vector<std::shared_ptr<scls::Image>>> images = std::vector<std::vector<std::shared_ptr<scls::Image>>>();
-            scls::Text_Style style;
             // Create each images
             int number = matrice.dimension().first_dimension();
             int number_dimensions = matrice.dimension().last_dimension();

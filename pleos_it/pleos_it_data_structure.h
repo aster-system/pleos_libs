@@ -250,6 +250,119 @@ namespace pleos {
         // Value of the root of the tree
         std::shared_ptr<E> a_value;
     };
+
+    //******************
+    //
+    // Graph structures
+    //
+    //******************
+
+    template <typename E>
+    class Graph {
+        // Class representating a graph
+    public:
+        // Node in a graph
+        class Node {
+        public:
+            // Links for a node in a graph
+            struct Link{std::weak_ptr<Node> target;};
+
+            // Node constructor
+            Node(E new_value, scls::Fraction x, scls::Fraction y):a_x(x),a_y(y){set_value(new_value);};
+            Node(){};
+
+            // Returns the value into an image
+            template <typename X = E> std::enable_if<!std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get());return to_return;};
+            template <typename X = E> std::enable_if<std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {scls::Text_Style style;style.alignment_horizontal=scls::H_Center;std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get(), style);return to_return;};
+
+            // Getters and setters
+            inline void set_value(E new_value){a_value = std::make_shared<E>(new_value);};
+            inline E* value() const {return a_value.get();};
+            inline scls::Fraction x() const {return a_x;};
+            inline scls::Fraction y() const {return a_y;};
+        private:
+            // Links to others nodes
+            std::vector<Link> a_links;
+            // Value in the node
+            std::shared_ptr<E> a_value;
+            // X value of the node
+            scls::Fraction a_x;
+            // Y value of the node
+            scls::Fraction a_y;
+        };
+
+        // Graph constructor
+        Graph(){};
+
+        // Adds a node in the graph
+        inline void add_node(E value, scls::Fraction x, scls::Fraction y){a_nodes.push_back(std::make_shared<Node>(value, x, y));};
+        inline void add_node(E value){add_node(value, 0, 0);};
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<Node>>& nodes() {return a_nodes;};
+
+        // Returns the tree in an image
+        std::shared_ptr<scls::Image> image() {
+            std::shared_ptr<scls::Image> to_return;
+            if(a_nodes.size() > 0) {
+                // Get the needed children images
+                int max_height = 0;
+                scls::Fraction max_x = 0;  scls::Fraction min_x = 0; bool min_x_used = false; bool max_x_used = false;
+                scls::Fraction max_y = 0;  scls::Fraction min_y = 0; bool min_y_used = false; bool max_y_used = false;
+                int pixel_in_value = 100;
+                std::vector<std::shared_ptr<scls::Image>> images;
+                for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = a_nodes[i].get()->image_value();
+                    images.push_back(current_image);
+                    // Get the datas about the image
+                    // Datas for width
+                    scls::Fraction current_min_x = a_nodes[i].get()->x() * pixel_in_value - scls::Fraction(current_image.get()->width(), 2);
+                    scls::Fraction current_max_x = a_nodes[i].get()->x() * pixel_in_value + scls::Fraction(current_image.get()->width(), 2);
+                    if(current_min_x < min_x || !min_x_used){min_x = current_min_x;min_x_used=true;}
+                    if(current_max_x > max_x || !max_x_used){max_x = current_max_x;max_x_used=true;}
+                    // Datas for height
+                    scls::Fraction current_min_y = a_nodes[i].get()->y() * pixel_in_value - scls::Fraction(current_image.get()->height(), 2);
+                    scls::Fraction current_max_y = a_nodes[i].get()->y() * pixel_in_value + scls::Fraction(current_image.get()->height(), 2);
+                    if(current_min_y < min_y || !min_y_used){min_y = current_min_y;min_y_used=true;}
+                    if(current_max_y > max_y || !max_y_used){max_y = current_max_y;max_y_used=true;}
+                }
+
+                // Draw the final image
+                int node_to_node_separation = 20;
+                int root_to_node_separation = 30;
+                scls::Fraction total_height = max_y - min_y;
+                scls::Fraction total_width = max_x - min_x;
+                to_return = std::make_shared<scls::Image>(total_width.to_double(), total_height.to_double(), scls::Color(255, 255, 255));
+
+                /*// Draw the links
+                int base_x = to_return.get()->width() / 2;
+                int base_y = 0;
+                int current_x = 0;
+                int current_y = base_y + root_to_node_separation;
+                scls::Color link_color = scls::Color(0, 0, 0); int link_width = 2;
+                for(int i = 0;i<static_cast<int>(images.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = images[i];
+                    to_return.get()->draw_line(base_x - link_width / 2, base_y, current_x + current_image.get()->width() / 2, current_y, link_color, link_width);
+                    current_x += current_image.get()->width() + node_to__node_separation;
+                } //*/
+
+                // Paste the children
+                for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
+                    std::shared_ptr<scls::Image> current_image = images[i];
+                    scls::Fraction current_x = (a_nodes[i].get()->x() * pixel_in_value - min_x);
+                    current_x -= scls::Fraction(current_image.get()->width(), 2);
+                    scls::Fraction current_y = total_height - (a_nodes[i].get()->y() * pixel_in_value - min_y);
+                    current_y -= scls::Fraction(current_image.get()->height(), 2);
+                    to_return.get()->paste(current_image.get(), current_x.to_double(), current_y.to_double());
+                }
+            }
+            return to_return;
+        };
+
+    private:
+        // Nodes in the tree
+        std::vector<std::shared_ptr<Node>> a_nodes;
+    };
 }
 
 #endif // PLEOS_IT_DATA_STRUCTURE
