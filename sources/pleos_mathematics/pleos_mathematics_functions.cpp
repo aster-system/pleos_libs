@@ -51,8 +51,8 @@ namespace pleos {
         if(function_studied.denominator() != 0) {
             Function_Studied fs; fs.function_formula = *function_studied.denominator();
             fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
-            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(fs, s));}
-            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(fs, *redaction));}
+            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(current_function, s));}
+            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(current_function, *redaction));}
             scls::Fraction needed_value = denominator_null.get()->numbers().at(0).real();
 
             // TEMPORARY SET THE INTERVAL
@@ -243,16 +243,16 @@ namespace pleos {
     }
 
     // Returns the set of roots of a function
-    scls::Set_Number function_roots(Function_Studied current_function, std::string& redaction) {
+    scls::Set_Number function_roots(Function_Studied* current_function, std::string& redaction) {
         // Create the redaction
-        scls::Formula& function_studied = current_function.function_formula;
+        scls::Formula& function_studied = current_function->function_formula;
         redaction += "Nous cherchons les racines de " + function_studied.to_std_string() + ". ";
         scls::Set_Number to_return = scls::Set_Number();
 
         // Only one polymonial
         if(function_studied.is_simple_polymonial()) {
             scls::Polymonial polymonial = function_studied;
-            int degree = polymonial.degree(current_function.function_unknown).real().to_int();
+            int degree = polymonial.degree(current_function->function_unknown).real().to_int();
             if(polymonial.is_known()) {
                 // Only one number
                 scls::Fraction number = static_cast<scls::Complex>(polymonial.known_monomonial()).real();
@@ -279,8 +279,8 @@ namespace pleos {
                 scls::Interval interval;
             } else if(degree == 2) {
                 // Calculate the known and unknown parts
-                scls::Complex a_part = polymonial.monomonial("n", 2).factor();
-                scls::Complex b_part = polymonial.monomonial("n").factor();
+                scls::Complex a_part = polymonial.monomonial(current_function->function_unknown, 2).factor();
+                scls::Complex b_part = polymonial.monomonial(current_function->function_unknown).factor();
                 scls::Complex c_part = polymonial.known_monomonial().factor();
                 scls::Complex discriminant_complex = b_part * b_part - 4 * a_part * c_part;
 
@@ -288,19 +288,18 @@ namespace pleos {
                 redaction += "Or, cette forme est un polynôme de degré 2. ";
                 redaction += "Pour étudier ses racines, nous devons étudier les trois parties qui la constitue. ";
                 redaction += "Commençons par calculer le discriminant d de cette forme. ";
-                redaction += " d = b * b + 4 * a * c = " + discriminant_complex.to_std_string_simple() + ". ";
+                redaction += " d = b * b - 4 * a * c = " + discriminant_complex.to_std_string_simple() + ". ";
 
                 // Search the needed roots
                 scls::Fraction discriminant = discriminant_complex.real();
-                if(discriminant < 0) {
-                    redaction += "Or, d &lt; 0, donc cette forme n'a pas de solution dans l'ensemble des réels. ";
-                } else if(discriminant == 0) {
+                if(discriminant < 0) {redaction += "Or, d &lt; 0, donc cette forme n'a pas de solution dans l'ensemble des réels. ";}
+                else if(discriminant == 0) {
                     scls::Fraction solution = ((b_part * -1) / (2 * a_part)).real();
                     redaction += "Or, d = 0, donc cette forme a une solution dans l'ensemble des réels. ";
                     redaction += "Cette solution est n = -b/2a = " + solution.to_std_string() + ". ";
                     to_return.add_number(solution);
                 } else {
-                    scls::Fraction sqrt_d = std::sqrt(discriminant.to_double());
+                    scls::Fraction sqrt_d = scls::Fraction(std::sqrt(discriminant.to_double()) * 1000000.0, 1000000.0);
                     scls::Fraction solution_1 = (((b_part * -1) + sqrt_d) / (2 * a_part)).real();
                     scls::Fraction solution_2 = (((b_part * -1) - sqrt_d) / (2 * a_part)).real();
                     redaction += "Or, d > 0, donc cette forme a deux solutions dans l'ensemble des réels. ";
@@ -374,7 +373,7 @@ namespace pleos {
                 redaction += "Or, cette forme est une forme polymonial de degré 2.";
                 redaction += " Commençons par trouver les racines de cette forme.</br>";
                 // Create the needed function studied
-                scls::Set_Number result = function_roots(current_function, redaction);
+                scls::Set_Number result = function_roots(&current_function, redaction);
                 redaction += "</br>";
                 // Search the sign
                 scls::Fraction a_part = polymonial.monomonial("n", 2).factor().real();

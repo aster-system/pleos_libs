@@ -122,7 +122,7 @@ namespace pleos {
         class Probability_Universe_Tree {
         public:
             // Probability_Universe_Tree constructor
-            Probability_Universe_Tree(std::string& redaction):a_redaction(redaction){style.font_size = 50;};
+            Probability_Universe_Tree(std::string& redaction):a_redaction(redaction){style.set_font_size(50);};
 
             // Create a case of the tree
             std::shared_ptr<scls::Image> create_case(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition);

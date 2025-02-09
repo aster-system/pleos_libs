@@ -37,7 +37,7 @@ namespace pleos {
 
         // Draw the text
         scls::Text_Image_Generator generator;
-        scls::Text_Style style; style.font_size = 24;
+        scls::Text_Style style; style.set_font_size(24);
         std::shared_ptr<scls::Image> needed_text = generator.image_shared_ptr("Modulo : " + scls::format_number_to_text(modulo) + "</br>Points : " + std::to_string(point_number), style);
 
         // Draw the lines

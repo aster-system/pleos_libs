@@ -62,7 +62,7 @@ namespace pleos {
         inline void set_formula(scls::Formula formula){function_formula = formula;};
         // Name of the function
         inline std::string name() const {return function_name;};
-        inline void set_name(std::string new_name){function_name = new_name;};
+        inline void set_name(std::string new_name){function_name = new_name;if(connected_object()!=0){connected_object()->set_text(std::string("Fonction ") + new_name);}};
 
         // Studied things
         // Definition set of the function
@@ -78,7 +78,7 @@ namespace pleos {
     // Returns the limit of a function / polymonial in + infinity
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction);
     // Returns the set of roots of a function
-    scls::Set_Number function_roots(Function_Studied current_function, std::string& redaction);
+    scls::Set_Number function_roots(Function_Studied* current_function, std::string& redaction);
     // Returns the set of a positive function
     scls::Set_Number function_sign(Function_Studied current_function, std::string& redaction);
 

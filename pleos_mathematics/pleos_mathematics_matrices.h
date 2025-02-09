@@ -264,18 +264,18 @@ namespace pleos {
             }
 
             // Include the separation
-            int image_end_size = 40; scls::Text_Style style_end = style; style_end.font_size = image_end_size;
-            int image_start_size = 40;scls::Text_Style style_start = style; style_start.font_size = image_end_size;
+            int image_end_size = 40; scls::Text_Style style_end = style; style_end.set_font_size(image_end_size);
+            int image_start_size = 40;scls::Text_Style style_start = style; style_start.set_font_size(image_end_size);
             std::shared_ptr<scls::Image> image_start = generator->image_shared_ptr("(", style_start);
             std::shared_ptr<scls::Image> image_end = generator->image_shared_ptr(")", style_end);
-            int separation_width = style.font_size;
+            int separation_width = style.font_size();
             total_width += (static_cast<int>(images.size()) - 1) * separation_width + image_start.get()->width() + image_end.get()->width();
             if(image_end.get()->height() > max_height){max_height = image_end.get()->height();}
             if(image_start.get()->height() > max_height){max_height = image_start.get()->height();}
 
             // Create the final image
             int current_x = 0; int current_y = 0;
-            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, max_height, style.background_color);
+            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, max_height, style.background_color());
             final_image.get()->paste(image_start.get(), current_x, current_y);
             current_x += image_start.get()->width();
             // Draw each fractions
@@ -314,14 +314,14 @@ namespace pleos {
             }
 
             // Create the formating
-            int separation_width = style.font_size;
+            int separation_width = style.font_size();
 
             // Create the final image
             int total_height = 0; for(int i = 0;i<static_cast<int>(max_height.size());i++){total_height+=max_height[i];}
             int total_width = 0; for(int i = 0;i<static_cast<int>(max_width.size());i++){total_width+=max_width[i];}
             total_width += (static_cast<int>(max_width.size()) - 1) * separation_width;
             int current_x = 0; int current_y = 0;
-            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, total_height, style.background_color);
+            std::shared_ptr<scls::Image> final_image = std::make_shared<scls::Image>(total_width, total_height, style.background_color());
             //final_image.get()->paste(image_start.get(), current_x, current_y);
             //current_x += image_start.get()->width();
             // Draw each fractions
