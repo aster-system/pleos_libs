@@ -158,7 +158,7 @@ namespace pleos {
         // Adds a function to the graphic
         void add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
-        inline void reset(){a_functions.clear();};
+        inline void reset(){a_forms_2d.clear();a_functions.clear();a_points.clear();a_vectors.clear();};
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image();
 
@@ -168,6 +168,12 @@ namespace pleos {
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
 
+        // Handle forms
+        // Adds a forms to the graphic
+        inline void add_form(std::shared_ptr<Form_2D> needed_formd_2d){a_forms_2d.push_back(needed_formd_2d);};
+        // Draws a form on the graphic
+        void draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return);
+
         // Handle points
         // Adds a points to the graphic
         inline void add_point(Vector needed_point){a_points.push_back(std::make_shared<Vector>(needed_point));};
@@ -175,6 +181,8 @@ namespace pleos {
         // Handle vectors
         // Adds a vector to the graphic
         inline void add_vector(Vector needed_vector){a_vectors.push_back(std::make_shared<Vector>(needed_vector));};
+        // Draws a vector on the graphic
+        void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return);
 
         // Getters and setters
         inline bool draw_base() const {return a_draw_base;};
@@ -209,6 +217,8 @@ namespace pleos {
 
         // Geometrical objects
         std::vector<std::shared_ptr<Circle>> a_circles;
+        // Geometrical forms 2D
+        std::vector<std::shared_ptr<Form_2D>> a_forms_2d;
         // Geometrical point
         std::vector<std::shared_ptr<Vector>> a_points;
         // Geometrical vectors

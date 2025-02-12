@@ -471,6 +471,60 @@ namespace pleos {
     // Function called after creation
     void Graphic::after_creation(){}
 
+    // Draws a form on the graphic
+    void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
+        // Triangulate the form
+        std::vector<std::shared_ptr<Vector>> triangulated_points = needed_form->triangulated_points();
+
+        // Draw the inner form
+        scls::Color inner_color = scls::Color(0, 255, 0);
+        for(int i = 0;i<static_cast<int>(triangulated_points.size());i+=3) {
+            std::shared_ptr<Vector> current_point = triangulated_points[i];
+            double first_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            current_point = triangulated_points[i + 1];
+            double second_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            current_point = triangulated_points[i + 2];
+            double third_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            to_return.get()->fill_triangle(first_x, first_y, second_x, second_y, third_x, third_y, inner_color);
+        } triangulated_points.clear();
+
+        // Draw the links
+        double form_width = 6;
+        std::shared_ptr<Vector> last_point = needed_form->points()[0];
+        double last_x = graphic_x_to_pixel_x(last_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double last_y = graphic_y_to_pixel_y_inversed(last_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+
+        // Link each points
+        for(int j = 0;j<static_cast<int>(needed_form->points().size());j++) {
+            std::shared_ptr<Vector> current_point = needed_form->points()[j];
+            double needed_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            to_return.get()->draw_line(last_x, last_y, needed_x, needed_y, scls::Color(255, 0, 0), form_width);
+            last_point = current_point; last_x = needed_x; last_y = needed_y;
+        }
+
+        // Link the last point
+        double needed_x = graphic_x_to_pixel_x(needed_form->points()[0]->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(needed_form->points()[0]->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        to_return.get()->draw_line(last_x, last_y, needed_x, needed_y, scls::Color(255, 0, 0), form_width);
+    }
+
+    // Draws a point on the graphic
+    void Graphic::draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return) {
+        double needed_x = graphic_x_to_pixel_x(needed_point->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(needed_point->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double point_width = 8;
+        if(needed_point->type() == Vector_Type::VT_Vector) {
+            to_return.get()->draw_line(graphic_x_to_pixel_x(0, to_return), graphic_y_to_pixel_y_inversed(0, to_return), needed_x, needed_y, scls::Color(255, 0, 0), 2);
+        }
+        else {
+            to_return.get()->fill_rect(needed_x - point_width / 2.0, needed_y  - point_width / 2.0, point_width, point_width, scls::Color(255, 0, 0));
+        }
+    }
+
     // Needed fragment shader for the function
     std::string Graphic::graphic_function_fragment_shader(scls::Formula needed_formula) {
         std::string to_return = "#version 330 core\n";
@@ -612,13 +666,6 @@ namespace pleos {
             }
         }
 
-        // Draw the vectors
-        for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {
-            std::shared_ptr<Vector> current_vector = a_vectors[i];
-            double needed_x = graphic_x_to_pixel_x(current_vector.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            double needed_y = graphic_y_to_pixel_y_inversed(current_vector.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            to_return.get()->draw_line(graphic_x_to_pixel_x(0, to_return), graphic_y_to_pixel_y_inversed(0, to_return), needed_x, needed_y, scls::Color(255, 0, 0), 2);
-        }
         // Draw the circles
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {
             std::shared_ptr<Circle> current_circle = a_circles[i];
@@ -629,6 +676,10 @@ namespace pleos {
             double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
         }
+        // Draw the forms
+        for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {draw_form(a_forms_2d[i].get(), to_return);}
+        // Draw the vectors
+        for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {draw_vector(a_vectors[i].get(), to_return);}
 
         return to_return;
     }
@@ -639,15 +690,17 @@ namespace pleos {
 
         // Move the plane
         bool modified = false;
-        scls::Fraction speed = scls::Fraction(1, 50);
-        if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (speed);modified = true;}
-        if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (speed);modified = true;}
-        if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);modified = true;}
-        if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);modified = true;}
-        // Zoom or unzoom
-        double zoom_speed = 10;
-        if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);modified = true;}
-        if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);modified = true;}
+        if(is_focused()) {
+            scls::Fraction speed = scls::Fraction(1, 50);
+            if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (speed);modified = true;}
+            if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (speed);modified = true;}
+            if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);modified = true;}
+            if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);modified = true;}
+            // Zoom or unzoom
+            double zoom_speed = 3;
+            if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);modified = true;}
+            if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);modified = true;}
+        }
 
         // Handle clicks
         if(is_clicked_during_this_frame(GLFW_MOUSE_BUTTON_LEFT)) {
@@ -658,6 +711,17 @@ namespace pleos {
                 scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
                 scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
                 add_vector(Vector("a", movement_x, movement_y));
+                modified = true;
+            }
+            else if(operation_at_click() == PLEOS_OPERATION_POINT) {
+                // Add a point
+                double needed_x = window_struct().mouse_x() - x_in_absolute_pixel();
+                double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
+                scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
+                scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
+                Vector needed_vector = Vector("a", movement_x, movement_y);
+                needed_vector.set_type(Vector_Type::VT_Point);
+                add_vector(needed_vector);
                 modified = true;
             }
         }

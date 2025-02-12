@@ -30,6 +30,11 @@
 // Include SCLS Graphic Benoit
 #include "../../../scls-graphic-benoit/scls_graphic.h"
 
+// ID of each types of geometrical objects
+#define PLEOS_MATHEMATICS_GEOMETRY_VECTOR 0
+#define PLEOS_MATHEMATICS_GEOMETRY_POINT 10
+#define PLEOS_MATHEMATICS_GEOMETRY_FORM 100
+
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
 
@@ -39,6 +44,7 @@ namespace pleos {
     //
     //******************
 
+    enum Vector_Type{VT_Vector, VT_Point};
     class Vector {
         // Class representating a mathematical vector (more mathematically advanced and geenralised than scls::Vector_3D)
     public:
@@ -48,6 +54,10 @@ namespace pleos {
         Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
         Vector():Vector(""){};
 
+        // Returns a vector 3D from a point
+        static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), needed_point->x(), needed_point->z());};
+        // Returns this vector in a point 3D
+        inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
         // Returns a copy of this vector
         Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(std::make_shared<scls::Formula>(a_coordinates[i].get()->formula_copy()));}return to_return;};
 
@@ -57,7 +67,7 @@ namespace pleos {
         // Returns the complex number form of the vector (and the redaction if needed)
         scls::Formula complex_number(std::string* redaction);
         // Returns the introduction of the vector
-        inline std::string introduction() const {return std::string("Nous avons le vecteur ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string() + std::string(";") + y()->to_std_string() + std::string(").");};
+        inline std::string introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string() + std::string(";") + y()->to_std_string() + std::string(").");};
         // Returns the norm of the vector (and the redaction if needed)
         scls::Formula norm(std::string* redaction);
         inline scls::Formula norm() {return norm(0);};
@@ -91,7 +101,11 @@ namespace pleos {
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::string name() const {return a_name;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
-        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Vecteur ") + a_name);}};
+        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(type_name() + std::string(" ") + a_name);}};
+        inline void set_type(Vector_Type new_type){a_type=new_type;};
+        inline Vector_Type type() const {return a_type;};
+        inline std::string type_name(bool capitalise_first_letter) const {if(capitalise_first_letter){if(a_type == Vector_Type::VT_Point){return std::string("Point");}return std::string("Vecteur");}if(a_type == Vector_Type::VT_Point){return std::string("point");}return std::string("vecteur");};
+        inline std::string type_name() const {return type_name(true);};
 
     private:
         // Connected object to this vector
@@ -100,9 +114,55 @@ namespace pleos {
         std::vector<std::shared_ptr<scls::Formula>> a_coordinates;
         // Name of the vector
         std::string a_name;
+        // Type of the vector
+        Vector_Type a_type = Vector_Type::VT_Vector;
 
         // Last norm of the vector
         scls::Formula a_last_norm; bool a_last_norm_calculated = false;
+    };
+
+    //******************
+    //
+    // The "Form_2D" class
+    //
+    //******************
+
+    class Form_2D {
+        // Class representating a geometrical form in 2D
+    public:
+        // Form_2D constructor
+        Form_2D(std::string name):a_name(name){};
+
+        // Adds a point to the form
+        inline void add_point(std::shared_ptr<Vector> point){a_points.push_back(point);};
+
+        // Returns a list of the points triangulated
+        std::vector<std::shared_ptr<Vector>> triangulated_points();
+
+        // Returns the introduction of the form 2D
+        inline std::string introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(".");};
+        // Returns the name of the type of the form
+        inline std::string type_name(bool capitalise_first_letter) const {std::string to_return=std::string();if(a_points.size()==3){if(capitalise_first_letter){return std::string("Triangle");}return std::string("triangle");}if(capitalise_first_letter){to_return+=std::string("Forme");}else{to_return+=std::string("forme");}to_return+=std::string(" à ")+std::to_string(a_points.size())+std::string(" points");return to_return;};
+        inline std::string type_name() const {return type_name(true);};
+
+        // Getters and setters
+        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline std::string name() const {return a_name;};
+        inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
+        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
+        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
+
+    private:
+        // Color of the border of the circle
+        scls::Color a_border_color;
+        // Radius of the border
+        int a_border_radius = 0;
+        // Connected object to this vector
+        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+        // Points in the circle
+        std::vector<std::shared_ptr<Vector>> a_points;
+        // Name of the circle
+        std::string a_name = std::string();
     };
 
     //******************

@@ -88,4 +88,21 @@ namespace pleos {
         a_last_norm_calculated = true;
         return to_return;
     }
+
+    //******************
+    //
+    // The "Form_2D" class
+    //
+    //******************
+
+    // Returns a list of the points triangulated
+    std::vector<std::shared_ptr<Vector>> Form_2D::triangulated_points() {
+        // Triangulate the face with the model maker part of SCLS
+        scls::model_maker::Face form_to_face;
+        for(int i = 0;i<static_cast<int>(points().size());i++) {form_to_face.points().push_back(std::make_shared<scls::model_maker::Point>(points()[i].get()->to_point_3d()));}
+        form_to_face.triangulate_full();
+        std::vector<std::shared_ptr<Vector>> to_return = std::vector<std::shared_ptr<Vector>>(form_to_face.points_for_rendering().size());
+        for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {to_return[i]=Vector::from_point(form_to_face.points_for_rendering()[i].get());}
+        return to_return;
+    }
 }
