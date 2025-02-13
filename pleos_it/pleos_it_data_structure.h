@@ -196,6 +196,8 @@ namespace pleos {
             inline int id() const {return a_id;};
             inline std::vector<Link>& links() {return a_links;};
             inline void set_value(E new_value){a_value = std::make_shared<E>(new_value);};
+            inline void set_x(scls::Fraction new_x){a_x = new_x;};
+            inline void set_y(scls::Fraction new_y){a_y = new_y;};
             inline E* value() const {return a_value.get();};
             inline scls::Fraction x() const {return a_x;};
             inline scls::Fraction y() const {return a_y;};
@@ -222,6 +224,7 @@ namespace pleos {
         inline void link_nodes(int id_1, int id_2){if(id_1!=id_2&&id_1<a_nodes.size()&&id_2<a_nodes.size()){a_nodes[id_1].get()->link(a_nodes[id_2]);}};
 
         // Getters and setters
+        inline Node* node(int id)const{if(id > a_nodes.size()){return 0;}return a_nodes.at(id).get();};
         inline std::vector<std::shared_ptr<Node>>& nodes() {return a_nodes;};
 
         // Returns the tree in an image
@@ -280,7 +283,7 @@ namespace pleos {
                         std::shared_ptr<Node> current_node = links[j].target.lock();
                         int current_id = current_node.get()->id();
                         if(current_node.get()->id() > a_nodes[i].get()->id()) {
-                            scls::Fraction current_x_end = needed_x[current_id] + scls::Fraction(images[j].get()->width(), 2);
+                            scls::Fraction current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
                             scls::Fraction current_y_end = needed_y[current_id];
                             scls::Fraction current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
                             scls::Fraction current_y_start = needed_y[i];
@@ -314,27 +317,60 @@ namespace pleos {
         // Class representating a tree
     public:
         // Tree constructor
-        Tree(){
-            a_root_id = a_graph.get()->add_node(E());
-        };
+        Tree(std::shared_ptr<Graph<E>> graph, int root_id):a_graph(graph),a_root_id(root_id){};
+        Tree():a_root_id(a_graph.get()->add_node(E())){};
 
         // Return the image of the graph attached to the tree
-        inline std::shared_ptr<scls::Image> image(){return a_graph.get()->image();};
+        inline std::shared_ptr<scls::Image> image(){place_nodes();return a_graph.get()->image();};
 
+        // Adds a node in the tree
+        inline Tree* add_node(E value){int current_id = a_graph.get()->add_node(value);a_children.push_back(Tree(a_graph, current_id));Tree& current = a_children[a_children.size() - 1];a_graph.get()->link_nodes(a_root_id,current_id);return &current;}
+        inline Tree* add_node(int sub_id, E value){Tree* needed_child = child(sub_id);if(needed_child==0){return 0;}return needed_child->add_node(value);};
+        inline Tree* add_node(int sub_id_1, int sub_id_2, E value){Tree* needed_child = child(sub_id_1);if(needed_child==0){return 0;}return needed_child->add_node(sub_id_2, value);};
+        // Place the nodes in the tree
+        void place_nodes() {
+            // Place the root
+            a_graph.get()->node(a_root_id)->set_x(a_root_x);
+            a_graph.get()->node(a_root_id)->set_y(a_root_y);
+
+            // Place the children
+            scls::Fraction needed_width = width();
+            scls::Fraction start_x = a_root_x - needed_width / 2;
+            scls::Fraction current_x = start_x;
+            for(int i = 0;i<static_cast<int>(a_children.size());i++) {
+                current_x += a_children[i].width() / 2;
+                a_children[i].a_root_x = current_x;
+                a_children[i].a_root_y = a_root_y - 1;
+                a_children[i].place_nodes();
+                current_x += a_children[i].width() / 2;
+            }
+        };
         // Returns a sub-tree in the tree
         //inline Tree<E>* sub_tree(int n){while(static_cast<int>(a_nodes.size()) <= n){a_nodes.push_back(std::make_shared<Tree>());}return a_nodes[n].get();};
+        // Returns the total width of the object
+        inline scls::Fraction width(){scls::Fraction to_return = 0;for(int i = 0;i<static_cast<int>(a_children.size());i++){to_return+=a_children[i].width();}if(to_return<=1){return 1;}return to_return;};
 
         // Getters and setters
+        inline Tree* child(int id){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].root_id()==id){return &a_children[i];}}return 0;};
         inline auto& nodes() {return a_graph.get()->nodes();};
+        inline int root_id() const {return a_root_id;};
 
         inline void set_value(E new_value){nodes()[a_root_id].get()->set_value(new_value);};
-        inline E* value() const {return nodes()[a_root_id].get()->value();};
+        inline E* value() const {return a_graph.get()->node(a_root_id)->value();};
 
     private:
+        // Children of this tree
+        std::vector<Tree> a_children = std::vector<Tree>();
         // Attached graph for this tree
         std::shared_ptr<Graph<E>> a_graph = std::make_shared<Graph<E>>();
+
+        // Datas for the root
         // ID of the roots for this tree
         int a_root_id = 0;
+        // X value of the root
+        scls::Fraction a_root_x = 0;
+        // Y value of the root
+        scls::Fraction a_root_y = 0;
     };
 }
 
