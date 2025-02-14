@@ -55,7 +55,7 @@ namespace pleos {
         Vector():Vector(""){};
 
         // Returns a vector 3D from a point
-        static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), needed_point->x(), needed_point->z());};
+        static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
         // Returns this vector in a point 3D
         inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
         // Returns a copy of this vector
@@ -76,6 +76,7 @@ namespace pleos {
         inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
         inline void set_y(scls::Formula formula) {while(a_coordinates.size() <= 1){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[1].get())=formula;};
         inline scls::Formula* x() const {if(a_coordinates.size() <= 0){return 0;} return a_coordinates[0].get();};
+        inline double x_to_double() const{return x()->to_polymonial().known_monomonial().factor().real().to_double();};
         inline scls::Formula* y() const {if(a_coordinates.size() <= 1){return 0;} return a_coordinates[1].get();};
         inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
         inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
@@ -99,6 +100,7 @@ namespace pleos {
 
         // Getters and setters
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates(){return a_coordinates;};
         inline std::string name() const {return a_name;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(type_name() + std::string(" ") + a_name);}};

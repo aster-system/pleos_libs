@@ -34,6 +34,7 @@
 #define PLEOS_OPERATION_NOTHING 0
 #define PLEOS_OPERATION_VECTOR 100
 #define PLEOS_OPERATION_POINT 101
+#define PLEOS_OPERATION_FORM 150
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -176,7 +177,8 @@ namespace pleos {
 
         // Handle points
         // Adds a points to the graphic
-        inline void add_point(Vector needed_point){a_points.push_back(std::make_shared<Vector>(needed_point));};
+        inline void add_point(std::shared_ptr<Vector> needed_point){a_points.push_back(needed_point);};
+        inline void add_point(Vector needed_point){add_point(std::make_shared<Vector>(needed_point));};
 
         // Handle vectors
         // Adds a vector to the graphic
@@ -185,6 +187,7 @@ namespace pleos {
         void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return);
 
         // Getters and setters
+        inline Form_2D* current_form_2d() const {return a_current_form_2d.get();};
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
@@ -223,6 +226,9 @@ namespace pleos {
         std::vector<std::shared_ptr<Vector>> a_points;
         // Geometrical vectors
         std::vector<std::shared_ptr<Vector>> a_vectors;
+
+        // Current object
+        std::shared_ptr<Form_2D> a_current_form_2d;
     };
 }
 

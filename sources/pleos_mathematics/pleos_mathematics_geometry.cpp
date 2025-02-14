@@ -99,10 +99,16 @@ namespace pleos {
     std::vector<std::shared_ptr<Vector>> Form_2D::triangulated_points() {
         // Triangulate the face with the model maker part of SCLS
         scls::model_maker::Face form_to_face;
-        for(int i = 0;i<static_cast<int>(points().size());i++) {form_to_face.points().push_back(std::make_shared<scls::model_maker::Point>(points()[i].get()->to_point_3d()));}
+        for(int i = 0;i<static_cast<int>(points().size());i++) {
+            scls::model_maker::Point current_point = points()[i].get()->to_point_3d();
+            form_to_face.points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
+        }
         form_to_face.triangulate_full();
         std::vector<std::shared_ptr<Vector>> to_return = std::vector<std::shared_ptr<Vector>>(form_to_face.points_for_rendering().size());
-        for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {to_return[i]=Vector::from_point(form_to_face.points_for_rendering()[i].get());}
+        for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {
+            scls::model_maker::Point* current_point = form_to_face.points_for_rendering()[i].get();
+            to_return[i]=Vector::from_point(current_point);
+        }
         return to_return;
     }
 }

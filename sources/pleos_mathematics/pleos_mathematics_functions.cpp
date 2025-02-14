@@ -473,6 +473,8 @@ namespace pleos {
 
     // Draws a form on the graphic
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
+        // Asserts
+        if(needed_form->points().size() < 3){return;}
         // Triangulate the form
         std::vector<std::shared_ptr<Vector>> triangulated_points = needed_form->triangulated_points();
 
@@ -480,13 +482,13 @@ namespace pleos {
         scls::Color inner_color = scls::Color(0, 255, 0);
         for(int i = 0;i<static_cast<int>(triangulated_points.size());i+=3) {
             std::shared_ptr<Vector> current_point = triangulated_points[i];
-            double first_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double first_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
             double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             current_point = triangulated_points[i + 1];
-            double second_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double second_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
             double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             current_point = triangulated_points[i + 2];
-            double third_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double third_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
             double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             to_return.get()->fill_triangle(first_x, first_y, second_x, second_y, third_x, third_y, inner_color);
         } triangulated_points.clear();
@@ -722,6 +724,21 @@ namespace pleos {
                 Vector needed_vector = Vector("a", movement_x, movement_y);
                 needed_vector.set_type(Vector_Type::VT_Point);
                 add_vector(needed_vector);
+                modified = true;
+            }
+            else if(operation_at_click() == PLEOS_OPERATION_FORM) {
+                // Add a form
+                // Check if the form is created
+                if(current_form_2d() == 0){a_current_form_2d=std::make_shared<Form_2D>("Forme");add_form(a_current_form_2d);}
+                // Add a point
+                double needed_x = window_struct().mouse_x() - x_in_absolute_pixel();
+                double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
+                scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
+                scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
+                std::shared_ptr<Vector> needed_vector = std::make_shared<Vector>(std::string("Forme_") + std::to_string(current_form_2d()->points().size()), movement_x, movement_y);
+                needed_vector.get()->set_type(Vector_Type::VT_Point);
+                add_point(needed_vector);
+                current_form_2d()->add_point(needed_vector);
                 modified = true;
             }
         }
