@@ -621,17 +621,17 @@ namespace pleos {
                 // Get the needed pos
                 Needed_Pos to_add;
                 if(a_functions[i].get()->definition_set()->is_in(screen_pos[j])) {
-                    to_add.pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j]));
+                    to_add.pos = needed_formula.value(screen_pos[j]);
                 }
                 else {
-                    to_add.pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j] - scls::Fraction(1, 1000)));
+                    to_add.pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
                 }
                 needed_pos[j] = to_add;
 
                 // Check according to the last value
                 if(j > 0 && !a_functions[i].get()->definition_set()->is_in(scls::Interval(screen_pos[j - 1], screen_pos[j]))) {
-                    needed_pos[j - 1].pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j - 1] + scls::Fraction(1, 1000)));
-                    needed_pos[j].previous_pos = needed_formula.replace_unknown("x", scls::Formula(screen_pos[j] - scls::Fraction(1, 1000)));
+                    needed_pos[j - 1].pos = needed_formula.value(screen_pos[j - 1] + scls::Fraction(1, 1000));
+                    needed_pos[j].previous_pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
                     needed_pos[j].previous_pos_used = true;
                 }
 
@@ -643,11 +643,11 @@ namespace pleos {
             struct Needed_Pos_Screen {int pos;int previous_pos;bool previous_pos_used = false;};
             std::vector<Needed_Pos_Screen> needed_y = std::vector<Needed_Pos_Screen>(to_return.get()->width() + 1);
             for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
-                scls::Fraction value = needed_pos[i].pos.to_polymonial().known_monomonial().factor().real();
+                scls::Fraction value = needed_pos[i].pos.formula_base()->value_to_fraction();
                 needed_y[i].pos = graphic_y_to_pixel_y(value.to_double(), to_return);
                 // Check the previous pos
                 if(needed_pos[i].previous_pos_used) {
-                    value = needed_pos[i].previous_pos.to_polymonial().known_monomonial().factor().real();
+                    value = needed_pos[i].previous_pos.formula_base()->value_to_fraction();
                     needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
                     needed_y[i].previous_pos_used = true;
                 }
