@@ -103,7 +103,13 @@ namespace pleos {
             scls::model_maker::Point current_point = points()[i].get()->to_point_3d();
             form_to_face.points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
         }
-        form_to_face.triangulate_full();
+        for(int i = 0;i<static_cast<int>(exclusion_points().size());i++) {
+            scls::model_maker::Point current_point = exclusion_points()[i].get()->to_point_3d();
+            form_to_face.exclusion_points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
+        }
+        form_to_face.triangulate();
+
+        // Get the needed result
         std::vector<std::shared_ptr<Vector>> to_return = std::vector<std::shared_ptr<Vector>>(form_to_face.points_for_rendering().size());
         for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {
             scls::model_maker::Point* current_point = form_to_face.points_for_rendering()[i].get();

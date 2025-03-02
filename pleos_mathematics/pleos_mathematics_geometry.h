@@ -71,13 +71,16 @@ namespace pleos {
         // Returns the norm of the vector (and the redaction if needed)
         scls::Formula norm(std::string* redaction);
         inline scls::Formula norm() {return norm(0);};
+        // Rotates the vector
+        inline void rotate(scls::Fraction angle){scls::Point_3D point = scls::Point_3D(x_to_double(), 0, y_to_double());point.rotate_y(angle.to_double());set_x(scls::Fraction(point.x() * 100000.0, 100000.0));set_y(scls::Fraction(point.z() * 100000.0, 100000.0));};
 
         // Returns the possible known coordinates
         inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
         inline void set_y(scls::Formula formula) {while(a_coordinates.size() <= 1){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[1].get())=formula;};
         inline scls::Formula* x() const {if(a_coordinates.size() <= 0){return 0;} return a_coordinates[0].get();};
-        inline double x_to_double() const{return x()->to_polymonial().known_monomonial().factor().real().to_double();};
+        inline double x_to_double() const{return x()->value(0).real().to_double();};
         inline scls::Formula* y() const {if(a_coordinates.size() <= 1){return 0;} return a_coordinates[1].get();};
+        inline double y_to_double() const{return y()->value(0).real().to_double();};
         inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
         inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
 
@@ -135,8 +138,12 @@ namespace pleos {
         // Form_2D constructor
         Form_2D(std::string name):a_name(name){};
 
+        // Adds an exclusion point to the form
+        inline void add_exclusion_point(std::shared_ptr<Vector> point){a_exclusion_points.push_back(point);};
         // Adds a point to the form
         inline void add_point(std::shared_ptr<Vector> point){a_points.push_back(point);};
+        // Rotates the form
+        inline void rotate(scls::Fraction angle){for(int i = 0;i<static_cast<int>(a_points.size());i++){a_points[i].get()->rotate(angle);}};
 
         // Returns a list of the points triangulated
         std::vector<std::shared_ptr<Vector>> triangulated_points();
@@ -149,6 +156,7 @@ namespace pleos {
 
         // Getters and setters
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline std::vector<std::shared_ptr<Vector>>& exclusion_points(){return a_exclusion_points;};
         inline std::string name() const {return a_name;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
@@ -161,10 +169,13 @@ namespace pleos {
         int a_border_radius = 0;
         // Connected object to this vector
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
-        // Points in the circle
-        std::vector<std::shared_ptr<Vector>> a_points;
         // Name of the circle
         std::string a_name = std::string();
+
+        // Exclusions points in the circle
+        std::vector<std::shared_ptr<Vector>> a_exclusion_points;
+        // Points in the circle
+        std::vector<std::shared_ptr<Vector>> a_points;
     };
 
     //******************

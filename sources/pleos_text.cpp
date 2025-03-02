@@ -1,0 +1,131 @@
+//******************
+//
+// pleos_text.cpp
+//
+//******************
+// Presentation :
+//
+// PLEOS, by Aster System, is a project which aims education.
+// By using the power of SCLS and other Aster System's tools, we created  this.
+// We want to make education easier for everyone (teachers, as students and pupils).
+// The software is made in french, because the main goal is France educational system.
+// For more information, see : https://aster-system.github.io/aster-system/projects/pleos.html.
+//
+// This file contains the source code of "pleos_text.h".
+//
+//******************
+//
+// License (GPL V3.0) :
+//
+// Copyright (C) 2024 by Aster System, Inc. <https://aster-system.github.io/aster-system/>
+// This file is part of PLEOS.
+// PLEOS is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+// PLEOS is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+// You should have received a copy of the GNU General Public License along with PLEOS. If not, see <https://www.gnu.org/licenses/>.
+//
+
+// Include "pleos_text.cpp"
+#include "../pleos_text.h"
+
+// The namespace "pleos" is used to simplify the all.
+namespace pleos {
+
+    //*********
+	//
+	// PLEOS Text handler
+	//
+	//*********
+
+	// Generate a word
+    void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
+        std::string balise_content = current_text.get()->xml_balise();
+        std::string current_balise_name = current_text.get()->xml_balise_name();
+        if(current_balise_name == "graphic") {
+            // Generate a graphic
+            Graphic graphic = Graphic();
+
+            // Get the datas about the graphic
+            scls::Fraction graphic_height = 10;scls::Fraction graphic_width = 10;
+            // Handle a lot of balises
+            for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++) {
+                std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
+                std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+                std::vector<std::string> attributes = scls::cut_balise_by_attributes(balise_content);
+                if(current_balise_name == "base") {
+                    // Get the datas about the base of the graphic
+                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                        std::string &current_attribute = attributes[i];
+                        std::string attribute_name = scls::attribute_name(current_attribute);
+                        if(attribute_name == "height") {
+                            // Height of the graphic
+                            graphic_height = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                        } else if(attribute_name == "width") {
+                            // Width of the graphic
+                            graphic_width = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                        }
+                    }
+                }
+                else if(current_balise_name == "form") {
+                    // Get the datas about a vector of the graphic
+                    std::string needed_name = std::string();std::string needed_points = std::string();
+                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                        std::string &current_attribute = attributes[i];
+                        std::string attribute_name = scls::attribute_name(current_attribute);
+                        if(attribute_name == "name") {
+                            // Name of the vector
+                            needed_name = scls::attribute_value(current_attribute);
+                        }
+                        else if(attribute_name == "points") {
+                            // Points of the vector
+                            needed_points = scls::attribute_value(current_attribute);
+                        }
+                    }
+                    // Add the form
+                    graphic.set_form_points(graphic.new_form(needed_name), needed_points);
+                }
+                else if(current_balise_name == "point" || current_balise_name == "vec") {
+                    // Get the datas about a vector of the graphic
+                    std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
+                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                        std::string &current_attribute = attributes[i];
+                        std::string attribute_name = scls::attribute_name(current_attribute);
+                        if(attribute_name == "name") {
+                            // Name of the vector
+                            needed_name = scls::attribute_value(current_attribute);
+                        }
+                        else if(attribute_name == "x") {
+                            // X of the vector
+                            needed_x = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                        }
+                        else if(attribute_name == "y") {
+                            // Y of the vector
+                            needed_y = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                        }
+                    }
+                    // Add the vector
+                    if(current_balise_name == "point"){graphic.add_point(Vector(needed_name, needed_x, needed_y));}
+                    else if(current_balise_name == "vec"){graphic.add_vector(Vector(needed_name, needed_x, needed_y));}
+                }
+            }
+            // Set the datas
+            graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
+
+            // Get the image
+            std::shared_ptr<scls::Image> src_img = graphic.to_image(200, 200);
+            src_img.get()->draw_border(1, 1, 1, 1, scls::Color(0, 0, 0));
+            int height = -1; int width = -1;
+            if(height == -1 && width == -1) {height = src_img.get()->height();width = src_img.get()->width();}
+            else if(height != -1 && width == -1) {
+                width = static_cast<int>(static_cast<double>(height) * (static_cast<double>(src_img.get()->width()) / static_cast<double>(src_img.get()->height())));
+            } else if(height == -1 && width != -1) {
+                height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
+            }
+            if(global_style()->max_width > 0 && width > global_style()->max_width) {
+                width = global_style()->max_width;
+                height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
+            }
+            __generate_image(word_to_add, src_img, current_position_in_plain_text, a_current_width, height, width);
+        }
+        else{scls::Text_Image_Line::generate_word(current_text, current_position_in_plain_text, needed_style, word_to_add);}
+    }
+}

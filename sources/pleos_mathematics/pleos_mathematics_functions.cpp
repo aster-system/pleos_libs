@@ -49,28 +49,34 @@ namespace pleos {
         // Fraction part
         std::shared_ptr<scls::Set_Number> denominator_null;
         if(function_studied.denominator() != 0) {
-            Function_Studied fs; fs.function_formula = *function_studied.denominator();
-            fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
-            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(current_function, s));}
-            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(current_function, *redaction));}
-            scls::Fraction needed_value = denominator_null.get()->numbers().at(0).real();
-
-            // TEMPORARY SET THE INTERVAL
-            to_return = scls::Set_Number();
-            scls::Interval interval = scls::Interval(needed_value - 1, needed_value);interval.set_start_infinite(true);to_return.add_interval(interval);
-            interval = scls::Interval(needed_value, needed_value + 1);interval.set_end_infinite(true);to_return.add_interval(interval);
-
             // Do the redaction
             if(redaction != 0) {
                 (*redaction) += "Cette forme contient un dénominateur global " + function_studied.denominator()->to_std_string() + ". ";
                 (*redaction) += "Donc, elle n'est pas définie pour " + function_studied.denominator()->to_std_string() + " = 0. ";
+            }
+
+            // Get the needed value
+            Function_Studied fs; fs.function_formula = *function_studied.denominator();
+            fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
+            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, s));}
+            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, *redaction));}
+            scls::Fraction needed_value;if(denominator_null.get()->numbers().size() > 0){needed_value = denominator_null.get()->numbers().at(0).real();}
+
+            // TEMPORARY SET THE INTERVAL
+            to_return = scls::Set_Number();
+            scls::Interval interval = scls::Interval(needed_value - 1, true, needed_value, false);interval.set_start_infinite(true);to_return.add_interval(interval);
+            interval = scls::Interval(needed_value, false, needed_value + 1, true);interval.set_end_infinite(true);to_return.add_interval(interval);
+
+            // Do the redaction
+            if(redaction != 0) {
                 (*redaction) += "Donc, la forme " + function_studied.to_std_string() + " n'est pas définie pour x appartenant à " + denominator_null.get()->to_std_string() + ". ";
             }
         }
 
         // Finish the redaction
-        if(redaction != 0 && to_return == scls::Set_Number::set_real()) {
-            (*redaction) += "Or, cette fonction ne contient aucune forme pouvant amener à une valeur interdite. Donc, elle est définie sur l'ensemble des réels. ";
+        if(redaction != 0) {
+            if(to_return == scls::Set_Number::set_real()) {(*redaction) += std::string("Or, cette fonction ne contient aucune forme pouvant amener à une valeur interdite. ");}
+            (*redaction) += std::string("Donc, cette fonction est définie sur l'ensemble ") + to_return.to_std_string() + std::string(". ");
         }
 
         // Return the result
@@ -257,7 +263,8 @@ namespace pleos {
                 // Only one number
                 scls::Fraction number = static_cast<scls::Complex>(polymonial.known_monomonial()).real();
                 redaction += "Or, " + function_studied.to_std_string() + " n'est pas égal à 0, cette forme n'a donc pas de racines. ";
-            } else if(degree == 1) {
+            }
+            else if(degree == 1) {
                 // Calculate the known and unknown parts
                 scls::Complex known_part = polymonial.known_monomonial().factor();
                 scls::Complex unknown_part = polymonial.unknown_monomonials()[0].factor();
@@ -277,7 +284,8 @@ namespace pleos {
                 redaction += "Donc, " + function_studied.to_std_string() + " admet pour racine " + solution.to_std_string_simple() + ". ";
                 to_return.add_number(solution);
                 scls::Interval interval;
-            } else if(degree == 2) {
+            }
+            else if(degree == 2) {
                 // Calculate the known and unknown parts
                 scls::Complex a_part = polymonial.monomonial(current_function->function_unknown, 2).factor();
                 scls::Complex b_part = polymonial.monomonial(current_function->function_unknown).factor();
@@ -456,20 +464,8 @@ namespace pleos {
     // Graphic constructor
     Graphic::Graphic_Function::Graphic_Function(std::shared_ptr<Function_Studied> function_studied):a_function_studied(function_studied){}
 
-    // Graphic constructor
-    Graphic::Graphic(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){update_texture();}
-
     // Adds a function to the graphic
-    void Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {
-        // Create the function
-        std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);
-        a_functions.push_back(new_function);
-
-        a_graphic_base.get()->a_function_number++;
-    }
-
-    // Function called after creation
-    void Graphic::after_creation(){}
+    void Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);a_functions.push_back(new_function);a_graphic_base.get()->a_function_number++;}
 
     // Draws a form on the graphic
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
@@ -502,8 +498,8 @@ namespace pleos {
         // Link each points
         for(int j = 0;j<static_cast<int>(needed_form->points().size());j++) {
             std::shared_ptr<Vector> current_point = needed_form->points()[j];
-            double needed_x = graphic_x_to_pixel_x(current_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double needed_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y_to_double(), to_return);
             to_return.get()->draw_line(last_x, last_y, needed_x, needed_y, scls::Color(255, 0, 0), form_width);
             last_point = current_point; last_x = needed_x; last_y = needed_y;
         }
@@ -563,18 +559,19 @@ namespace pleos {
         return to_return;
     }
 
-    // Render the object
-    void Graphic::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
-
     // Returns the image of the graphic
     int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
     int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * floor(pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return needed_image.get()->height() - graphic_y_to_pixel_y(y, needed_image);};
     scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((scls::Fraction(x) - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
     scls::Fraction Graphic::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return middle_y() + ((scls::Fraction(needed_image.get()->height(), 2) - scls::Fraction(y)) / scls::Fraction(floor(pixel_by_case_y())));}
-    std::shared_ptr<scls::Image> Graphic::to_image() {
+    std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(255, 255, 255));
+
+        // Handle the height and width
+        if(a_graphic_base.get()->a_height != -1) {a_graphic_base.get()->a_pixel_by_case_y = static_cast<double>(height_in_pixel) / a_graphic_base.get()->a_height;}
+        if(a_graphic_base.get()->a_width != -1) {a_graphic_base.get()->a_pixel_by_case_x = static_cast<double>(width_in_pixel) / a_graphic_base.get()->a_width;}
 
         // Draw the basic lines
         if(draw_base() || draw_sub_bases()) {
@@ -686,22 +683,31 @@ namespace pleos {
         return to_return;
     }
 
+    // Graphic constructor
+    Graphic_Object::Graphic_Object(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){update_texture();}
+
+    // Function called after creation
+    void Graphic_Object::after_creation(){}
+
+    // Render the object
+    void Graphic_Object::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
+
     // Updates the object
-    void Graphic::update_event() {
+    void Graphic_Object::update_event() {
         GUI_Object::update_event();
 
         // Move the plane
         bool modified = false;
         if(is_focused()) {
             scls::Fraction speed = scls::Fraction(1, 50);
-            if(window_struct().key_pressed("q")){a_graphic_base.get()->a_middle_x -= (speed);modified = true;}
-            if(window_struct().key_pressed("d")){a_graphic_base.get()->a_middle_x += (speed);modified = true;}
-            if(window_struct().key_pressed("z")){a_graphic_base.get()->a_middle_y += (speed);modified = true;}
-            if(window_struct().key_pressed("s")){a_graphic_base.get()->a_middle_y -= (speed);modified = true;}
+            if(window_struct().key_pressed("q")){middle_x_add(speed * -1);modified = true;}
+            if(window_struct().key_pressed("d")){middle_x_add(speed);modified = true;}
+            if(window_struct().key_pressed("z")){middle_x_add(speed);modified = true;}
+            if(window_struct().key_pressed("s")){middle_x_add(speed * -1);modified = true;}
             // Zoom or unzoom
             double zoom_speed = 3;
-            if(window_struct().key_pressed("w")){a_graphic_base.get()->a_pixel_by_case_x -= (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y -= (zoom_speed);modified = true;}
-            if(window_struct().key_pressed("c")){a_graphic_base.get()->a_pixel_by_case_x += (zoom_speed);a_graphic_base.get()->a_pixel_by_case_y += (zoom_speed);modified = true;}
+            if(window_struct().key_pressed("w")){pixel_by_case_x_add(zoom_speed * -1);pixel_by_case_y_add(zoom_speed * -1);modified = true;}
+            if(window_struct().key_pressed("c")){pixel_by_case_x_add(zoom_speed);pixel_by_case_y_add(zoom_speed);modified = true;}
         }
 
         // Handle clicks

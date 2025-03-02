@@ -28,7 +28,8 @@
 #define PLEOS_TEXT
 
 // Include SCLS Graphic Benoit
-#include "../../../scls-graphic-benoit/scls_graphic.h"
+#include "../../scls-graphic-benoit/scls_graphic.h"
+#include "pleos_mathematics/pleos_mathematics_functions.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -38,6 +39,43 @@ namespace pleos {
 	// PLEOS Text handler
 	//
 	//*********
+
+	class __Text_Line : public scls::Text_Image_Line {
+        // Class representating a more complete text handler for PLEOS
+    public:
+
+        // __Text_Line constructor
+        __Text_Line(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::XML_Text> text):scls::Text_Image_Line(defined_balises,text){};
+
+        // Generate a word
+        virtual void generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add);
+    private:
+    };
+
+	class __Text_Block : public scls::Text_Image_Block {
+        // Class representating a more complete text handler for PLEOS
+    public:
+
+        // __Text_Block constructor
+        __Text_Block(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){};
+
+        // Creates and returns a line for the block
+        virtual scls::Text_Image_Line* __create_line(scls::Line_Datas& needed_datas){return new __Text_Line(defined_balises_shared_ptr(), needed_datas.content);};
+    private:
+    };
+
+	class Text : public scls::Text_Image_Multi_Block {
+        // Class representating a more complete text handler for PLEOS
+    public:
+
+        // Text constructor
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();current_balise.get()->has_content = true;defined_balises.get()->set_defined_balise("graphic", current_balise);};
+
+        // Creates and returns a __Text_Block
+        virtual std::shared_ptr<scls::Text_Image_Block>__create_block(std::shared_ptr<scls::Block_Datas>needed_datas){return std::make_shared<__Text_Block>(defined_balises_shared_ptr(), needed_datas);};
+
+    private:
+    };
 }
 
 #endif //PLEOS_TEXT
