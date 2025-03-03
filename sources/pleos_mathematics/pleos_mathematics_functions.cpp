@@ -559,12 +559,98 @@ namespace pleos {
         return to_return;
     }
 
+    // Struct containing some datas for positions
+    struct Needed_Pos {scls::__Formula_Base::Formula pos;scls::__Formula_Base::Formula previous_pos;bool previous_pos_used = false;};
+    // Draw the bases of the image
+    void Graphic::image_draw_base(std::shared_ptr<scls::Image> image) {
+        // Horizontal lines
+        double current_y = pixel_y_to_graphic_y(image.get()->height(), image).to_double();
+        current_y = floor(current_y);
+        double needed_y = graphic_y_to_pixel_y(current_y, image);
+        while(needed_y < image.get()->width()) {
+            scls::Color needed_color = scls::Color(0, 0, 0);
+            int needed_height = 1;
+            if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
+            image.get()->fill_rect(0, image.get()->height() - needed_y, image.get()->width(), needed_height, needed_color);
+            current_y++;
+            needed_y = graphic_y_to_pixel_y(current_y, image);
+        }
+        // Vertical lines
+        double current_x = pixel_x_to_graphic_x(0, image).to_double();
+        current_x = ceil(current_x);
+        int needed_x = graphic_x_to_pixel_x(current_x, image);
+        while(needed_x < image.get()->width()) {
+            scls::Color needed_color = scls::Color(0, 0, 0);
+            int needed_width = 1;
+            if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
+            image.get()->fill_rect(needed_x, 0, needed_width, image.get()->height(), needed_color);
+            current_x++;
+            needed_x = graphic_x_to_pixel_x(current_x, image);
+        }
+    }
+    // Draw a function on the image
+    void Graphic::image_draw_function(std::shared_ptr<scls::Image> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos) {
+        // Get the values
+        scls::Formula needed_formula = needed_function.get()->formula();
+        std::vector<Needed_Pos> needed_pos = std::vector<Needed_Pos>(to_return.get()->width() + 1);
+        // Get each values of the function
+        scls::__Formula_Base::Formula last_pos;
+        for(int j = 0;j<static_cast<int>(to_return.get()->width()) + 1;j++){
+            // Get the needed pos
+            Needed_Pos to_add;
+            if(needed_function.get()->definition_set()->is_in(screen_pos[j])) {
+                to_add.pos = needed_formula.value(screen_pos[j]);
+            }
+            else {
+                to_add.pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
+            }
+            needed_pos[j] = to_add;
+
+            // Check according to the last value
+            if(j > 0 && !needed_function.get()->definition_set()->is_in(scls::Interval(screen_pos[j - 1], screen_pos[j]))) {
+                needed_pos[j - 1].pos = needed_formula.value(screen_pos[j - 1] + scls::Fraction(1, 1000));
+                needed_pos[j].previous_pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
+                needed_pos[j].previous_pos_used = true;
+            }
+
+            // Finalise the creation
+            last_pos = to_add.pos;
+        }
+
+        // Adapt each values to the screen
+        struct Needed_Pos_Screen {int pos;int previous_pos;bool previous_pos_used = false;};
+        std::vector<Needed_Pos_Screen> needed_y = std::vector<Needed_Pos_Screen>(to_return.get()->width() + 1);
+        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
+            scls::Fraction value = needed_pos[i].pos.formula_base()->value_to_fraction();
+            needed_y[i].pos = graphic_y_to_pixel_y(value.to_double(), to_return);
+            // Check the previous pos
+            if(needed_pos[i].previous_pos_used) {
+                value = needed_pos[i].previous_pos.formula_base()->value_to_fraction();
+                needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
+                needed_y[i].previous_pos_used = true;
+            }
+        }
+
+        // Draw each pixel
+        int width = 3;
+        for(int j = 0;j<static_cast<int>(to_return.get()->width());j++) {
+            int y_1 = to_return.get()->height() - needed_y[j].pos;
+            int y_2 = to_return.get()->height() - needed_y[j + 1].pos;
+            if(needed_y[j + 1].previous_pos_used){y_1 = to_return.get()->height() - needed_y[j + 1].previous_pos;}
+            // Draw the point
+            int needed_height = std::abs(y_1 - y_2);
+            int needed_y = std::min(y_1, y_2) - width / 2.0;
+            if(needed_y < to_return.get()->height() && needed_y >= -needed_height) {
+                to_return.get()->fill_rect(j - width / 2.0, needed_y, width, needed_height + width, scls::Color(255, 0, 0));
+            }
+        }
+    }
     // Returns the image of the graphic
-    int Graphic::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return (x - middle_x().to_double()) * floor(pixel_by_case_x()) + (needed_image.get()->width() / 2.0);};
-    int Graphic::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return (y - middle_y().to_double()) * floor(pixel_by_case_y()) + (needed_image.get()->height() / 2.0);};
-    int Graphic::graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return needed_image.get()->height() - graphic_y_to_pixel_y(y, needed_image);};
-    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return middle_x() + ((scls::Fraction(x) - scls::Fraction(needed_image.get()->width(), 2)) / scls::Fraction(floor(pixel_by_case_x())));}
-    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return middle_y() + ((scls::Fraction(needed_image.get()->height(), 2) - scls::Fraction(y)) / scls::Fraction(floor(pixel_by_case_y())));}
+    int Graphic::graphic_x_to_pixel_x(double x, int image_width){return floor((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(image_width) / 2.0));};
+    int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return floor((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0);};
+    int Graphic::graphic_y_to_pixel_y_inversed(double y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
+    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction(floor(pixel_by_case_x())));}
+    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction(floor(pixel_by_case_y())));}
     std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(255, 255, 255));
@@ -574,96 +660,15 @@ namespace pleos {
         if(a_graphic_base.get()->a_width != -1) {a_graphic_base.get()->a_pixel_by_case_x = static_cast<double>(width_in_pixel) / a_graphic_base.get()->a_width;}
 
         // Draw the basic lines
-        if(draw_base() || draw_sub_bases()) {
-            // Horizontal lines
-            double current_y = pixel_y_to_graphic_y(to_return.get()->height(), to_return).to_double();
-            current_y = floor(current_y);
-            double needed_y = graphic_y_to_pixel_y(current_y, to_return);
-            while(needed_y < to_return.get()->width()) {
-                scls::Color needed_color = scls::Color(0, 0, 0);
-                int needed_height = 1;
-                if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
-                to_return.get()->fill_rect(0, to_return.get()->height() - needed_y, to_return.get()->width(), needed_height, needed_color);
-                current_y++;
-                needed_y = graphic_y_to_pixel_y(current_y, to_return);
-            }
-            // Vertical lines
-            double current_x = pixel_x_to_graphic_x(0, to_return).to_double();
-            current_x = ceil(current_x);
-            int needed_x = graphic_x_to_pixel_x(current_x, to_return);
-            while(needed_x < to_return.get()->width()) {
-                scls::Color needed_color = scls::Color(0, 0, 0);
-                int needed_width = 1;
-                if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
-                to_return.get()->fill_rect(needed_x, 0, needed_width, to_return.get()->height(), needed_color);
-                current_x++;
-                needed_x = graphic_x_to_pixel_x(current_x, to_return);
-            }
-        }
+        if(draw_base() || draw_sub_bases()) {image_draw_base(to_return);}
 
         // Get the datas for the drawing
         scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
         scls::Fraction multiplier = scls::Fraction(1, pixel_by_case_x());
-        struct Needed_Pos {scls::__Formula_Base::Formula pos;scls::__Formula_Base::Formula previous_pos;bool previous_pos_used = false;};
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
         for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
         // Draw the functions
-        for(int i = 0;i<static_cast<int>(a_functions.size());i++) {
-            // Get the values
-            scls::Formula needed_formula = a_functions[i].get()->formula();
-            std::vector<Needed_Pos> needed_pos = std::vector<Needed_Pos>(to_return.get()->width() + 1);
-            // Get each values of the function
-            scls::__Formula_Base::Formula last_pos;
-            for(int j = 0;j<static_cast<int>(to_return.get()->width()) + 1;j++){
-                // Get the needed pos
-                Needed_Pos to_add;
-                if(a_functions[i].get()->definition_set()->is_in(screen_pos[j])) {
-                    to_add.pos = needed_formula.value(screen_pos[j]);
-                }
-                else {
-                    to_add.pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
-                }
-                needed_pos[j] = to_add;
-
-                // Check according to the last value
-                if(j > 0 && !a_functions[i].get()->definition_set()->is_in(scls::Interval(screen_pos[j - 1], screen_pos[j]))) {
-                    needed_pos[j - 1].pos = needed_formula.value(screen_pos[j - 1] + scls::Fraction(1, 1000));
-                    needed_pos[j].previous_pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
-                    needed_pos[j].previous_pos_used = true;
-                }
-
-                // Finalise the creation
-                last_pos = to_add.pos;
-            }
-
-            // Adapt each values to the screen
-            struct Needed_Pos_Screen {int pos;int previous_pos;bool previous_pos_used = false;};
-            std::vector<Needed_Pos_Screen> needed_y = std::vector<Needed_Pos_Screen>(to_return.get()->width() + 1);
-            for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
-                scls::Fraction value = needed_pos[i].pos.formula_base()->value_to_fraction();
-                needed_y[i].pos = graphic_y_to_pixel_y(value.to_double(), to_return);
-                // Check the previous pos
-                if(needed_pos[i].previous_pos_used) {
-                    value = needed_pos[i].previous_pos.formula_base()->value_to_fraction();
-                    needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
-                    needed_y[i].previous_pos_used = true;
-                }
-            }
-
-            // Draw each pixel
-            int width = 3;
-            for(int j = 0;j<static_cast<int>(to_return.get()->width());j++) {
-                int y_1 = to_return.get()->height() - needed_y[j].pos;
-                int y_2 = to_return.get()->height() - needed_y[j + 1].pos;
-                if(needed_y[j + 1].previous_pos_used){y_1 = to_return.get()->height() - needed_y[j + 1].previous_pos;}
-                // Draw the point
-                int needed_height = std::abs(y_1 - y_2);
-                int needed_y = std::min(y_1, y_2) - width / 2.0;
-                if(needed_y < to_return.get()->height() && needed_y >= -needed_height) {
-                    to_return.get()->fill_rect(j - width / 2.0, needed_y, width, needed_height + width, scls::Color(255, 0, 0));
-                }
-            }
-        }
+        for(int i = 0;i<static_cast<int>(a_functions.size());i++) {image_draw_function(to_return, a_functions[i], screen_pos);}
 
         // Draw the circles
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {

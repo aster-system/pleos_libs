@@ -147,11 +147,20 @@ namespace pleos {
         inline void set_scale(double width, double height){a_graphic_base.get()->a_height = height;a_graphic_base.get()->a_width = width;};
 
         // Annoying functions to draw the image
-        int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image);
-        int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image);
-        int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image);
-        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image);
-        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image);
+        int graphic_x_to_pixel_x(double x, int needed_width);
+        int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return graphic_x_to_pixel_x(x, needed_image.get()->width());};
+        int graphic_y_to_pixel_y(double y, int needed_height);
+        int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return graphic_y_to_pixel_y(y, needed_image.get()->height());};
+        int graphic_y_to_pixel_y_inversed(double y, int needed_height);
+        int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return graphic_y_to_pixel_y_inversed(y, needed_image.get()->height());};
+        scls::Fraction pixel_x_to_graphic_x(int x, int needed_width);
+        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return pixel_x_to_graphic_x(x, needed_image.get()->width());};
+        scls::Fraction pixel_y_to_graphic_y(int y, int needed_height);
+        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());};
+        // Draw the bases of the image
+        void image_draw_base(std::shared_ptr<scls::Image> to_return);
+        // Draw a function on the image
+        void image_draw_function(std::shared_ptr<scls::Image> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos);
 
         // Adds a function to the graphic
         void add_function(std::shared_ptr<Function_Studied> function_studied);
@@ -255,6 +264,39 @@ namespace pleos {
 
     public:
 
+        class Graphic_GUI_Object {
+            // GUI object in a graphic
+        public:
+            // Graphic_GUI_Object constructor
+            Graphic_GUI_Object(std::shared_ptr<scls::GUI_Object>needed_object):a_object(needed_object){};
+
+            // Scale the GUI Object
+            inline void scale(Graphic_Object* graphic, int image_width, int image_height){
+                a_object.get()->set_height_in_pixel((graphic->pixel_by_case_y() * a_height).to_double_round());
+                a_object.get()->set_width_in_pixel((graphic->pixel_by_case_x() * a_width).to_double_round());
+                a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
+                a_object.get()->set_y_in_pixel(graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height));
+            };
+
+            // Getters and setters
+            inline scls::GUI_Object* object() const {return a_object.get();};
+            inline scls::Fraction height() const {return a_height;};
+            inline void set_height(scls::Fraction new_height){a_height = new_height;};
+            inline void set_width(scls::Fraction new_width){a_width = new_width;};
+            inline void set_x(scls::Fraction new_x){a_x = new_x;};
+            inline void set_y(scls::Fraction new_y){a_y = new_y;};
+            inline scls::Fraction width() const {return a_width;};
+            inline scls::Fraction x() const {return a_x;};
+            inline scls::Fraction y() const {return a_y;};
+        private:
+            // GUI object
+            std::shared_ptr<scls::GUI_Object> a_object;
+            // Position of the object in the graphic
+            scls::Fraction a_x;scls::Fraction a_y;
+            // Size of the object in the graphic
+            scls::Fraction a_height;scls::Fraction a_width;
+        };
+
         //******************
         //
         // Graphic_Object handling
@@ -270,7 +312,7 @@ namespace pleos {
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
         virtual void update_event();
-        virtual void update_texture(){texture()->set_image(to_image());};
+        virtual void update_texture(){for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}texture()->set_image(to_image());};
 
         // Adds a function to the graphic
         inline void add_function(std::shared_ptr<Function_Studied> function_studied){a_datas.add_function(function_studied);};
@@ -299,14 +341,24 @@ namespace pleos {
         // Handle vectors
         // Adds a vector to the graphic
         inline void add_vector(Vector needed_vector){a_datas.add_vector(needed_vector);};
+        inline void add_vector(scls::Fraction x, scls::Fraction y){a_datas.add_vector(Vector(std::string(), x, y));};
         // Draws a vector on the graphic
         inline void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return){a_datas.draw_vector(needed_point, to_return);};
 
+        // Handle other object
+        // Creates a new GUI object
+        template <typename T = scls::GUI_Object> std::shared_ptr<Graphic_GUI_Object> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<T>(other_name);std::shared_ptr<Graphic_GUI_Object>object=std::make_shared<Graphic_GUI_Object>(to_return);a_gui_objects.push_back(object);return object;};
+
         // Annoying functions to draw the image
+        inline int graphic_x_to_pixel_x(double x, int needed_width){return a_datas.graphic_x_to_pixel_x(x, needed_width);};
         inline int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::Image>& needed_image){return a_datas.graphic_x_to_pixel_x(x, needed_image);};
+        inline int graphic_y_to_pixel_y(double y, int needed_height){return a_datas.graphic_y_to_pixel_y(y, needed_height);};
         inline int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::Image>& needed_image){return a_datas.graphic_y_to_pixel_y(y, needed_image);};
+        inline int graphic_y_to_pixel_y_inversed(double y, int needed_height){return a_datas.graphic_y_to_pixel_y_inversed(y, needed_height);};
         inline int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::Image>& needed_image){return a_datas.graphic_y_to_pixel_y_inversed(y, needed_image);};
+        inline scls::Fraction pixel_x_to_graphic_x(int x, int needed_width){return a_datas.pixel_x_to_graphic_x(x, needed_width);};
         inline scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return a_datas.pixel_x_to_graphic_x(x, needed_image);};
+        inline scls::Fraction pixel_y_to_graphic_y(int y, int needed_height){return a_datas.pixel_y_to_graphic_y(y, needed_height);};
         inline scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return a_datas.pixel_y_to_graphic_y(y, needed_image);};
 
         // Getters and setters
@@ -314,6 +366,7 @@ namespace pleos {
         inline bool draw_base() const {return a_datas.draw_base();};
         inline bool draw_sub_bases() const {return a_datas.draw_sub_bases();};
         inline Graphic* graphic() {return &a_datas;};
+        inline std::vector<std::shared_ptr<Graphic_GUI_Object>>& gui_objects(){return a_gui_objects;};
         inline scls::Fraction middle_x() const {return a_datas.middle_x();};
         inline void middle_x_add(scls::Fraction value) {a_datas.middle_x_add(value);};
         inline scls::Fraction middle_y() const {return a_datas.middle_y();};
@@ -331,6 +384,8 @@ namespace pleos {
 
         // Datas about the graphic
         Graphic a_datas;
+        // Other object in the graphic
+        std::vector<std::shared_ptr<Graphic_GUI_Object>> a_gui_objects;
 
         // Operation to do at click
         int a_operation_at_click = PLEOS_OPERATION_NOTHING;
