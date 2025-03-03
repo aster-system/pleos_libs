@@ -30,6 +30,7 @@
 // Include SCLS Graphic Benoit
 #include "../../scls-graphic-benoit/scls_graphic.h"
 #include "pleos_mathematics/pleos_mathematics_functions.h"
+#include "pleos_it.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -69,7 +70,20 @@ namespace pleos {
     public:
 
         // Text constructor
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();current_balise.get()->has_content = true;defined_balises.get()->set_defined_balise("graphic", current_balise);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){
+            std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("graphic", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("tree", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("node", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("nodes", current_balise);
+        };
 
         // Creates and returns a __Text_Block
         virtual std::shared_ptr<scls::Text_Image_Block>__create_block(std::shared_ptr<scls::Block_Datas>needed_datas){return std::make_shared<__Text_Block>(defined_balises_shared_ptr(), needed_datas);};

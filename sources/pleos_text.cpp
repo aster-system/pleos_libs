@@ -36,6 +36,26 @@ namespace pleos {
 	//
 	//*********
 
+	// Add datas to a tree
+	void __tree_add_datas(std::shared_ptr<scls::XML_Text> current_text, Tree<std::string>* tree){
+        // Handle the attributes
+        std::string to_add = std::string();
+        for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
+            if(current_text.get()->xml_attributes()[i].name == std::string("name")){to_add = current_text.get()->xml_attributes()[i].value;}
+        }
+        tree->set_value(to_add);
+
+        // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            std::vector<std::string> attributes = scls::cut_balise_by_attributes(balise_content);
+            if(current_balise_name == "node" || current_balise_name == "nodes"){
+                // Add the node
+                __tree_add_datas(current_text->sub_texts()[i], tree->add_node(std::string()));
+            }
+        }
+	}
 	// Generate a word
     void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
@@ -113,6 +133,26 @@ namespace pleos {
             // Get the image
             std::shared_ptr<scls::Image> src_img = graphic.to_image(200, 200);
             src_img.get()->draw_border(1, 1, 1, 1, scls::Color(0, 0, 0));
+            int height = -1; int width = -1;
+            if(height == -1 && width == -1) {height = src_img.get()->height();width = src_img.get()->width();}
+            else if(height != -1 && width == -1) {
+                width = static_cast<int>(static_cast<double>(height) * (static_cast<double>(src_img.get()->width()) / static_cast<double>(src_img.get()->height())));
+            } else if(height == -1 && width != -1) {
+                height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
+            }
+            if(global_style()->max_width > 0 && width > global_style()->max_width) {
+                width = global_style()->max_width;
+                height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
+            }
+            __generate_image(word_to_add, src_img, current_position_in_plain_text, a_current_width, height, width);
+        }
+        else if(current_balise_name == "tree") {
+            // Generate a tree
+            std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();
+            __tree_add_datas(current_text, tree.get());
+
+            // Get the image
+            std::shared_ptr<scls::Image> src_img = tree.get()->to_image();
             int height = -1; int width = -1;
             if(height == -1 && width == -1) {height = src_img.get()->height();width = src_img.get()->width();}
             else if(height != -1 && width == -1) {

@@ -321,10 +321,10 @@ namespace pleos {
         Tree():a_root_id(a_graph.get()->add_node(E())){};
 
         // Return the image of the graph attached to the tree
-        inline std::shared_ptr<scls::Image> image(){place_nodes();return a_graph.get()->image();};
+        inline std::shared_ptr<scls::Image> to_image(){place_nodes();return a_graph.get()->image();};
 
         // Adds a node in the tree
-        inline Tree* add_node(E value){int current_id = a_graph.get()->add_node(value);a_children.push_back(Tree(a_graph, current_id));Tree& current = a_children[a_children.size() - 1];a_graph.get()->link_nodes(a_root_id,current_id);return &current;}
+        inline Tree* add_node(E value){int current_id = a_graph.get()->add_node(value);a_children.push_back(Tree(a_graph, current_id));Tree& current = a_children[a_children.size() - 1];a_graph.get()->link_nodes(a_root_id,current_id);std::cout << "P " << &current << std::endl;return &current;}
         inline Tree* add_node(int sub_id, E value){Tree* needed_child = child(sub_id);if(needed_child==0){return 0;}return needed_child->add_node(value);};
         inline Tree* add_node(int sub_id_1, int sub_id_2, E value){Tree* needed_child = child(sub_id_1);if(needed_child==0){return 0;}return needed_child->add_node(sub_id_2, value);};
         // Place the nodes in the tree
