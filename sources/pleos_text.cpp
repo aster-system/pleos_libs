@@ -36,6 +36,38 @@ namespace pleos {
 	//
 	//*********
 
+	//Add a node to the graph
+	void __graph_add_node(std::shared_ptr<scls::XML_Text> current_text, Graph<std::string>* graph) {
+        // Handle the attributes
+        std::string to_add = std::string();
+        scls::Fraction x = 0; scls::Fraction y = 0;
+        for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
+            if(current_text.get()->xml_attributes()[i].name == std::string("name")){to_add = current_text.get()->xml_attributes()[i].value;}
+            else if(current_text.get()->xml_attributes()[i].name == std::string("x")){x = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
+            else if(current_text.get()->xml_attributes()[i].name == std::string("y")){y = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
+        }
+        int needed_node = graph->add_node(to_add, x, y);
+
+        // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "link"){
+                // Link the node
+                int needed_id = 0;
+                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                    std::string attribute_name = attributes[j].name;
+                    std::string attribute_value = attributes[j].value;
+                    if(attribute_name == "id") {needed_id = std::stoi(attribute_value);}
+                }
+
+                // Add the link
+                if(needed_id == needed_node){scls::print(std::string("PLEOS Graph"), std::string("Can't link the ") + std::to_string(needed_id) + std::string(" with himself."));}
+                else {graph->link_nodes(needed_node, needed_id);}
+            }
+        }
+	}
 	// Add datas to a tree
 	void __tree_add_datas(std::shared_ptr<scls::XML_Text> current_text, Tree<std::string>* tree){
         // Handle the attributes
@@ -49,10 +81,14 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
-            std::vector<std::string> attributes = scls::cut_balise_by_attributes(balise_content);
-            if(current_balise_name == "node" || current_balise_name == "nodes"){
+            std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "tree" || current_balise_name == "trees"){
                 // Add the node
                 __tree_add_datas(current_text->sub_texts()[i], tree->add_node(std::string()));
+            }
+            else if(current_balise_name == "node"){
+                // Add the node
+                __graph_add_node(current_text->sub_texts()[i], tree->graph());
             }
         }
 	}
@@ -70,35 +106,20 @@ namespace pleos {
             for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++) {
                 std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
                 std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
-                std::vector<std::string> attributes = scls::cut_balise_by_attributes(balise_content);
+                std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
                 if(current_balise_name == "base") {
                     // Get the datas about the base of the graphic
-                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                        std::string &current_attribute = attributes[i];
-                        std::string attribute_name = scls::attribute_name(current_attribute);
-                        if(attribute_name == "height") {
-                            // Height of the graphic
-                            graphic_height = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
-                        } else if(attribute_name == "width") {
-                            // Width of the graphic
-                            graphic_width = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
-                        }
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                        else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                     }
                 }
                 else if(current_balise_name == "form") {
                     // Get the datas about a vector of the graphic
                     std::string needed_name = std::string();std::string needed_points = std::string();
-                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                        std::string &current_attribute = attributes[i];
-                        std::string attribute_name = scls::attribute_name(current_attribute);
-                        if(attribute_name == "name") {
-                            // Name of the vector
-                            needed_name = scls::attribute_value(current_attribute);
-                        }
-                        else if(attribute_name == "points") {
-                            // Points of the vector
-                            needed_points = scls::attribute_value(current_attribute);
-                        }
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                        else if(attributes[j].name == "points") {needed_points = attributes[j].value;}
                     }
                     // Add the form
                     graphic.set_form_points(graphic.new_form(needed_name), needed_points);
@@ -106,20 +127,15 @@ namespace pleos {
                 else if(current_balise_name == "point" || current_balise_name == "vec") {
                     // Get the datas about a vector of the graphic
                     std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
-                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                        std::string &current_attribute = attributes[i];
-                        std::string attribute_name = scls::attribute_name(current_attribute);
-                        if(attribute_name == "name") {
-                            // Name of the vector
-                            needed_name = scls::attribute_value(current_attribute);
-                        }
-                        else if(attribute_name == "x") {
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                        else if(attributes[j].name == "x") {
                             // X of the vector
-                            needed_x = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                            needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();
                         }
-                        else if(attribute_name == "y") {
+                        else if(attributes[j].name == "y") {
                             // Y of the vector
-                            needed_y = scls::Fraction::from_std_string(scls::attribute_value(current_attribute)).to_double();
+                            needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();
                         }
                     }
                     // Add the vector

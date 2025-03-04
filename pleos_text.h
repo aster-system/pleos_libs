@@ -75,14 +75,20 @@ namespace pleos {
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("graphic", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("tree", current_balise);
+            current_balise.get()->has_content = false;
+            defined_balises.get()->set_defined_balise("link", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("node", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("nodes", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("tree", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("trees", current_balise);
         };
 
         // Creates and returns a __Text_Block

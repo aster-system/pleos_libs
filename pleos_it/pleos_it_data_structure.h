@@ -221,7 +221,7 @@ namespace pleos {
         inline int add_node(E value, scls::Fraction x, scls::Fraction y){a_nodes.push_back(std::make_shared<Node>(value, x, y, a_nodes.size()));return a_nodes[a_nodes.size()-1].get()->id();};
         inline int add_node(E value){return add_node(value, 0, 0);};
         // Links two nodes in the graph
-        inline void link_nodes(int id_1, int id_2){if(id_1!=id_2&&id_1<a_nodes.size()&&id_2<a_nodes.size()){a_nodes[id_1].get()->link(a_nodes[id_2]);}};
+        inline bool link_nodes(int id_1, int id_2){if(id_1!=id_2&&id_1<a_nodes.size()&&id_2<a_nodes.size()){a_nodes[id_1].get()->link(a_nodes[id_2]);return true;}return false;};
 
         // Getters and setters
         inline Node* node(int id)const{if(id > a_nodes.size()){return 0;}return a_nodes.at(id).get();};
@@ -282,7 +282,7 @@ namespace pleos {
                     for(int j = 0;j<static_cast<int>(links.size());j++) {
                         std::shared_ptr<Node> current_node = links[j].target.lock();
                         int current_id = current_node.get()->id();
-                        if(current_node.get()->id() > a_nodes[i].get()->id()) {
+                        if(current_id > a_nodes[i].get()->id() || true) {
                             scls::Fraction current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
                             scls::Fraction current_y_end = needed_y[current_id];
                             scls::Fraction current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
@@ -352,9 +352,9 @@ namespace pleos {
 
         // Getters and setters
         inline Tree* child(int id){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].root_id()==id){return &a_children[i];}}return 0;};
+        inline Graph<E>* graph() const {return a_graph.get();};
         inline auto& nodes() {return a_graph.get()->nodes();};
         inline int root_id() const {return a_root_id;};
-
         inline void set_value(E new_value){nodes()[a_root_id].get()->set_value(new_value);};
         inline E* value() const {return a_graph.get()->node(a_root_id)->value();};
 
