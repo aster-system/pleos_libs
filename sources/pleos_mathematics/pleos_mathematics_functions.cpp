@@ -646,14 +646,14 @@ namespace pleos {
         }
     }
     // Returns the image of the graphic
-    int Graphic::graphic_x_to_pixel_x(double x, int image_width){return floor((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(image_width) / 2.0));};
-    int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return floor((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0);};
+    int Graphic::graphic_x_to_pixel_x(double x, int image_width){return std::ceil((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(image_width) / 2.0));};
+    int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return std::ceil((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0);};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
-    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction(floor(pixel_by_case_x())));}
-    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction(floor(pixel_by_case_y())));}
+    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction(round(pixel_by_case_x())));}
+    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction(round(pixel_by_case_y())));}
     std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(255, 255, 255));
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(0, 0, 0, 0));
 
         // Handle the height and width
         if(a_graphic_base.get()->a_height != -1) {a_graphic_base.get()->a_pixel_by_case_y = static_cast<double>(height_in_pixel) / a_graphic_base.get()->a_height;}
@@ -688,29 +688,103 @@ namespace pleos {
         return to_return;
     }
 
+    //******************
+    //
+    // Physic handling
+    //
+    //******************
+
+    // Checks if a collision occurs with an another collision
+    bool __check_collision_rect_rect(Graphic::Graphic_Collision* collision_1, Graphic::Graphic_Collision* collision_2){
+        // Check X
+        bool x_1 = (collision_1->max_x() > collision_2->min_x() && collision_2->max_x() > collision_1->max_x());
+        bool x_2 = (collision_2->max_x() > collision_1->min_x() && collision_1->max_x() > collision_2->max_x());
+        bool x_3 = (collision_2->max_x() >= collision_1->max_x() && collision_1->min_x() >= collision_2->min_x());
+        bool x_4 = (collision_1->max_x() >= collision_2->max_x() && collision_2->min_x() >= collision_1->min_x());
+        if(!(x_1 || x_2 || x_3 || x_4)){return false;}
+
+        // Check Y
+        bool y_1 = (collision_1->max_y() > collision_2->min_y() && collision_2->max_y() > collision_1->max_y());
+        bool y_2 = (collision_2->max_y() > collision_1->min_y() && collision_1->max_y() > collision_2->max_y());
+        bool y_3 = (collision_2->max_y() >= collision_1->max_y() && collision_1->min_y() >= collision_2->min_y());
+        bool y_4 = (collision_1->max_y() >= collision_2->max_y() && collision_2->min_y() >= collision_1->min_y());
+        if(!(y_1 || y_2 || y_3 || y_4)){return false;}
+
+        return true;
+    };
+    bool Graphic::Graphic_Collision::check_collision(Graphic_Collision* collision) {
+        // Asserts
+        if(collision == 0 || collision->attached_object() == attached_object()){return false;}
+
+        // Both objects are rect
+        if(type() == Graphic::Graphic_Collision_Type::GCT_Rect && collision->type() == Graphic::Graphic_Collision_Type::GCT_Rect) {
+            if(__check_collision_rect_rect(this, collision)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    // Checks if a collision occurs with an another object
+    void Graphic::Graphic_Physic::check_collision(Graphic::Graphic_Collision* collision) {
+        // Asserts
+        if(collision == 0 || collision->attached_object() == attached_object()){return;}
+
+        // Check each collision
+        bool result = false;
+        for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {result = (result || a_collisions[i].get()->check_collision(collision));}
+
+        // Apply result
+        if(result) {
+            a_next_movement = scls::Point_3D(0, 0, 0);
+            a_velocity *= scls::Point_3D(1, 0, 1);
+        }
+    }
+
+    // Loads 100 X 100 physic map
+    void Graphic::load_physic_map(int middle_loading_x, int middle_loading_y) {
+        // Get the needed datas
+        int height = 100;int width = 100;
+        a_physic_map_start_x = middle_loading_x - width / 2;
+        a_physic_map_start_y = middle_loading_y - height / 2;
+
+        // Create the cases
+        a_physic_map = std::vector<std::vector<Physic_Case>>(width, std::vector<Physic_Case>(height));
+    }
+
     // Graphic constructor
     Graphic_Object::Graphic_Object(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent):scls::GUI_Object(window, name, parent){update_texture();}
 
-    // Function called after creation
-    void Graphic_Object::after_creation(){}
-
     // Render the object
     void Graphic_Object::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
+
+    // Scale the GUI Object
+    void Graphic_Object::Graphic_GUI_Object::scale(Graphic_Object* graphic, int image_width, int image_height){
+        a_object.get()->set_height_in_pixel(std::ceil(graphic->pixel_by_case_y()) * a_height.to_double());
+        a_object.get()->set_width_in_pixel(std::ceil(graphic->pixel_by_case_x()) * a_width.to_double());
+        a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
+        a_object.get()->set_y_in_pixel(graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height));
+        a_object.get()->set_texture_scale_x(width().to_double());a_object.get()->set_texture_scale_y(height().to_double());
+    };
 
     // Updates the object
     void Graphic_Object::update_event() {
         GUI_Object::update_event();
 
+        // Update the physic
+        int needed_update_physic = update_physic();
+
         // Move the plane
-        bool modified = false;
+        bool modified = (needed_update_physic > 0);
         if(is_focused()) {
-            scls::Fraction speed = scls::Fraction(1, 50);
+            scls::Fraction speed = scls::Fraction(5) * window_struct().delta_time();
             if(window_struct().key_pressed("q")){middle_x_add(speed * -1);modified = true;}
             if(window_struct().key_pressed("d")){middle_x_add(speed);modified = true;}
-            if(window_struct().key_pressed("z")){middle_x_add(speed);modified = true;}
-            if(window_struct().key_pressed("s")){middle_x_add(speed * -1);modified = true;}
+            if(window_struct().key_pressed("z")){middle_y_add(speed);modified = true;}
+            if(window_struct().key_pressed("s")){middle_y_add(speed * -1);modified = true;}
             // Zoom or unzoom
-            double zoom_speed = 3;
+            double zoom_speed = 30 * window_struct().delta_time();
             if(window_struct().key_pressed("w")){pixel_by_case_x_add(zoom_speed * -1);pixel_by_case_y_add(zoom_speed * -1);modified = true;}
             if(window_struct().key_pressed("c")){pixel_by_case_x_add(zoom_speed);pixel_by_case_y_add(zoom_speed);modified = true;}
         }
@@ -756,5 +830,88 @@ namespace pleos {
 
         if(modified){update_texture();}
         if(window_struct().key_pressed("p")){to_image().get()->save_png("tests/function.png");}
+    }
+
+    // Updates the physic
+    scls::Point_3D gravity = scls::Point_3D(0, -1.625, 0);
+    int Graphic_Object::update_physic() {
+        // Realised updates
+        int needed_update = 0;
+
+        // Apply gravity
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            if(a_gui_objects[i].get()->physic_object() != 0 && a_gui_objects[i].get()->physic_object()->use_gravity()) {
+                a_gui_objects[i].get()->physic_object()->velocity() += (gravity * window_struct().delta_time());
+                needed_update++;
+            }
+        }
+
+        // Apply velocity
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            if(a_gui_objects[i].get()->physic_object() != 0) {
+                a_gui_objects[i].get()->physic_object()->set_next_movement(a_gui_objects[i].get()->physic_object()->velocity() * window_struct().delta_time());
+                needed_update++;
+            }
+        }
+
+        // Update each objects in the case
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            if(a_gui_objects[i].get()->physic_object() != 0) {
+                if(!a_gui_objects[i].get()->physic_object()->is_static()) {
+                    // Get the needed datas
+                    int needed_height = a_gui_objects[i].get()->max_y_next().to_double_ceil() - a_gui_objects[i].get()->min_y_next().to_double_floor();
+                    int needed_width = a_gui_objects[i].get()->max_x_next().to_double_ceil() - a_gui_objects[i].get()->min_x_next().to_double_floor();
+                    int x_start = a_gui_objects[i].get()->min_x_next().to_double_floor();
+                    int y_start = a_gui_objects[i].get()->min_y_next().to_double_floor();
+
+                    // Check the cases
+                    for(int j = 0;j<needed_width;j++) {
+                        for(int h = 0;h<needed_height;h++) {
+                            Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
+                            if(current_case->static_objects_collisions.size() > 0){
+                                for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
+                                    a_gui_objects[i].get()->physic_object()->check_collision(current_case->static_objects_collisions[h].lock().get());
+                                }
+                            }
+                        }
+                    }
+                }
+                else if(a_gui_objects[i].get()->moved_during_this_frame()) {
+                    // Delete the last cases
+                    for(int j = 0;j<static_cast<int>(a_gui_objects[i].get()->physic_object()->used_physic_case().size());j++) {
+                        for(int k = 0;k<static_cast<int>(a_gui_objects[i].get()->physic_object()->collisions().size());k++) {
+                            a_gui_objects[i].get()->physic_object()->used_physic_case()[j]->delete_static_object_collision(a_gui_objects[i].get()->physic_object()->collisions()[k].get());
+                        }
+                    }
+
+                    // Get the needed datas
+                    int needed_height = a_gui_objects[i].get()->max_y_next().to_double_ceil() - a_gui_objects[i].get()->min_y_next().to_double_floor();
+                    int needed_width = a_gui_objects[i].get()->max_x_next().to_double_ceil() - a_gui_objects[i].get()->min_x_next().to_double_floor();
+                    int x_start = a_gui_objects[i].get()->min_x_next().to_double_floor();
+                    int y_start = a_gui_objects[i].get()->min_y_next().to_double_floor();
+
+                    // Add the cases
+                    for(int j = 0;j<needed_width;j++) {
+                        for(int h = 0;h<needed_height;h++) {
+                            Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
+                            for(int l = 0;l<static_cast<int>(a_gui_objects[i].get()->physic_object()->collisions().size());l++){
+                                current_case->static_objects_collisions.push_back(a_gui_objects[i].get()->physic_object()->collisions()[l]);
+                            }
+                            a_gui_objects[i].get()->physic_object()->used_physic_case().push_back(current_case);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Apply next movement
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            if(a_gui_objects[i].get()->physic_object() != 0) {
+                a_gui_objects[i].get()->move(a_gui_objects[i].get()->physic_object()->next_movement());
+                needed_update++;
+            }
+        }
+
+        return needed_update;
     }
 }

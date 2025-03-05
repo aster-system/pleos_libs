@@ -98,6 +98,41 @@ namespace pleos {
     //
     //******************
 
+    // Base object in a graphic
+    class Graphic_Base_Object{
+        // Class representating the base of an object in a graphic
+    public:
+        // Graphic_Base_Object constructor
+        Graphic_Base_Object(){};
+
+        // Getters and setters
+        inline scls::Fraction height() const {return a_height;};
+        inline scls::Fraction max_x() const {return a_x + a_width / 2;};
+        inline scls::Fraction max_y() const {return a_y + a_height / 2;};
+        inline scls::Fraction min_x() const {return a_x - a_width / 2;};
+        inline scls::Fraction min_y() const {return a_y - a_height / 2;};
+        inline bool moved_during_this_frame() const {return a_moved_this_frame;};
+        inline void set_height(scls::Fraction new_height){a_height = new_height;a_moved_this_frame=true;};
+        inline void set_this_object(std::weak_ptr<Graphic_Base_Object> new_this_object){a_this_object = new_this_object;};
+        inline void set_width(scls::Fraction new_width){a_width = new_width;a_moved_this_frame=true;};
+        inline void set_x(scls::Fraction new_x){a_x = new_x;a_moved_this_frame=true;};
+        inline void set_y(scls::Fraction new_y){a_y = new_y;a_moved_this_frame=true;};
+        inline scls::Fraction width() const {return a_width;};
+        inline scls::Fraction x() const {return a_x;};
+        inline scls::Fraction y() const {return a_y;};
+
+    protected:
+        // If the object has been moved during this frame
+        bool a_moved_this_frame = true;
+        // Position of the object in the graphic
+        scls::Fraction a_x;scls::Fraction a_y;
+        // Size of the object in the graphic
+        scls::Fraction a_height;scls::Fraction a_width;
+
+        // This object
+        std::weak_ptr<Graphic_Base_Object> a_this_object;
+    };
+
     class Graphic {
         // Class representating a graphic for one (or a lot) of functions
     public:
@@ -238,6 +273,89 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
 
+        //******************
+        //
+        // Physic handling
+        //
+        //******************
+
+        // Collision in a graphic object
+        enum Graphic_Collision_Type {GCT_Rect};
+        class Graphic_Collision {
+            // Class representating a collision in a graphic object
+        public:
+            // Graphic_Collision constructor
+            Graphic_Collision(std::weak_ptr<Graphic_Base_Object> attached_object):a_attached_object(attached_object){};
+
+            // Checks if a collision occurs with an another collision
+            bool check_collision(Graphic_Collision* collision);
+
+            // Getters and setters
+            inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
+            inline scls::Fraction max_x() const {return attached_object()->max_x();};
+            inline scls::Fraction max_y() const {return attached_object()->max_y();};
+            inline scls::Fraction min_x() const {return attached_object()->min_x();};
+            inline scls::Fraction min_y() const {return attached_object()->min_y();};
+            inline Graphic_Collision_Type type()const{return a_type;};
+        private:
+            // Attached object
+            std::weak_ptr<Graphic_Base_Object> a_attached_object;
+            // Type of the collision
+            Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
+        };
+
+        // Physic case
+        struct Physic_Case{
+            // Static objects in the case
+            inline void delete_static_object_collision(Graphic_Collision* object){for(int i=0;i<static_cast<int>(static_objects_collisions.size());i++){if(static_objects_collisions[i].lock().get()==object){static_objects_collisions.erase(static_objects_collisions.begin() + i);break;}}};
+            std::vector<std::weak_ptr<Graphic_Collision>> static_objects_collisions;
+        };
+
+        // Loads 100 X 100 physic map
+        void load_physic_map(int middle_loading_x, int middle_loading_y);
+        // Returns a physic case by its coordinates
+        inline Physic_Case* physic_case(int x, int y){return &a_physic_map[(-a_physic_map_start_x) + x][(-a_physic_map_start_y) + y];};
+
+        // Physic in a graphic object
+        class Graphic_Physic {
+            // Class representating a physic handler in a graphic object
+        public:
+            // Graphic_Physic constructor
+            Graphic_Physic(std::weak_ptr<Graphic_Base_Object> attached_object):a_attached_object(attached_object){};
+
+            // Add a collision to the graphic object
+            void add_collision(){a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_object));};
+            // Checks if a collision occurs with an another collision
+            void check_collision(Graphic_Collision* collision);
+
+            // Getters and setters
+            inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
+            inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
+            inline bool is_static() const {return a_static;};
+            inline scls::Point_3D next_movement() const {return a_next_movement;};
+            inline void set_next_movement(scls::Point_3D new_next_movement){a_next_movement = new_next_movement;};
+            inline void set_static(bool new_static) {a_static = new_static;}
+            inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
+            inline bool use_gravity() const {return a_use_gravity;};
+            inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
+            inline scls::Point_3D& velocity() {return a_velocity;};
+        private:
+            // Attached object
+            std::weak_ptr<Graphic_Base_Object> a_attached_object;
+            // Collisions in the physic object
+            std::vector<std::shared_ptr<Graphic_Collision>> a_collisions;
+            // Next movement of the object
+            scls::Point_3D a_next_movement;
+            // If the object is static or not
+            bool a_static = true;
+            // If the object use gravity or not
+            bool a_use_gravity = true;
+            // Used physic cases
+            std::vector<Physic_Case*> a_used_physic_case;
+            // Velocity of the object
+            scls::Point_3D a_velocity;
+        };
+
     private:
 
         // Things to draw
@@ -257,44 +375,58 @@ namespace pleos {
         std::vector<std::shared_ptr<Vector>> a_points;
         // Geometrical vectors
         std::vector<std::shared_ptr<Vector>> a_vectors;
+
+        //******************
+        //
+        // Physic handling
+        //
+        //******************
+
+        // Physic map
+        std::vector<std::vector<Physic_Case>> a_physic_map;
+        int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;
     };
 
     class Graphic_Object : public scls::GUI_Object {
         // Class representating an object containing a graphic
-
     public:
 
-        class Graphic_GUI_Object {
+        class Graphic_GUI_Object : public Graphic_Base_Object {
             // GUI object in a graphic
         public:
             // Graphic_GUI_Object constructor
-            Graphic_GUI_Object(std::shared_ptr<scls::GUI_Object>needed_object):a_object(needed_object){};
+            Graphic_GUI_Object(std::shared_ptr<scls::GUI_Object>needed_object):Graphic_Base_Object(),a_object(needed_object){needed_object.get()->set_ignore_click(true);needed_object.get()->set_texture_alignment(scls::T_Fill);};
 
+            // Soft reset the object
+            void soft_reset(){a_moved_this_frame=false;};
+
+            // Move the GUI object
+            void move(scls::Point_3D point){a_x += scls::Fraction::from_double(point.x());a_y += scls::Fraction::from_double(point.y());};
             // Scale the GUI Object
-            inline void scale(Graphic_Object* graphic, int image_width, int image_height){
-                a_object.get()->set_height_in_pixel((graphic->pixel_by_case_y() * a_height).to_double_round());
-                a_object.get()->set_width_in_pixel((graphic->pixel_by_case_x() * a_width).to_double_round());
-                a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
-                a_object.get()->set_y_in_pixel(graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height));
-            };
+            void scale(Graphic_Object* graphic, int image_width, int image_height);
+
+            // Sets the physic object
+            inline void set_physic_object(bool is_static){a_physic_object=std::make_shared<Graphic::Graphic_Physic>(a_this_object);a_physic_object.get()->set_static(is_static);a_physic_object.get()->set_use_gravity(!is_static);};
 
             // Getters and setters
+            inline scls::Fraction max_x_next() const {return a_x + a_width / 2 + scls::Fraction::from_double(physic_object()->next_movement().x());};
+            inline scls::Fraction max_y_next() const {return a_y + a_height / 2 + scls::Fraction::from_double(physic_object()->next_movement().y());};
+            inline scls::Fraction min_x_next() const {return a_x - a_width / 2 + scls::Fraction::from_double(physic_object()->next_movement().x());};
+            inline scls::Fraction min_y_next() const {return a_y - a_height / 2 + scls::Fraction::from_double(physic_object()->next_movement().y());};
             inline scls::GUI_Object* object() const {return a_object.get();};
-            inline scls::Fraction height() const {return a_height;};
-            inline void set_height(scls::Fraction new_height){a_height = new_height;};
-            inline void set_width(scls::Fraction new_width){a_width = new_width;};
-            inline void set_x(scls::Fraction new_x){a_x = new_x;};
-            inline void set_y(scls::Fraction new_y){a_y = new_y;};
-            inline scls::Fraction width() const {return a_width;};
-            inline scls::Fraction x() const {return a_x;};
-            inline scls::Fraction y() const {return a_y;};
+            inline Graphic::Graphic_Physic* physic_object() const {return a_physic_object.get();};
         private:
             // GUI object
             std::shared_ptr<scls::GUI_Object> a_object;
-            // Position of the object in the graphic
-            scls::Fraction a_x;scls::Fraction a_y;
-            // Size of the object in the graphic
-            scls::Fraction a_height;scls::Fraction a_width;
+
+            //******************
+            //
+            // Physic handling
+            //
+            //******************
+
+            // Physic object of this object
+            std::shared_ptr<Graphic::Graphic_Physic> a_physic_object;
         };
 
         //******************
@@ -306,13 +438,13 @@ namespace pleos {
         // Graphic constructor
         Graphic_Object(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<scls::GUI_Object> parent);
 
-        // Function called after creation
-        virtual void after_creation();
+        // Function called after resizing the window
+        virtual void after_resizing(){update_texture();};
         // Renders the object
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
         virtual void update_event();
-        virtual void update_texture(){for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}texture()->set_image(to_image());};
+        virtual void update_texture(){texture()->set_image(to_image());for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}};
 
         // Adds a function to the graphic
         inline void add_function(std::shared_ptr<Function_Studied> function_studied){a_datas.add_function(function_studied);};
@@ -347,7 +479,7 @@ namespace pleos {
 
         // Handle other object
         // Creates a new GUI object
-        template <typename T = scls::GUI_Object> std::shared_ptr<Graphic_GUI_Object> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<T>(other_name);std::shared_ptr<Graphic_GUI_Object>object=std::make_shared<Graphic_GUI_Object>(to_return);a_gui_objects.push_back(object);return object;};
+        template <typename T = scls::GUI_Object> std::shared_ptr<Graphic_GUI_Object> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<T>(other_name);std::shared_ptr<Graphic_GUI_Object>object=std::make_shared<Graphic_GUI_Object>(to_return);object.get()->set_this_object(object);a_gui_objects.push_back(object);return object;};
 
         // Annoying functions to draw the image
         inline int graphic_x_to_pixel_x(double x, int needed_width){return a_datas.graphic_x_to_pixel_x(x, needed_width);};
@@ -379,6 +511,19 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_datas.set_draw_base(new_draw_base);};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_datas.set_draw_sub_bases(new_draw_sub_bases);};
         inline void set_operation_at_click(int new_operation_at_click) {a_operation_at_click = new_operation_at_click;};
+
+        //******************
+        //
+        // Physic handling
+        //
+        //******************
+
+        // Loads 100 X 100 physic map
+        inline void load_physic_map(int middle_loading_x, int middle_loading_y){a_datas.load_physic_map(middle_loading_x, middle_loading_y);};
+        // Returns a physic case by its coordinates
+        inline Graphic::Physic_Case* physic_case(int x, int y){return a_datas.physic_case(x, y);};
+        // Updates the physic
+        int update_physic();
 
     private:
 
