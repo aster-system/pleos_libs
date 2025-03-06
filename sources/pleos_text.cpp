@@ -79,7 +79,6 @@ namespace pleos {
 
         // Handle a lot of balises
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
-            std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
             std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "tree" || current_balise_name == "trees"){
@@ -92,6 +91,9 @@ namespace pleos {
             }
         }
 	}
+	// Creates and returns a tree from an std::string
+	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, tree.get());return tree;};
+
 	// Generate a word
     void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
@@ -164,8 +166,7 @@ namespace pleos {
         }
         else if(current_balise_name == "tree") {
             // Generate a tree
-            std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();
-            __tree_add_datas(current_text, tree.get());
+            std::shared_ptr<Tree<std::string>> tree = tree_from_xml(current_text);
 
             // Get the image
             std::shared_ptr<scls::Image> src_img = tree.get()->to_image();

@@ -598,12 +598,8 @@ namespace pleos {
         for(int j = 0;j<static_cast<int>(to_return.get()->width()) + 1;j++){
             // Get the needed pos
             Needed_Pos to_add;
-            if(needed_function.get()->definition_set()->is_in(screen_pos[j])) {
-                to_add.pos = needed_formula.value(screen_pos[j]);
-            }
-            else {
-                to_add.pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));
-            }
+            if(needed_function.get()->definition_set()->is_in(screen_pos[j])) {to_add.pos = needed_formula.value(screen_pos[j]);}
+            else {to_add.pos = needed_formula.value(screen_pos[j] - scls::Fraction(1, 1000));}
             needed_pos[j] = to_add;
 
             // Check according to the last value
@@ -637,6 +633,8 @@ namespace pleos {
             int y_1 = to_return.get()->height() - needed_y[j].pos;
             int y_2 = to_return.get()->height() - needed_y[j + 1].pos;
             if(needed_y[j + 1].previous_pos_used){y_1 = to_return.get()->height() - needed_y[j + 1].previous_pos;}
+            if(y_1 > to_return.get()->height() && y_2 > to_return.get()->height()){continue;}
+            else if(y_1 < 0 && y_2 < 0){continue;}
             // Draw the point
             int needed_height = std::abs(y_1 - y_2);
             int needed_y = std::min(y_1, y_2) - width / 2.0;
@@ -649,8 +647,8 @@ namespace pleos {
     int Graphic::graphic_x_to_pixel_x(double x, int image_width){return std::ceil((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(image_width) / 2.0));};
     int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return std::ceil((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0);};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
-    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction(round(pixel_by_case_x())));}
-    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction(round(pixel_by_case_y())));}
+    scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
+    scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
     std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(0, 0, 0, 0));
@@ -664,7 +662,7 @@ namespace pleos {
 
         // Get the datas for the drawing
         scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
-        scls::Fraction multiplier = scls::Fraction(1, pixel_by_case_x());
+        scls::Fraction multiplier = scls::Fraction(1, 1) / scls::Fraction::from_double(pixel_by_case_x());
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
         for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
         // Draw the functions
@@ -765,7 +763,7 @@ namespace pleos {
         a_object.get()->set_width_in_pixel(std::ceil(graphic->pixel_by_case_x()) * a_width.to_double());
         a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
         a_object.get()->set_y_in_pixel(graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height));
-        a_object.get()->set_texture_scale_x(width().to_double());a_object.get()->set_texture_scale_y(height().to_double());
+        //a_object.get()->set_texture_scale_x(width().to_double());a_object.get()->set_texture_scale_y(height().to_double());
     };
 
     // Updates the object

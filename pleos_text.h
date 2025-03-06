@@ -41,6 +41,10 @@ namespace pleos {
 	//
 	//*********
 
+	// Creates and returns a tree from an std::string
+	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml);
+	inline std::shared_ptr<Tree<std::string>> tree_from_xml(std::string xml, std::shared_ptr<scls::__Balise_Container> balise){return tree_from_xml(scls::xml(balise, xml));};
+
 	class __Text_Line : public scls::Text_Image_Line {
         // Class representating a more complete text handler for PLEOS
     public:
@@ -72,6 +76,9 @@ namespace pleos {
         // Text constructor
         Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){
             std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("graph", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("graphic", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
