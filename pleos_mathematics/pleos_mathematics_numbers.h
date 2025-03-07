@@ -35,6 +35,9 @@ namespace pleos {
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
     std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number);
+
+    // Calculate the GCD of two numbers
+    long long arithmetic_gcd(long long first, long long second, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS

@@ -65,4 +65,42 @@ namespace pleos {
 
         return to_return;
     }
+
+    // Calculate the GCD of two numbers
+    long long arithmetic_gcd(long long first, long long second, std::string* redaction) {
+        // Add the start of the redaction
+        const long long start_first = first;
+        const long long start_second = second;
+        if(redaction != 0){
+            (*redaction) += std::string("Nous cherchons le plus grand commun diviseur de ") + std::to_string(first) + std::string(" et ") + std::to_string(second) + std::string(". ");
+            (*redaction) += std::string("Pour cela, utilisons l'algorithme d'Euclide. </br></br>");
+        }
+
+        // Do the algorithm
+        if(second > first){long long temp = first;first = second;second = temp;}
+        while(first % second != 0) {
+            // Get the rest
+            long long first_temp = first;
+            long long second_temp = second;
+            second = first % second;
+            first = second_temp;
+
+            // Add the start of the redaction
+            if(redaction != 0) {
+                (*redaction) += std::string("Nous cherchons le reste de ") + std::to_string(first_temp) + std::string(" et ") + std::to_string(first) + std::string(".</br>");
+                (*redaction) += std::to_string(first_temp) + std::string(" % ") + std::to_string(first) + std::string(" = ") + std::to_string(second) + std::string("</br>");
+                if(second != 0) {
+                    (*redaction) += std::string("Le reste n'est pas nul, nous continuons donc l'algorithme.</br>");
+                }
+            }
+        }
+
+        // Finish the redaction
+        if(redaction != 0) {
+            (*redaction) += std::string("Le plus grand commun diviseur de ") + std::to_string(start_first) + std::string(" et ") + std::to_string(start_second) + std::string(" est ") + std::to_string(second) + std::string(". ");
+            (*redaction) += std::string("En effet, ") + std::to_string(start_first) + std::string(" / ") + std::to_string(second) + std::string(" = ") + std::to_string(start_first / second) + std::string(" et ") + std::to_string(start_second) + std::string(" / ") + std::to_string(second) + std::string(" = ") + std::to_string(start_second / second) + std::string(". ");
+        }
+
+        return second;
+    };
 }
