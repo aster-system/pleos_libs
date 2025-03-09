@@ -63,6 +63,7 @@ namespace pleos {
 
         // __Text_Block constructor
         __Text_Block(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){};
+        __Text_Block(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, std::shared_ptr<scls::Text_Style> style):scls::Text_Image_Block(defined_balises, text, style){};
 
         // Creates and returns a line for the block
         virtual scls::Text_Image_Line* __create_line(scls::Line_Datas& needed_datas){return new __Text_Line(defined_balises_shared_ptr(), needed_datas.content);};

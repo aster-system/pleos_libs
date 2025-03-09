@@ -32,12 +32,36 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
+    // Arithmetic object
+    struct Arithmetic_Object{
+        std::shared_ptr<scls::GUI_Text>connected_object;
+        std::string choice=std::string();
+        inline std::string name()const{return connected_object.get()->name();};
+
+        // Each values of the Euclid algorithm
+        std::vector<int> euclid_algorithm_value = std::vector<int>();
+
+        // Needed choice
+        bool choice_1 = false;
+        // Needed value
+        scls::Formula value_1;
+        scls::Formula value_2;
+
+        // Possible input
+        std::shared_ptr<scls::GUI_Text_Input> input_1;
+        std::shared_ptr<scls::GUI_Text_Input> input_2;
+        // Possible choices
+        std::shared_ptr<scls::GUI_Scroller_Choice> choice_input_1;
+    };
+
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
     std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number);
 
     // Calculate the GCD of two numbers
-    long long arithmetic_gcd(long long first, long long second, std::string* redaction);
+    long long arithmetic_gcd(Arithmetic_Object* object, std::string* redaction);
+    // Calculate the Bezout identity of two numbers
+    void arithmetic_bezout_identity(Arithmetic_Object* object, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS

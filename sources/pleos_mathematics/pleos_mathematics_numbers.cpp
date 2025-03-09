@@ -67,8 +67,11 @@ namespace pleos {
     }
 
     // Calculate the GCD of two numbers
-    long long arithmetic_gcd(long long first, long long second, std::string* redaction) {
+    long long arithmetic_gcd(Arithmetic_Object* object, std::string* redaction) {
         // Add the start of the redaction
+        long long first = object->value_1.value_to_double(0);
+        long long second = object->value_2.value_to_double(0);
+        if(second > first){long long temp = first;first = second;second = temp;}
         const long long start_first = first;
         const long long start_second = second;
         if(redaction != 0){
@@ -77,19 +80,21 @@ namespace pleos {
         }
 
         // Do the algorithm
-        if(second > first){long long temp = first;first = second;second = temp;}
+        object->euclid_algorithm_value.push_back(first);
+        object->euclid_algorithm_value.push_back(second);
         while(first % second != 0) {
             // Get the rest
             long long first_temp = first;
             long long second_temp = second;
             second = first % second;
             first = second_temp;
+            object->euclid_algorithm_value.push_back(second);
 
             // Add the start of the redaction
             if(redaction != 0) {
                 (*redaction) += std::string("Nous cherchons le reste de ") + std::to_string(first_temp) + std::string(" et ") + std::to_string(first) + std::string(".</br>");
                 (*redaction) += std::to_string(first_temp) + std::string(" % ") + std::to_string(first) + std::string(" = ") + std::to_string(second) + std::string("</br>");
-                if(second != 0) {
+                if(first % second != 0) {
                     (*redaction) += std::string("Le reste n'est pas nul, nous continuons donc l'algorithme.</br>");
                 }
             }
@@ -103,4 +108,59 @@ namespace pleos {
 
         return second;
     };
+
+    // Calculate the Bezout identity of two numbers
+    void arithmetic_bezout_identity(Arithmetic_Object* object, std::string* redaction) {
+        // Add the start of the redaction
+        long long first = object->value_1.value_to_double(0);
+        long long second = object->value_2.value_to_double(0);
+        if(second > first){long long temp = first;first = second;second = temp;}
+        const long long start_first = first;
+        const long long start_second = second;
+        if(redaction != 0){
+            (*redaction) += std::string("Nous cherchons l'identité de Bézout de ") + std::to_string(first) + std::string(" et ") + std::to_string(second) + std::string(". ");
+            (*redaction) += std::string("Pour cela, utilisons les résultats de l'algorithme d'Euclide. </br></br>");
+        }
+
+        // Do the algorithm
+        std::vector<int> combination_values = std::vector<int>();
+        std::vector<int>& values = object->euclid_algorithm_value;
+        for(int i = 0;i<static_cast<int>(values.size() - 2);i++) {
+            // Get the rest
+            long long x = values[i];
+            long long y = values[i + 1];
+            long long c = -(x - values[i + 2]) / y;
+            // Do the good calculation
+            // A
+            long long current_a = 1;
+            long long a = current_a;
+            if(i > 1) {a = combination_values[combination_values.size() - 4] + combination_values[combination_values.size() - 2] * c;}
+            else if(i > 0) {a = combination_values[combination_values.size() - 2] * c;}
+            // B
+            long long current_b = c;
+            long long b = current_b;
+            if(i > 1) {b = combination_values[combination_values.size() - 3] + combination_values[combination_values.size() - 1] * c;}
+            else if(i > 0) {b = combination_values[combination_values.size() - 1] * c + current_a;}
+            combination_values.push_back(a);
+            combination_values.push_back(b);
+
+            // Add the start of the redaction
+            if(redaction != 0) {
+                (*redaction) += std::string("Nous cherchons la combinaison linéaire de ") + std::to_string(x) + std::string(" et ") + std::to_string(y) + std::string(".</br>");
+                (*redaction) += std::to_string(x) + std::string(" * ") + std::to_string(current_a) + std::string(" + ") + std::to_string(y) + std::string(" * ") + std::to_string(current_b) + std::string(" = ") + std::to_string(values[i + 2]) + std::string("</br>");
+                if(i > 0) {
+                    (*redaction) += std::to_string(start_first) + std::string(" * ") + std::to_string(a) + std::string(" + ") + std::to_string(start_second) + std::string(" * ") + std::to_string(b) + std::string(" = ") + std::to_string(values[i + 2]) + std::string("</br>");
+                }
+            }
+        }
+
+        // Finish the redaction
+        long long a = combination_values[combination_values.size() - 2];
+        long long b = combination_values[combination_values.size() - 1];
+        long long gcd = values[values.size() - 1];
+        if(redaction != 0) {
+            (*redaction) += std::string("L'identité de Bézout de ") + std::to_string(start_first) + std::string(" et ") + std::to_string(start_second) + std::string(" est ");
+            (*redaction) += std::to_string(start_first) + std::string(" * ") + std::to_string(a) + std::string(" + ") + std::to_string(start_second) + std::string(" * ") + std::to_string(b) + std::string(" = ") + std::to_string(gcd) + std::string(". ");
+        }
+    }
 }
