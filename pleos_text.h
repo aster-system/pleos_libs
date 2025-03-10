@@ -32,6 +32,13 @@
 #include "pleos_mathematics/pleos_mathematics_functions.h"
 #include "pleos_it.h"
 
+// Define a macro to easily add an object
+#define GUI_PAGE(type, gui, gui_page, function, display_function, display_function_parent) private: std::shared_ptr<type> gui; \
+public: inline type* function() const {return gui.get();} \
+public: void display_function(){display_function_parent();set_current_page(gui_page);function()->set_visible(true);}
+#define GUI_OBJECT_CREATION(type, gui, name) else if(object_name == name){gui = *parent->new_object<type>(object_name);return gui;}
+#define GUI_OBJECT_SELECTION(display_function, name) else if(page == name){display_function;}
+
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
 
