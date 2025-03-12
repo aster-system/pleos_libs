@@ -284,11 +284,28 @@ namespace pleos {
         class Graphic_Collision {
             // Class representating a collision in a graphic object
         public:
+
+            // Datas for a rect collision
+            struct Collision_Rect_Rect {
+                // Possible side for collision
+                #define PLEOS_PHYSIC_RECT_COLLISION_BOTTOM 3
+                #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
+                #define PLEOS_PHYSIC_RECT_COLLISION_RIGHT 4
+                #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
+
+                // Distance between the colliding side
+                double distance;
+                // If the collision happens or not
+                bool happens = false;
+                // Side of the collision
+                char side;
+            };
+
             // Graphic_Collision constructor
             Graphic_Collision(std::weak_ptr<Graphic_Base_Object> attached_object):a_attached_object(attached_object){};
 
             // Checks if a collision occurs with an another collision
-            bool check_collision(Graphic_Collision* collision);
+            Collision_Rect_Rect check_collision(Graphic_Collision* collision);
 
             // Getters and setters
             inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
@@ -328,12 +345,17 @@ namespace pleos {
             // Checks if a collision occurs with an another collision
             void check_collision(Graphic_Collision* collision);
 
+            // Accelerates the object
+            inline void accelerate(scls::Point_3D acceleration){a_velocity += acceleration;};
+
             // Getters and setters
+            inline void add_next_movement(scls::Point_3D new_next_movement){a_next_movement += new_next_movement;};
             inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline bool is_static() const {return a_static;};
             inline scls::Point_3D next_movement() const {return a_next_movement;};
             inline void set_next_movement(scls::Point_3D new_next_movement){a_next_movement = new_next_movement;};
+            inline void set_next_movement(int new_next_movement){set_next_movement(scls::Point_3D(new_next_movement, new_next_movement, new_next_movement));};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
             inline bool use_gravity() const {return a_use_gravity;};
@@ -386,6 +408,7 @@ namespace pleos {
         std::vector<std::vector<Physic_Case>> a_physic_map;
         int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;
     };
+    typedef Graphic::Graphic_Collision::Collision_Rect_Rect Collision_Rect_Rect;
 
     class Graphic_Object : public scls::GUI_Object {
         // Class representating an object containing a graphic
@@ -397,11 +420,14 @@ namespace pleos {
             // Graphic_GUI_Object constructor
             Graphic_GUI_Object(std::shared_ptr<scls::GUI_Object>needed_object):Graphic_Base_Object(),a_object(needed_object){needed_object.get()->set_ignore_click(true);needed_object.get()->set_texture_alignment(scls::T_Fill);};
 
+            // Updates the event of the object
+            virtual void update_event(){};
             // Soft reset the object
-            void soft_reset(){a_moved_this_frame=false;};
+            virtual void soft_reset(){a_moved_this_frame=false;};
 
             // Move the GUI object
-            void move(scls::Point_3D point){a_x += scls::Fraction::from_double(point.x());a_y += scls::Fraction::from_double(point.y());};
+            void move(scls::Point_3D point){physic_object()->add_next_movement(point);};
+            void __move(scls::Point_3D point){a_x += scls::Fraction::from_double(point.x());a_y += scls::Fraction::from_double(point.y());};
             // Scale the GUI Object
             void scale(Graphic_Object* graphic, int image_width, int image_height);
 
@@ -415,6 +441,7 @@ namespace pleos {
             inline scls::Fraction min_y_next() const {return a_y - a_height / 2 + scls::Fraction::from_double(physic_object()->next_movement().y());};
             inline scls::GUI_Object* object() const {return a_object.get();};
             inline Graphic::Graphic_Physic* physic_object() const {return a_physic_object.get();};
+            inline scls::_Window_Advanced_Struct* window_struct(){return &a_object.get()->window_struct();};
         private:
             // GUI object
             std::shared_ptr<scls::GUI_Object> a_object;
@@ -444,7 +471,7 @@ namespace pleos {
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
         virtual void update_event();
-        virtual void update_texture(){texture()->set_image(to_image());for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}};
+        virtual void update_texture(){texture()->set_image(to_image());for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}set_should_render_during_this_frame(true);};
 
         // Adds a function to the graphic
         inline void add_function(std::shared_ptr<Function_Studied> function_studied){a_datas.add_function(function_studied);};
@@ -479,7 +506,7 @@ namespace pleos {
 
         // Handle other object
         // Creates a new GUI object
-        template <typename T = scls::GUI_Object> std::shared_ptr<Graphic_GUI_Object> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<T>(other_name);std::shared_ptr<Graphic_GUI_Object>object=std::make_shared<Graphic_GUI_Object>(to_return);object.get()->set_this_object(object);a_gui_objects.push_back(object);return object;};
+        template <typename T = Graphic_GUI_Object, typename G = scls::GUI_Object> std::shared_ptr<T> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<G>(other_name);std::shared_ptr<T>object=std::make_shared<T>(to_return);object.get()->set_this_object(object);a_gui_objects.push_back(object);return object;};
 
         // Annoying functions to draw the image
         inline int graphic_x_to_pixel_x(double x, int needed_width){return a_datas.graphic_x_to_pixel_x(x, needed_width);};

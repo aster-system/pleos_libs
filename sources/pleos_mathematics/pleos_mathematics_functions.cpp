@@ -693,35 +693,66 @@ namespace pleos {
     //******************
 
     // Checks if a collision occurs with an another collision
-    bool __check_collision_rect_rect(Graphic::Graphic_Collision* collision_1, Graphic::Graphic_Collision* collision_2){
+    Collision_Rect_Rect __check_collision_rect_rect(Graphic::Graphic_Collision* collision_1, Graphic::Graphic_Collision* collision_2){
         // Check X
         bool x_1 = (collision_1->max_x() > collision_2->min_x() && collision_2->max_x() > collision_1->max_x());
         bool x_2 = (collision_2->max_x() > collision_1->min_x() && collision_1->max_x() > collision_2->max_x());
         bool x_3 = (collision_2->max_x() >= collision_1->max_x() && collision_1->min_x() >= collision_2->min_x());
         bool x_4 = (collision_1->max_x() >= collision_2->max_x() && collision_2->min_x() >= collision_1->min_x());
-        if(!(x_1 || x_2 || x_3 || x_4)){return false;}
+        if(!(x_1 || x_2 || x_3 || x_4)){return Collision_Rect_Rect();}
 
         // Check Y
         bool y_1 = (collision_1->max_y() > collision_2->min_y() && collision_2->max_y() > collision_1->max_y());
         bool y_2 = (collision_2->max_y() > collision_1->min_y() && collision_1->max_y() > collision_2->max_y());
         bool y_3 = (collision_2->max_y() >= collision_1->max_y() && collision_1->min_y() >= collision_2->min_y());
         bool y_4 = (collision_1->max_y() >= collision_2->max_y() && collision_2->min_y() >= collision_1->min_y());
-        if(!(y_1 || y_2 || y_3 || y_4)){return false;}
+        if(!(y_1 || y_2 || y_3 || y_4)){return Collision_Rect_Rect();}
 
-        return true;
+        // Get the differences
+        Collision_Rect_Rect to_return;
+        to_return.happens = true;
+
+        // X
+        double x_diff = collision_2->min_x().to_double() - collision_1->max_x().to_double();
+        double x_diff_temp = collision_1->min_x().to_double() - collision_2->max_x().to_double();
+        if(std::abs(x_diff) > std::abs(x_diff_temp)){x_diff = x_diff_temp;}
+        // Y
+        double y_diff = collision_2->min_y().to_double() - collision_1->max_y().to_double();
+        double y_diff_temp = collision_1->min_y().to_double() - collision_2->max_y().to_double();
+        if(std::abs(y_diff) > std::abs(y_diff_temp)){y_diff = y_diff_temp;}
+
+        // Returns the good value
+        if(std::abs(x_diff) > std::abs(y_diff)){
+            // Returns a Y
+            if(y_1 || y_4){to_return.side = PLEOS_PHYSIC_RECT_COLLISION_TOP;}
+            else{to_return.side = PLEOS_PHYSIC_RECT_COLLISION_BOTTOM;}
+
+            // Set the distance
+            to_return.distance = std::abs(y_diff);
+        }
+        else {
+            // Returns a X
+            if(x_2 || x_3){to_return.side = PLEOS_PHYSIC_RECT_COLLISION_LEFT;}
+            else{to_return.side = PLEOS_PHYSIC_RECT_COLLISION_RIGHT;}
+
+            // Set the distance
+            to_return.distance = std::abs(x_diff);
+        }
+
+        // Return the result
+        return to_return;
     };
-    bool Graphic::Graphic_Collision::check_collision(Graphic_Collision* collision) {
+    Collision_Rect_Rect Graphic::Graphic_Collision::check_collision(Graphic_Collision* collision) {
         // Asserts
-        if(collision == 0 || collision->attached_object() == attached_object()){return false;}
+        if(collision == 0 || collision->attached_object() == attached_object()){return Collision_Rect_Rect();}
 
         // Both objects are rect
         if(type() == Graphic::Graphic_Collision_Type::GCT_Rect && collision->type() == Graphic::Graphic_Collision_Type::GCT_Rect) {
-            if(__check_collision_rect_rect(this, collision)) {
-                return true;
-            }
+            Collision_Rect_Rect current_result = __check_collision_rect_rect(this, collision);
+            if(current_result.happens) {return current_result;}
         }
 
-        return false;
+        return Collision_Rect_Rect();
     }
 
     // Checks if a collision occurs with an another object
@@ -730,13 +761,28 @@ namespace pleos {
         if(collision == 0 || collision->attached_object() == attached_object()){return;}
 
         // Check each collision
-        bool result = false;
-        for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {result = (result || a_collisions[i].get()->check_collision(collision));}
+        for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {
+            Collision_Rect_Rect current_result = a_collisions[i].get()->check_collision(collision);
 
-        // Apply result
-        if(result) {
-            a_next_movement = scls::Point_3D(0, 0, 0);
-            a_velocity *= scls::Point_3D(1, 0, 1);
+            if(current_result.happens) {
+                // Apply result
+                if(current_result.side == PLEOS_PHYSIC_RECT_COLLISION_BOTTOM) {
+                    if(a_next_movement.y() < 0){a_next_movement *= scls::Point_3D(1, 0, 1);a_next_movement += scls::Point_3D(0, current_result.distance, 0);}
+                    if(a_velocity.y() < 0){a_velocity *= scls::Point_3D(1, 0, 1);}
+                }
+                else if(current_result.side == PLEOS_PHYSIC_RECT_COLLISION_LEFT) {
+                    if(a_next_movement.x() < 0){a_next_movement *= scls::Point_3D(0, 1, 1);a_next_movement += scls::Point_3D(current_result.distance, 0, 0);}
+                    if(a_velocity.x() < 0){a_velocity *= scls::Point_3D(0, 1, 1);}
+                }
+                else if(current_result.side == PLEOS_PHYSIC_RECT_COLLISION_RIGHT) {
+                    if(a_next_movement.x() > 0){a_next_movement *= scls::Point_3D(0, 1, 1);a_next_movement += scls::Point_3D(-current_result.distance, 0, 0);}
+                    if(a_velocity.x() > 0){a_velocity *= scls::Point_3D(0, 1, 1);}
+                }
+                else if(current_result.side == PLEOS_PHYSIC_RECT_COLLISION_TOP) {
+                    if(a_next_movement.y() > 0){a_next_movement *= scls::Point_3D(1, 0, 1);a_next_movement += scls::Point_3D(0, -current_result.distance, 0);}
+                    if(a_velocity.y() > 0){a_velocity *= scls::Point_3D(1, 0, 1);}
+                }
+            }
         }
     }
 
@@ -769,6 +815,13 @@ namespace pleos {
     // Updates the object
     void Graphic_Object::update_event() {
         GUI_Object::update_event();
+
+        // Update the object
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            if(a_gui_objects[i].get() != 0) {
+                a_gui_objects[i].get()->update_event();
+            }
+        }
 
         // Update the physic
         int needed_update_physic = update_physic();
@@ -827,7 +880,6 @@ namespace pleos {
         }
 
         if(modified){update_texture();}
-        if(window_struct().key_pressed("p")){to_image().get()->save_png("tests/function.png");}
     }
 
     // Updates the physic
@@ -847,7 +899,7 @@ namespace pleos {
         // Apply velocity
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
             if(a_gui_objects[i].get()->physic_object() != 0) {
-                a_gui_objects[i].get()->physic_object()->set_next_movement(a_gui_objects[i].get()->physic_object()->velocity() * window_struct().delta_time());
+                a_gui_objects[i].get()->physic_object()->add_next_movement(a_gui_objects[i].get()->physic_object()->velocity() * window_struct().delta_time());
                 needed_update++;
             }
         }
@@ -905,7 +957,8 @@ namespace pleos {
         // Apply next movement
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
             if(a_gui_objects[i].get()->physic_object() != 0) {
-                a_gui_objects[i].get()->move(a_gui_objects[i].get()->physic_object()->next_movement());
+                a_gui_objects[i].get()->__move(a_gui_objects[i].get()->physic_object()->next_movement());
+                a_gui_objects[i].get()->physic_object()->set_next_movement(0);
                 needed_update++;
             }
         }
