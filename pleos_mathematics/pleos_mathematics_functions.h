@@ -429,7 +429,7 @@ namespace pleos {
             void move(scls::Point_3D point){physic_object()->add_next_movement(point);};
             void __move(scls::Point_3D point){a_x += scls::Fraction::from_double(point.x());a_y += scls::Fraction::from_double(point.y());};
             // Scale the GUI Object
-            void scale(Graphic_Object* graphic, int image_width, int image_height);
+            void scale(Graphic* graphic, int image_width, int image_height);
 
             // Sets the physic object
             inline void set_physic_object(bool is_static){a_physic_object=std::make_shared<Graphic::Graphic_Physic>(a_this_object);a_physic_object.get()->set_static(is_static);a_physic_object.get()->set_use_gravity(!is_static);};
@@ -471,7 +471,7 @@ namespace pleos {
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
         // Updates the object
         virtual void update_event();
-        virtual void update_texture(){texture()->set_image(to_image());for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {a_gui_objects[i].get()->scale(this, width_in_pixel(), height_in_pixel());}set_should_render_during_this_frame(true);};
+        virtual void update_texture();
 
         // Adds a function to the graphic
         inline void add_function(std::shared_ptr<Function_Studied> function_studied){a_datas.add_function(function_studied);};

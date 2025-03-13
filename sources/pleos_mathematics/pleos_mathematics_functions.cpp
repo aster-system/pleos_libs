@@ -803,8 +803,9 @@ namespace pleos {
     // Render the object
     void Graphic_Object::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
 
+
     // Scale the GUI Object
-    void Graphic_Object::Graphic_GUI_Object::scale(Graphic_Object* graphic, int image_width, int image_height){
+    void Graphic_Object::Graphic_GUI_Object::scale(Graphic* graphic, int image_width, int image_height){
         a_object.get()->set_height_in_pixel(std::ceil(graphic->pixel_by_case_y()) * a_height.to_double());
         a_object.get()->set_width_in_pixel(std::ceil(graphic->pixel_by_case_x()) * a_width.to_double());
         a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
@@ -813,8 +814,10 @@ namespace pleos {
     };
 
     // Updates the object
+    int __graphic_object_render_number = 0;
     void Graphic_Object::update_event() {
         GUI_Object::update_event();
+        if(window_struct().time_since_last_fps_calculation() <= 0){std::cout << "R " << __graphic_object_render_number << std::endl;__graphic_object_render_number=0;}
 
         // Update the object
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
@@ -829,7 +832,7 @@ namespace pleos {
         // Move the plane
         bool modified = (needed_update_physic > 0);
         if(is_focused()) {
-            scls::Fraction speed = scls::Fraction(5) * window_struct().delta_time();
+            scls::Fraction speed = scls::Fraction(round(5.0 * window_struct().delta_time() * 10000.0), 10000);
             if(window_struct().key_pressed("q")){middle_x_add(speed * -1);modified = true;}
             if(window_struct().key_pressed("d")){middle_x_add(speed);modified = true;}
             if(window_struct().key_pressed("z")){middle_y_add(speed);modified = true;}
@@ -883,7 +886,7 @@ namespace pleos {
     }
 
     // Updates the physic
-    scls::Point_3D gravity = scls::Point_3D(0, -1.625, 0);
+    scls::Point_3D gravity = scls::Point_3D(0, -3.71, 0);
     int Graphic_Object::update_physic() {
         // Realised updates
         int needed_update = 0;
@@ -965,4 +968,22 @@ namespace pleos {
 
         return needed_update;
     }
+
+    // Update the texture of the object
+    void Graphic_Object::update_texture(){
+        // Set the good image
+        int needed_width = width_in_pixel();int needed_height = height_in_pixel();
+        std::shared_ptr<scls::Image> needed_image = a_datas.to_image(needed_width, needed_height);
+        texture()->set_image(needed_image);
+        __graphic_object_render_number++;
+
+        // Update the objects
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
+            Graphic_Object::Graphic_GUI_Object* current = a_gui_objects.at(i).get();
+            current->scale(&a_datas, needed_width, needed_height);
+        }
+
+        // Update the parent
+        set_should_render_during_this_frame(true);
+    };
 }
