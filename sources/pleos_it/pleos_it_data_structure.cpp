@@ -29,5 +29,6 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
-
+    // Current node style
+    scls::Text_Style __current_node_style = scls::Text_Style();
 }

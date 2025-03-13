@@ -37,7 +37,7 @@ namespace pleos {
 	//*********
 
 	//Add a node to the graph
-	void __graph_add_node(std::shared_ptr<scls::XML_Text> current_text, Graph<std::string>* graph) {
+	void __graph_add_node(std::shared_ptr<scls::XML_Text> current_text, scls::Text_Style needed_style, Graph<std::string>* graph) {
         // Handle the attributes
         std::string to_add = std::string();
         scls::Fraction x = 0; scls::Fraction y = 0;
@@ -69,30 +69,36 @@ namespace pleos {
         }
 	}
 	// Add datas to a tree
-	void __tree_add_datas(std::shared_ptr<scls::XML_Text> current_text, Tree<std::string>* tree){
+	void __tree_add_datas(std::shared_ptr<scls::XML_Text> current_text, scls::Text_Style needed_style, Tree<std::string>* tree){
         // Handle the attributes
         std::string to_add = std::string();
         for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
             if(current_text.get()->xml_attributes()[i].name == std::string("name")){to_add = current_text.get()->xml_attributes()[i].value;}
         }
-        tree->set_value(to_add);
 
-        // Handle a lot of balises
-        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
-            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
-            std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
-            if(current_balise_name == "tree" || current_balise_name == "trees"){
-                // Add the node
-                __tree_add_datas(current_text->sub_texts()[i], tree->add_node(std::string()));
-            }
-            else if(current_balise_name == "node"){
-                // Add the node
-                __graph_add_node(current_text->sub_texts()[i], tree->graph());
+        if(to_add == std::string() && current_text->sub_texts().size() == 1){__tree_add_datas(current_text->sub_texts()[0], needed_style, tree);}
+        else {
+            // Set the name
+            tree->root()->set_style(needed_style);
+            tree->set_value(to_add);
+
+            // Handle a lot of balises
+            for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+                std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+                std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+                if(current_balise_name == "tree" || current_balise_name == "trees"){
+                    // Add the node
+                    __tree_add_datas(current_text->sub_texts()[i], needed_style, tree->add_node(std::string()));
+                }
+                else if(current_balise_name == "node"){
+                    // Add the node
+                    __graph_add_node(current_text->sub_texts()[i], needed_style, tree->graph());
+                }
             }
         }
 	}
 	// Creates and returns a tree from an std::string
-	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, tree.get());return tree;};
+	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;};
 
 	// Generate a word
     void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
@@ -166,7 +172,7 @@ namespace pleos {
         }
         else if(current_balise_name == "tree") {
             // Generate a tree
-            std::shared_ptr<Tree<std::string>> tree = tree_from_xml(current_text);
+            std::shared_ptr<Tree<std::string>> tree = tree_from_xml(current_text, *needed_style.get());
 
             // Get the image
             std::shared_ptr<scls::Image> src_img = tree.get()->to_image();

@@ -171,6 +171,9 @@ namespace pleos {
     //
     //******************
 
+    // Current node style
+    extern scls::Text_Style __current_node_style;
+
     template <typename E>
     class Graph {
         // Class representating a graph
@@ -190,11 +193,13 @@ namespace pleos {
 
             // Returns the value into an image
             template <typename X = E> std::enable_if<!std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get());return to_return;};
-            template <typename X = E> std::enable_if<std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {scls::Text_Style style;style.set_alignment_horizontal(scls::H_Center);std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get(), style);return to_return;};
+            template <typename X = E> std::enable_if<std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {style().set_alignment_horizontal(scls::H_Center);std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get(), style());return to_return;};
 
             // Getters and setters
             inline int id() const {return a_id;};
             inline std::vector<Link>& links() {return a_links;};
+            inline scls::Text_Style& style() {return a_style;};
+            inline void set_style(scls::Text_Style new_style){a_style = new_style;};
             inline void set_value(E new_value){a_value = std::make_shared<E>(new_value);};
             inline void set_x(scls::Fraction new_x){a_x = new_x;};
             inline void set_y(scls::Fraction new_y){a_y = new_y;};
@@ -206,6 +211,8 @@ namespace pleos {
             int a_id = 0;
             // Links to others nodes
             std::vector<Link> a_links;
+            // Style of the node
+            scls::Text_Style a_style;
             // Value in the node
             std::shared_ptr<E> a_value;
             // X value of the node
@@ -354,6 +361,7 @@ namespace pleos {
         inline Tree* child(int id){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].root_id()==id){return &a_children[i];}}return 0;};
         inline Graph<E>* graph() const {return a_graph.get();};
         inline auto& nodes() {return a_graph.get()->nodes();};
+        inline auto* root() {return nodes()[a_root_id].get();};
         inline int root_id() const {return a_root_id;};
         inline void set_value(E new_value){nodes()[a_root_id].get()->set_value(new_value);};
         inline E* value() const {return a_graph.get()->node(a_root_id)->value();};
