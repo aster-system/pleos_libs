@@ -482,6 +482,7 @@ namespace pleos {
         inline void reset(){a_datas.reset();};
         // Returns the image of the graphic
         inline std::shared_ptr<scls::Image> to_image(){return a_datas.to_image(width_in_pixel(), height_in_pixel());};
+        inline bool use_image() const {return a_datas.draw_base() && a_datas.draw_sub_bases();};
 
         // Handle circles
         // Adds a circle to the graphic

@@ -803,7 +803,6 @@ namespace pleos {
     // Render the object
     void Graphic_Object::render(glm::vec3 scale_multiplier) {scls::GUI_Object::render(scale_multiplier);}
 
-
     // Scale the GUI Object
     void Graphic_Object::Graphic_GUI_Object::scale(Graphic* graphic, int image_width, int image_height){
         a_object.get()->set_height_in_pixel(std::ceil(graphic->pixel_by_case_y()) * a_height.to_double());
@@ -976,8 +975,10 @@ namespace pleos {
     void Graphic_Object::update_texture(){
         // Set the good image
         int needed_width = width_in_pixel();int needed_height = height_in_pixel();
-        std::shared_ptr<scls::Image> needed_image = a_datas.to_image(needed_width, needed_height);
-        texture()->set_image(needed_image);
+        if(use_image()) {
+            std::shared_ptr<scls::Image> needed_image = a_datas.to_image(needed_width, needed_height);
+            texture()->set_image(needed_image);
+        }
         __graphic_object_render_number++;
 
         // Update the objects
