@@ -272,6 +272,7 @@ namespace pleos {
         inline void pixel_by_case_y_add(double value) const {a_graphic_base.get()->a_pixel_by_case_y += value;};
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
+        inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_vectors;};
 
         //******************
         //
@@ -469,6 +470,8 @@ namespace pleos {
         virtual void after_resizing(){update_texture();};
         // Renders the object
         virtual void render(glm::vec3 scale_multiplier = glm::vec3(1, 1, 1));
+        // Soft reset the object
+        virtual void soft_reset(){a_created_vectors_at_click.clear();};
         // Updates the object
         virtual void update_event();
         virtual void update_texture();
@@ -521,6 +524,7 @@ namespace pleos {
         inline scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return a_datas.pixel_y_to_graphic_y(y, needed_image);};
 
         // Getters and setters
+        inline std::vector<std::shared_ptr<Vector>>& created_vectors_at_click(){return a_created_vectors_at_click;};
         inline Form_2D* current_form_2d() const {return a_current_form_2d.get();};
         inline bool draw_base() const {return a_datas.draw_base();};
         inline bool draw_sub_bases() const {return a_datas.draw_sub_bases();};
@@ -538,6 +542,7 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_datas.set_draw_base(new_draw_base);};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_datas.set_draw_sub_bases(new_draw_sub_bases);};
         inline void set_operation_at_click(int new_operation_at_click) {a_operation_at_click = new_operation_at_click;};
+        inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_datas.vectors();};
 
         //******************
         //
@@ -559,6 +564,8 @@ namespace pleos {
         // Other object in the graphic
         std::vector<std::shared_ptr<Graphic_GUI_Object>> a_gui_objects;
 
+        // Created objects at click
+        std::vector<std::shared_ptr<Vector>> a_created_vectors_at_click;
         // Operation to do at click
         int a_operation_at_click = PLEOS_OPERATION_NOTHING;
 

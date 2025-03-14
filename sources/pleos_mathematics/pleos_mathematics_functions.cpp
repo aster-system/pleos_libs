@@ -817,7 +817,7 @@ namespace pleos {
     int __graphic_object_render_number = 0;
     void Graphic_Object::update_event() {
         GUI_Object::update_event();
-        if(window_struct().time_since_last_fps_calculation() <= 0){std::cout << "R " << __graphic_object_render_number << std::endl;__graphic_object_render_number=0;}
+        //if(window_struct().time_since_last_fps_calculation() <= 0){std::cout << "R " << __graphic_object_render_number << std::endl;__graphic_object_render_number=0;}
 
         // Update the object
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
@@ -852,6 +852,7 @@ namespace pleos {
                 scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
                 scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
                 add_vector(Vector("a", movement_x, movement_y));
+                a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
                 modified = true;
             }
             else if(operation_at_click() == PLEOS_OPERATION_POINT) {
@@ -863,6 +864,7 @@ namespace pleos {
                 Vector needed_vector = Vector("a", movement_x, movement_y);
                 needed_vector.set_type(Vector_Type::VT_Point);
                 add_vector(needed_vector);
+                a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
                 modified = true;
             }
             else if(operation_at_click() == PLEOS_OPERATION_FORM) {
@@ -877,6 +879,7 @@ namespace pleos {
                 std::shared_ptr<Vector> needed_vector = std::make_shared<Vector>(std::string("Forme_") + std::to_string(current_form_2d()->points().size()), movement_x, movement_y);
                 needed_vector.get()->set_type(Vector_Type::VT_Point);
                 add_point(needed_vector);
+                a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
                 current_form_2d()->add_point(needed_vector);
                 modified = true;
             }
