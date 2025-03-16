@@ -174,7 +174,7 @@ namespace pleos {
         };
 
         // Graphic constructor
-        Graphic(){};
+        Graphic(){a_style.get()->set_background_color(scls::Color(0, 0, 0, 0));};
 
         // Sets the middle of the base
         inline void set_middle(double middle_x, double middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
@@ -270,8 +270,10 @@ namespace pleos {
         inline void pixel_by_case_x_add(double value) const {a_graphic_base.get()->a_pixel_by_case_x += value;};
         inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
         inline void pixel_by_case_y_add(double value) const {a_graphic_base.get()->a_pixel_by_case_y += value;};
+        inline void set_background_color(scls::Color new_background_color){a_style.get()->set_background_color(new_background_color);};
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
+        inline scls::Text_Style* style() const {return a_style.get();};
         inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_vectors;};
 
         //******************
@@ -384,6 +386,8 @@ namespace pleos {
         // Things to draw
         bool a_draw_base = true;
         bool a_draw_sub_bases = true;
+        // Style of the graphic
+        std::shared_ptr<scls::Text_Style> a_style = std::make_shared<scls::Text_Style>();
 
         // Loaded function
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;

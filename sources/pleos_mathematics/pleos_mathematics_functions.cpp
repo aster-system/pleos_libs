@@ -651,7 +651,7 @@ namespace pleos {
     scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
     std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, scls::Color(0, 0, 0, 0));
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, style()->background_color());
 
         // Handle the height and width
         if(a_graphic_base.get()->a_height != -1) {a_graphic_base.get()->a_pixel_by_case_y = static_cast<double>(height_in_pixel) / a_graphic_base.get()->a_height;}
