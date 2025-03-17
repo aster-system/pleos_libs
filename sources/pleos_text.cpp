@@ -36,6 +36,53 @@ namespace pleos {
 	//
 	//*********
 
+	// Creates and returns a linked-list from an std::string
+	std::shared_ptr<Linked_List<std::string>> linked_list_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style) {
+	    std::shared_ptr<Linked_List<std::string>> to_return;
+
+	    // Handle a lot of balises
+	    std::shared_ptr<Linked_List<std::string>> current_list;
+        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
+            std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
+            std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "case" || current_balise_name == "element"){
+                std::string content = std::string();
+                for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                    if(attributes[i].name == std::string("content")){content = attributes[i].value;}
+                }
+                if(to_return.get() == 0) {to_return = std::make_shared<Linked_List<std::string>>();to_return.get()->set_value(content);current_list = to_return;}
+                else{current_list = current_list.get()->add_child(content);}
+            }
+        }
+
+        // Return the result
+        return to_return;
+	}
+
+	// Creates and returns a table from an std::string
+	std::shared_ptr<Table> table_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style) {
+	    std::shared_ptr<Table> to_return = std::make_shared<Table>();
+	    scls::Text_Image_Generator tig;
+
+	    // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
+            std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
+            std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "case"){
+                std::string content = std::string();int x = 0;int y = 0;
+                for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                    if(attributes[i].name == std::string("content")){content = attributes[i].value;}
+                    else if(attributes[i].name == std::string("x")){x = std::stoi(attributes[i].value);}
+                    else if(attributes[i].name == std::string("y")){y = std::stoi(attributes[i].value);}
+                }
+                to_return.get()->case_at(x, y)->image = tig.image_shared_ptr(content, needed_style);
+            }
+        }
+
+        // Return the result
+        return to_return;
+	}
+
 	//Add a node to the graph
 	void __graph_add_node(std::shared_ptr<scls::XML_Text> current_text, scls::Text_Style needed_style, Graph<std::string>* graph) {
         // Handle the attributes
@@ -160,6 +207,8 @@ namespace pleos {
             to_return = graphic.to_image(200, 200);
             to_return.get()->draw_border(1, 1, 1, 1, scls::Color(0, 0, 0));
         }
+        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
 
         return to_return;
@@ -167,7 +216,7 @@ namespace pleos {
     void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
-        if(current_balise_name == "graphic" || current_balise_name == "tree") {
+        if(current_balise_name == "graphic" || current_balise_name == "linked_list" || current_balise_name == "table" || current_balise_name == "tree") {
             // Get the image
             std::shared_ptr<scls::Image> src_img = generate_text_image(current_text, needed_style);
 

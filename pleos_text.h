@@ -31,6 +31,7 @@
 #include "../../scls-graphic-benoit/scls_graphic.h"
 #include "pleos_mathematics/pleos_mathematics_functions.h"
 #include "pleos_it.h"
+#include "pleos_table.h"
 
 // Define a macro to easily add an object
 #define GUI_PAGE(type, gui, gui_page, function, display_function, display_function_parent) private: std::shared_ptr<type> gui; \
@@ -49,6 +50,12 @@ namespace pleos {
 	// PLEOS Text handler
 	//
 	//*********
+
+	// Creates and returns a linked-list from an std::string
+	std::shared_ptr<Linked_List<std::string>> linked_list_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
+
+	// Creates and returns a table from an std::string
+	std::shared_ptr<Table> table_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
 
 	// Creates and returns a tree from an std::string
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
@@ -100,10 +107,16 @@ namespace pleos {
             defined_balises.get()->set_defined_balise("link", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("linked_list", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("node", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("nodes", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("table", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("tree", current_balise);

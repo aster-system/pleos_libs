@@ -174,15 +174,15 @@ namespace pleos {
     // Current node style
     extern scls::Text_Style __current_node_style;
 
-    template <typename E>
-    class Graph {
+    template <typename E> class Graph {
         // Class representating a graph
     public:
         // Node in a graph
         class Node {
         public:
             // Links for a node in a graph
-            struct Link{std::weak_ptr<Node> target;};
+            enum Link_Type{LT_Middle, LT_Angle, LT_Bottom, LT_Left, LT_Right, LT_Top, LT_X, LT_Y};
+            struct Link{Link_Type type = Link_Type::LT_Middle;std::weak_ptr<Node> target;};
 
             // Node constructor
             Node(E new_value, scls::Fraction x, scls::Fraction y, int id):a_id(id),a_x(x),a_y(y){set_value(new_value);};
@@ -219,7 +219,7 @@ namespace pleos {
             scls::Fraction a_x;
             // Y value of the node
             scls::Fraction a_y;
-        }; typedef Node::Link Link;
+        }; typedef Node::Link Link;typedef Node::Link_Type Link_Type;
 
         // Graph constructor
         Graph(){};
@@ -290,10 +290,60 @@ namespace pleos {
                         std::shared_ptr<Node> current_node = links[j].target.lock();
                         int current_id = current_node.get()->id();
                         if(current_id > a_nodes[i].get()->id() || true) {
-                            scls::Fraction current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
-                            scls::Fraction current_y_end = needed_y[current_id];
-                            scls::Fraction current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
-                            scls::Fraction current_y_start = needed_y[i];
+                            // Get the good link type
+                            Link_Type link_type = links[j].type;
+
+                            // Calculate with the angle
+                            if(link_type == Link_Type::LT_Angle) {
+                                // Get the good angle
+                                scls::Fraction x_diff = needed_x[current_id] - needed_x[i];
+                                scls::Fraction y_diff = needed_y[current_id] - needed_y[i];
+                                double angle = scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0 / SCLS_PI);
+                                while(angle < 0){angle += 360;}
+                                if(angle > 225 && angle <= 315){link_type = Link_Type::LT_Bottom;}
+                                else if(angle > 135 && angle <= 225){link_type = Link_Type::LT_Left;}
+                                else if(angle <= 45 || angle >= 315){link_type = Link_Type::LT_Right;}
+                                else {link_type = Link_Type::LT_Top;}
+                            }
+
+                            // Get the good values
+                            scls::Fraction current_x_end;scls::Fraction current_x_start;
+                            scls::Fraction current_y_end;scls::Fraction current_y_start;
+                            if(link_type == Link_Type::LT_Middle) {
+                                // Start at the middle
+                                current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
+                                current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
+                                current_y_end = needed_y[current_id] + scls::Fraction(images[current_id].get()->height(), 2);
+                                current_y_start = needed_y[i] + scls::Fraction(images[i].get()->height(), 2);
+                            }
+                            else if(link_type == Link_Type::LT_Bottom) {
+                                // Bottom link
+                                current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
+                                current_y_end = needed_y[current_id] + scls::Fraction(images[current_id].get()->height());
+                                current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
+                                current_y_start = needed_y[i];
+                            }
+                            else if(link_type == Link_Type::LT_Left) {
+                                // Left link
+                                current_x_end = needed_x[current_id] + scls::Fraction(images[i].get()->width());
+                                current_y_end = needed_y[current_id] + scls::Fraction(images[i].get()->height(), 2);
+                                current_x_start = needed_x[i];
+                                current_y_start = needed_y[i] + scls::Fraction(images[i].get()->height(), 2);
+                            }
+                            else if(link_type == Link_Type::LT_Right) {
+                                // Right link
+                                current_x_end = needed_x[current_id] - scls::Fraction(images[current_id].get()->width());
+                                current_y_end = needed_y[current_id] + scls::Fraction(images[i].get()->height(), 2);
+                                current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width());
+                                current_y_start = needed_y[i] + scls::Fraction(images[i].get()->height(), 2);
+                            }
+                            else {
+                                // Top link
+                                current_x_end = needed_x[current_id] + scls::Fraction(images[current_id].get()->width(), 2);
+                                current_y_end = needed_y[current_id];
+                                current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
+                                current_y_start = needed_y[i] + scls::Fraction(images[current_id].get()->height());
+                            }//*/
 
                             // Draw the link
                             to_return.get()->draw_line(current_x_start.to_double(), current_y_start.to_double(), current_x_end.to_double(), current_y_end.to_double(), scls::Color(0, 0, 0), 2);
@@ -316,11 +366,53 @@ namespace pleos {
     };
 
     //******************
+    // Linked list
+    //******************
+
+    template <typename E> class Linked_List {
+        // Class representating a linked-list (in a graph environment)
+    public:
+        // Linked_List constructor
+        Linked_List(std::shared_ptr<Graph<E>> graph, int root_id):a_graph(graph),a_root_id(root_id){};
+        Linked_List():a_root_id(a_graph.get()->add_node(E())){};
+
+        // Add a child in the graph
+        std::shared_ptr<Linked_List> add_child(E value){int current_id = a_graph.get()->add_node(value);a_child = std::make_shared<Linked_List>(a_graph, current_id);a_graph.get()->link_nodes(a_root_id,current_id);place_child_directly();return a_child;}
+        // Place the child in the graph
+        void place_child() {root()->set_x(a_root_x);root()->set_y(a_root_y);if(a_child.get() != 0){a_child.get()->place_child();}};
+        void place_child_directly() {if(a_child.get() == 0){return;}scls::Fraction x = 1;scls::Fraction y = 0;a_child.get()->a_root_x=a_root_x + x;a_child.get()->a_root_y=a_root_y + y;a_child.get()->place_child();};
+
+        // Return the image of the graph attached to the linked-list
+        inline std::shared_ptr<scls::Image> to_image(){place_child();return a_graph.get()->image();};
+
+        // Getters and setters
+        inline std::shared_ptr<Linked_List> child() const {return a_child;};
+        inline auto& nodes() {return a_graph.get()->nodes();};
+        inline auto* root() {return nodes()[a_root_id].get();};
+        inline int root_id() const {return a_root_id;};
+        inline void set_value(E new_value){root()->set_value(new_value);};
+
+    private:
+
+        // Children of this list
+        std::shared_ptr<Linked_List> a_child;
+        // Attached graph for this tree
+        std::shared_ptr<Graph<E>> a_graph = std::make_shared<Graph<E>>();
+
+        // Datas for the root
+        // ID of the roots for this tree
+        int a_root_id = 0;
+        // X value of the root
+        scls::Fraction a_root_x = 0;
+        // Y value of the root
+        scls::Fraction a_root_y = 0;
+    };
+
+    //******************
     // Tree
     //******************
 
-    template <typename E>
-    class Tree {
+    template <typename E> class Tree {
         // Class representating a tree
     public:
         // Tree constructor
