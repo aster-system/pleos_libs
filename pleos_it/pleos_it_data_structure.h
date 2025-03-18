@@ -377,20 +377,25 @@ namespace pleos {
         Linked_List():a_root_id(a_graph.get()->add_node(E())){};
 
         // Add a child in the graph
-        std::shared_ptr<Linked_List> add_child(E value){int current_id = a_graph.get()->add_node(value);a_child = std::make_shared<Linked_List>(a_graph, current_id);a_graph.get()->link_nodes(a_root_id,current_id);place_child_directly();return a_child;}
+        std::shared_ptr<Linked_List> add_child(E value){int current_id = a_graph.get()->add_node(value);a_child = std::make_shared<Linked_List>(a_graph, current_id);a_child.get()->a_parent=a_this_object;a_child.get()->a_this_object=a_child;a_graph.get()->link_nodes(a_root_id,current_id);place_child_directly();return a_child;}
         // Place the child in the graph
         void place_child() {root()->set_x(a_root_x);root()->set_y(a_root_y);if(a_child.get() != 0){a_child.get()->place_child();}};
-        void place_child_directly() {if(a_child.get() == 0){return;}scls::Fraction x = 1;scls::Fraction y = 0;a_child.get()->a_root_x=a_root_x + x;a_child.get()->a_root_y=a_root_y + y;a_child.get()->place_child();};
+        void __place_child_directly(Linked_List* needed_child) {scls::Fraction x = 1;scls::Fraction y = 0;needed_child->a_root_x=a_root_x + x;needed_child->a_root_y=a_root_y + y;a_child.get()->place_child();};
+        void place_child_directly() {if(a_child.get() == 0){return;}else if(ignore_for_placement()){if(parent()!=0){parent()->__place_child_directly(a_child.get());}return;}__place_child_directly(a_child.get());};
 
         // Return the image of the graph attached to the linked-list
         inline std::shared_ptr<scls::Image> to_image(){place_child();return a_graph.get()->image();};
 
         // Getters and setters
         inline std::shared_ptr<Linked_List> child() const {return a_child;};
+        inline bool ignore_for_placement() const{return a_ignore_for_placement;};
         inline auto& nodes() {return a_graph.get()->nodes();};
+        inline Linked_List<E>* parent() const{return a_parent.lock().get();};
         inline auto* root() {return nodes()[a_root_id].get();};
         inline int root_id() const {return a_root_id;};
+        inline void set_ignore_for_placement(bool new_ignore_for_placement){a_ignore_for_placement = new_ignore_for_placement;};
         inline void set_value(E new_value){root()->set_value(new_value);};
+        inline void set_y(scls::Fraction new_y){a_root_y = new_y;};
 
     private:
 
@@ -398,6 +403,12 @@ namespace pleos {
         std::shared_ptr<Linked_List> a_child;
         // Attached graph for this tree
         std::shared_ptr<Graph<E>> a_graph = std::make_shared<Graph<E>>();
+        // Ignore the element for the place
+        bool a_ignore_for_placement = false;
+        // Parent of this list
+        std::weak_ptr<Linked_List> a_parent;
+        // Shared ptr to this object
+        std::weak_ptr<Linked_List> a_this_object;
 
         // Datas for the root
         // ID of the roots for this tree

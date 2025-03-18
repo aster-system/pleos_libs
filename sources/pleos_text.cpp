@@ -47,11 +47,21 @@ namespace pleos {
             std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "case" || current_balise_name == "element"){
                 std::string content = std::string();
+                bool ignore_for_placement = false;
+                scls::Fraction x = 0;bool x_used = false;
+                scls::Fraction y = 0;bool y_used = false;
                 for(int i = 0;i<static_cast<int>(attributes.size());i++) {
                     if(attributes[i].name == std::string("content")){content = attributes[i].value;}
+                    else if(attributes[i].name == std::string("ignore_for_placement")){ignore_for_placement=true;}
+                    else if(attributes[i].name == std::string("x")){x = scls::Fraction::from_std_string(attributes[i].value);x_used=true;}
+                    else if(attributes[i].name == std::string("y")){y = scls::Fraction::from_std_string(attributes[i].value);y_used=true;}
                 }
                 if(to_return.get() == 0) {to_return = std::make_shared<Linked_List<std::string>>();to_return.get()->set_value(content);current_list = to_return;}
                 else{current_list = current_list.get()->add_child(content);}
+                // Configurate the node
+                current_list.get()->set_ignore_for_placement(ignore_for_placement);
+                if(x_used){current_list.get()->root()->set_x(x);}
+                if(y_used){current_list.get()->set_y(y);}
             }
         }
 
