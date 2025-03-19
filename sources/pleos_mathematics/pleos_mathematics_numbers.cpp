@@ -29,6 +29,96 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
+    // Analysed numbers
+    std::shared_ptr<std::vector<std::shared_ptr<Number>>> numbers;
+    std::shared_ptr<std::vector<std::shared_ptr<Number>>> prime_numbers;
+    // Create the first elements of the list
+    void __first_numbers(){
+        // Create the first elements of the list
+        numbers = std::make_shared<std::vector<std::shared_ptr<Number>>>(10);
+        for(int i = 0;i<static_cast<int>(10);i++) {
+            (*numbers.get())[i] = std::make_shared<Number>();
+            (*numbers.get())[i].get()->number=i;
+        }
+
+        // Set the prime number
+        prime_numbers = std::make_shared<std::vector<std::shared_ptr<Number>>>(4);
+        (*numbers.get())[2].get()->a_is_prime = true;(*prime_numbers.get())[0] = ((*numbers.get())[2]);
+        (*numbers.get())[3].get()->a_is_prime = true;(*prime_numbers.get())[1] = ((*numbers.get())[3]);
+        (*numbers.get())[5].get()->a_is_prime = true;(*prime_numbers.get())[2] = ((*numbers.get())[5]);
+        (*numbers.get())[7].get()->a_is_prime = true;(*prime_numbers.get())[3] = ((*numbers.get())[7]);
+    };
+    // Update the list to a precise position
+    void __update_numbers(long long position) {
+        if(numbers.get() == 0){__first_numbers();}
+        if(numbers.get()->size() > position){return;}
+        std::shared_ptr<std::vector<std::shared_ptr<Number>>>temp=numbers;
+        numbers = std::make_shared<std::vector<std::shared_ptr<Number>>>(position + 1);
+        if(temp.get() != 0) {for(int i = 0;i<static_cast<int>(temp.get()->size());i++){(*numbers.get())[i] = (*temp.get())[i];}}
+    }
+
+    // Check if the number is prime with existing values
+    bool __number_is_prime_existing(long long tested_number) {
+        // Check
+        if(prime_numbers.get() == 0){__first_numbers();}
+        long long limit = tested_number / 2;long long i = 0;
+        while(i < prime_numbers.get()->size() && (*prime_numbers.get())[i].get()->number < limit) {
+            if(tested_number % (*prime_numbers.get())[i].get()->number == 0){return false;}
+            i++;
+        }
+        return true;
+    }
+    // Get the next prime number
+    void __next_prime(){
+        if(prime_numbers.get() == 0){__first_numbers();}
+        long long to_add = 0;
+        for(int i = (*prime_numbers.get())[prime_numbers.get()->size() - 1].get()->number + 2;i>0;i+=2) {if(__number_is_prime_existing(i)){to_add = i;break;}}
+        __update_numbers(to_add);
+        // Create the number if needed
+        if((*numbers.get())[to_add].get() == 0){
+            (*numbers.get())[to_add] = std::make_shared<Number>();
+            (*numbers.get())[to_add].get()->number=to_add;
+        }
+        (*numbers.get())[to_add].get()->a_is_prime = 1;
+        prime_numbers.get()->push_back((*numbers.get())[to_add]);
+    }
+    // Check if an analysed number is prime or not
+    void __number_is_prime(std::shared_ptr<Number> tested_number) {
+        // Check
+        long long limit = tested_number.get()->number / 2;long long i = 0;
+        tested_number.get()->a_is_prime = 1;
+        while((*prime_numbers.get())[i].get()->number < limit) {
+            if(tested_number.get()->number % (*prime_numbers.get())[i].get()->number == 0){tested_number.get()->a_is_prime = 0;break;}
+            i++;
+
+            // Get the next prime number
+            if(prime_numbers.get()->size() <= i){__next_prime();}
+        }
+    }
+
+    // Generates prime number until a certain number
+    void generate_prime_number(long long limit) {while(prime_numbers.get()->size() <= limit){__next_prime();}}
+    void generate_prime_number_until(long long limit) {while((*prime_numbers.get())[prime_numbers.get()->size() - 1].get()->number <= limit){__next_prime();}}
+    // Returns an analysed number
+    std::shared_ptr<Number> number_shared_ptr(long long position){
+        // Update the list if needed
+        __update_numbers(position);
+
+        // Create the number if needed
+        if((*numbers.get())[position].get() == 0){
+            (*numbers.get())[position] = std::make_shared<Number>();
+            (*numbers.get())[position].get()->number=position;
+            __number_is_prime((*numbers.get())[position]);
+        }
+
+        // Returns the needed element
+        return (*numbers.get())[position];
+    };
+    Number* number(long long position){return number_shared_ptr(position).get();}
+    // Returns an analysed prime number
+    std::shared_ptr<Number> prime_number_shared_ptr(long long position){generate_prime_number(position);return (*prime_numbers.get())[position];}
+    Number* prime_number(long long position){return prime_number_shared_ptr(position).get();}
+
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
     std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number) {
@@ -161,6 +251,43 @@ namespace pleos {
         if(redaction != 0) {
             (*redaction) += std::string("L'identité de Bézout de ") + std::to_string(start_first) + std::string(" et ") + std::to_string(start_second) + std::string(" est ");
             (*redaction) += std::to_string(start_first) + std::string(" * ") + std::to_string(a) + std::string(" + ") + std::to_string(start_second) + std::string(" * ") + std::to_string(b) + std::string(" = ") + std::to_string(gcd) + std::string(". ");
+        }
+    }
+
+    // Calculate the decomposition of a number
+    void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction) {
+        long long number_value = object->value_1.value_to_double(0);
+        const long long number_value_start = number_value;
+        if(redaction != 0){
+            //(*redaction) += std::string("Nous cherchons la décomposition en produit de facteurs premiers de ") + std::to_string(number_value) + std::string(". ");
+        }
+
+        std::vector<std::shared_ptr<Number>> decomposition;
+        std::vector<std::shared_ptr<Number>> needed_numbers;
+        // Decompose the number
+        std::shared_ptr<Number> needed_number = number_shared_ptr(number_value);
+        if(number != 0){
+            if(needed_number.get()->is_prime()) {decomposition.push_back(needed_number);}
+            else {
+                int current_divisor = 0;
+                while(number_value > 1) {
+                    if(number_value % prime_number(current_divisor)->number == 0) {
+                        decomposition.push_back(prime_number_shared_ptr(current_divisor));
+                        number_value /= prime_number(current_divisor)->number;
+                    }
+                    else{current_divisor++;}
+                }
+            }
+        }
+
+        // Set the result
+        if(redaction != 0){
+            (*redaction) += std::string("La décomposition en produit de facteurs premiers de ") + std::to_string(number_value_start) + std::string(" est ");
+            (*redaction) += std::to_string(decomposition[0].get()->number);
+            for(int i = 1;i<static_cast<int>(decomposition.size());i++) {
+                (*redaction) += std::string(" * ") + std::to_string(decomposition[i].get()->number);
+            }
+            (*redaction) += std::string(".");
         }
     }
 }

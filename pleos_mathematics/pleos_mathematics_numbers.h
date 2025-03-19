@@ -32,6 +32,13 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
+    // Analysed numbers
+    struct Number {char a_is_prime = -1;bool is_prime()const{return a_is_prime == 1;}; int number = 0;};;
+    extern std::shared_ptr<std::vector<std::shared_ptr<Number>>> numbers;
+    extern std::shared_ptr<std::vector<std::shared_ptr<Number>>> prime_numbers;
+    // Returns an analysed number
+    Number* number(long long position);
+
     // Arithmetic object
     struct Arithmetic_Object{
         std::shared_ptr<scls::GUI_Text>connected_object;
@@ -62,6 +69,8 @@ namespace pleos {
     long long arithmetic_gcd(Arithmetic_Object* object, std::string* redaction);
     // Calculate the Bezout identity of two numbers
     void arithmetic_bezout_identity(Arithmetic_Object* object, std::string* redaction);
+    // Calculate the decomposition of a number
+    void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS
