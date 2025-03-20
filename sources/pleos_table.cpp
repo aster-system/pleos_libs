@@ -40,7 +40,7 @@ namespace pleos {
     int Table::column_width(int column) const{
         int to_return = 0;
         for(int i = 0;i<static_cast<int>(a_cases.at(column).size());i++){
-            if(a_cases.at(column).at(i).get()->width() > to_return){
+            if(a_cases.at(column).at(i).get() != 0 && a_cases.at(column).at(i).get()->width() > to_return){
                 to_return = a_cases.at(column).at(i).get()->width();
             }
         }
@@ -131,6 +131,16 @@ namespace pleos {
                     int current_y = needed_y[j] + (needed_height[j] / 2 - current_image->height() / 2);
                     to_return.get()->paste(current_image, current_x, current_y);
                 }
+
+                // Draw the separation
+                scls::Color separation_color = scls::Color(0, 0, 0);
+                if(i > 0){to_return.get()->fill_rect(needed_x[i] - column_separation, needed_y[j], column_separation, needed_height[j] + line_separation, separation_color);}
+                if(j > 0){to_return.get()->fill_rect(needed_x[i], needed_y[j] - line_separation, needed_width[i] + column_separation, line_separation, separation_color);}
+            }
+
+            // Missing cases
+            for(int j = a_cases.at(i).size();j<static_cast<int>(needed_lines);j++) {
+                Table::Table_Case* current_case = case_at(i, j);
 
                 // Draw the separation
                 scls::Color separation_color = scls::Color(0, 0, 0);
