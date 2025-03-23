@@ -1,6 +1,6 @@
 //******************
 //
-// pleos_mathematics_functions.h
+// pleos_it_data_structure.h
 //
 //******************
 // Presentation :
@@ -235,7 +235,7 @@ namespace pleos {
         inline std::vector<std::shared_ptr<Node>>& nodes() {return a_nodes;};
 
         // Returns the tree in an image
-        std::shared_ptr<scls::Image> image() {
+        std::shared_ptr<scls::Image> image(std::shared_ptr<scls::Text_Style> needed_style) {
             std::shared_ptr<scls::Image> to_return;
             if(a_nodes.size() > 0) {
                 // Get the needed children images
@@ -278,10 +278,20 @@ namespace pleos {
                     needed_y.push_back(current_y);
                 }
 
-                // Draw the final image
+                // Prepare the creation of the image
                 int node_to_node_separation = 20;
                 int root_to_node_separation = 30;
-                to_return = std::make_shared<scls::Image>(total_width.to_double(), total_height.to_double(), scls::Color(255, 255, 255));
+                int x_offset = 0;int y_offset = 0;int height_to_add = 0;int width_to_add = 0;
+                if(needed_style.get() != 0){
+                    x_offset = needed_style.get()->border_left_width + needed_style.get()->padding_left();y_offset = needed_style.get()->border_top_width + needed_style.get()->padding_top();
+                    height_to_add = y_offset + needed_style.get()->border_right_width + needed_style.get()->padding_right();width_to_add = x_offset + needed_style.get()->border_bottom_width + needed_style.get()->padding_bottom();
+                }
+                // Draw the final image
+                to_return = std::make_shared<scls::Image>(total_width.to_double() + width_to_add, total_height.to_double() + height_to_add, scls::Color(255, 255, 255));
+                if(needed_style.get() != 0) {
+                    // Draw the border
+                    to_return.get()->draw_border(needed_style.get()->border_left_width, needed_style.get()->border_top_width, needed_style.get()->border_bottom_width, needed_style.get()->border_right_width, needed_style.get()->border_color);
+                }
 
                 // Draw the links
                 for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
@@ -346,7 +356,7 @@ namespace pleos {
                             }//*/
 
                             // Draw the link
-                            to_return.get()->draw_line(current_x_start.to_double(), current_y_start.to_double(), current_x_end.to_double(), current_y_end.to_double(), scls::Color(0, 0, 0), 2);
+                            to_return.get()->draw_line(current_x_start.to_double() + x_offset, current_y_start.to_double() + y_offset, current_x_end.to_double() + x_offset, current_y_end.to_double() + y_offset, scls::Color(0, 0, 0), 2);
                         }
                     }
                 } //*/
@@ -354,11 +364,12 @@ namespace pleos {
                 // Paste the children
                 for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
                     std::shared_ptr<scls::Image> current_image = images[i];
-                    to_return.get()->paste(current_image.get(), needed_x[i].to_double(), needed_y[i].to_double());
+                    to_return.get()->paste(current_image.get(), needed_x[i].to_double() + x_offset, needed_y[i].to_double() + y_offset);
                 }
             }
             return to_return;
         };
+        inline std::shared_ptr<scls::Image> image(){return image(std::shared_ptr<scls::Text_Style>());};
 
     private:
         // Nodes in the tree
@@ -384,7 +395,8 @@ namespace pleos {
         void place_child_directly() {if(a_child.get() == 0){return;}else if(ignore_for_placement()){if(parent()!=0){parent()->__place_child_directly(a_child.get());}return;}__place_child_directly(a_child.get());};
 
         // Return the image of the graph attached to the linked-list
-        inline std::shared_ptr<scls::Image> to_image(){place_child();return a_graph.get()->image();};
+        inline std::shared_ptr<scls::Image> to_image(std::shared_ptr<scls::Text_Style> needed_style){place_child();return a_graph.get()->image(needed_style);};
+        inline std::shared_ptr<scls::Image> to_image(){return to_image(std::shared_ptr<scls::Text_Style>());};
 
         // Getters and setters
         inline std::shared_ptr<Linked_List> child() const {return a_child;};

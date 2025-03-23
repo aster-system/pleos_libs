@@ -162,6 +162,18 @@ namespace pleos {
 	    std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
         std::shared_ptr<scls::Image> to_return;
+
+        // Handle style balises
+        needed_style = needed_style.get()->new_child();
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "border") {scls::border_from_xml(current_text->sub_texts()[i], needed_style.get());}
+            else if(current_balise_name == "padding") {scls::padding_from_xml(current_text->sub_texts()[i], needed_style.get());}
+        }
+
+        // Create the image
         if(current_balise_name == "graphic") {
             // Generate a graphic
             Graphic graphic = Graphic();
@@ -217,7 +229,7 @@ namespace pleos {
             to_return = graphic.to_image(200, 200);
             to_return.get()->draw_border(1, 1, 1, 1, scls::Color(0, 0, 0));
         }
-        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}
         else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
 

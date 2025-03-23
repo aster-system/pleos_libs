@@ -29,5 +29,7 @@
 
 // Include the data structure part
 #include "pleos_it/pleos_it_data_structure.h"
+// Include the sorting part
+#include "pleos_it/pleos_it_sorting.h"
 
 #endif // PLEOS_IT
