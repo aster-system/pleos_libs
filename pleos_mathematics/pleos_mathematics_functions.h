@@ -220,6 +220,7 @@ namespace pleos {
         inline Form_2D* form(std::string form_name){return form_shared_ptr(form_name).get();};
         // Creates and returns a form
         inline std::shared_ptr<Form_2D> new_form(std::string name){std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);add_form(to_return);return to_return;};
+        inline std::shared_ptr<Form_2D> new_form(std::string name, std::string points){std::shared_ptr<Form_2D>needed_form=new_form(name);set_form_points(needed_form.get(), points);return needed_form;};
         // Creates and returns a form from a face
         inline std::shared_ptr<Form_2D> new_form_from_face(std::string name, scls::model_maker::Face* face){
             std::shared_ptr<Form_2D>to_return=new_form(name);
@@ -252,6 +253,8 @@ namespace pleos {
         // Returns a point by his name
         inline std::shared_ptr<Vector> point_shared_ptr(std::string point_name){for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points[i].get()->name() == point_name){return a_points[i];}}return std::shared_ptr<Vector>();};
         inline Vector* point(std::string point_name){return point_shared_ptr(point_name).get();};
+        // Creates and returns a new point in the graphic
+        inline std::shared_ptr<Vector> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>needed=std::make_shared<Vector>(name, x, y);add_point(needed);return needed;};
 
         // Handle vectors
         // Adds a vector to the graphic

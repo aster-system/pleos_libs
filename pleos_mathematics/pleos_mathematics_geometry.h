@@ -135,13 +135,16 @@ namespace pleos {
     class Form_2D {
         // Class representating a geometrical form in 2D
     public:
+        // Link between the point
+        struct Link {double drawing_proportion = 1;};
+
         // Form_2D constructor
         Form_2D(std::string name):a_name(name){};
 
         // Adds an exclusion point to the form
         inline void add_exclusion_point(std::shared_ptr<Vector> point){a_exclusion_points.push_back(point);};
         // Adds a point to the form
-        inline void add_point(std::shared_ptr<Vector> point){a_points.push_back(point);};
+        inline void add_point(std::shared_ptr<Vector> point){a_points.push_back(point);a_points_link.push_back(Link());};
         // Rotates the form
         inline void rotate(scls::Fraction angle){for(int i = 0;i<static_cast<int>(a_points.size());i++){a_points[i].get()->rotate(angle);}};
 
@@ -157,9 +160,13 @@ namespace pleos {
         // Getters and setters
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::vector<std::shared_ptr<Vector>>& exclusion_points(){return a_exclusion_points;};
+        inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
+        inline Link& link(int position){return a_points_link[position];};
         inline std::string name() const {return a_name;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
+        inline void set_link_drawing_proportion(int link, double new_proportion){if(link >= a_points_link.size()){return;}a_points_link[link].drawing_proportion = new_proportion;};
+        inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
 
     private:
@@ -176,6 +183,8 @@ namespace pleos {
         std::vector<std::shared_ptr<Vector>> a_exclusion_points;
         // Points in the circle
         std::vector<std::shared_ptr<Vector>> a_points;
+        // Links for the point
+        std::vector<Link> a_points_link;
     };
 
     //******************

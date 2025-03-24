@@ -500,14 +500,42 @@ namespace pleos {
             std::shared_ptr<Vector> current_point = needed_form->points()[j];
             double needed_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
             double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y_to_double(), to_return);
-            to_return.get()->draw_line(last_x, last_y, needed_x, needed_y, scls::Color(255, 0, 0), form_width);
+
+            // Apply the proportion
+            double needed_proportion = needed_form->link(j - 1).drawing_proportion;
+            double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
+            double needed_move_y = needed_y - last_y;double needed_move_y_minus = 0;
+            if(needed_proportion >= 0) {
+                needed_move_x *= needed_proportion;
+                needed_move_y *= needed_proportion;
+            }
+            else {
+                needed_move_x_minus = needed_move_x * (1.0 + needed_proportion);
+                needed_move_y_minus = needed_move_y * (1.0 + needed_proportion);
+            }
+
+            to_return.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, scls::Color(255, 0, 0), form_width);
             last_point = current_point; last_x = needed_x; last_y = needed_y;
         }
 
         // Link the last point
         double needed_x = graphic_x_to_pixel_x(needed_form->points()[0]->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
         double needed_y = graphic_y_to_pixel_y_inversed(needed_form->points()[0]->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        to_return.get()->draw_line(last_x, last_y, needed_x, needed_y, scls::Color(255, 0, 0), form_width);
+        // Apply the proportion
+        double needed_proportion = needed_form->last_link().drawing_proportion;
+        double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
+        double needed_move_y = needed_y - last_y;double needed_move_y_minus = 0;
+        if(needed_proportion >= 0) {
+            needed_move_x *= needed_proportion;
+            needed_move_y *= needed_proportion;
+        }
+        else {
+            needed_move_x_minus = needed_move_x * (1.0 + needed_proportion);
+            needed_move_y_minus = needed_move_y * (1.0 + needed_proportion);
+        }
+
+        // Apply the proportion
+        to_return.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, scls::Color(255, 0, 0), form_width);
     }
 
     // Draws a point on the graphic
