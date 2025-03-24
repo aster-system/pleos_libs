@@ -197,16 +197,19 @@ namespace pleos {
                     (*a_elements[i].get()) *= total_product;
                 }
             }
-            else if(dimension().dimension_number() == 1 && other.dimension().last_dimension() == 1 && dimension() == other.dimension().first_dimension()) {
+            else if(dimension().dimension_number() == 1 && dimension() == other.dimension().first_dimension()) {
                 // Multiply as a single dimension matrice
-                E final_value;
+                Matrice<E> final_matrice(name() + " * " + other.name(), dimension());
                 for(int i = 0;i<static_cast<int>(a_elements.size());i++) {
                     // Add the elements
-                    final_value += other.matrice_at(i)->at(0) * (*a_elements[i].get());
+                    E current_value = 0;
+                    for(int j = 0;j<static_cast<int>(a_elements.size());j++){
+                        E to_add = (*a_elements[j].get()) * other.matrice_at(i)->at(j);
+                        current_value += to_add;
+                    }
+                    final_matrice.set(i, current_value);
                 }
                 // Set the final value
-                Matrice<E> final_matrice(name() + " * " + other.name(), 1);
-                final_matrice[0] = final_value;
                 *this = final_matrice;
             }
         };
