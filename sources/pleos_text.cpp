@@ -177,9 +177,19 @@ namespace pleos {
         if(current_balise_name == "graphic") {
             // Generate a graphic
             Graphic graphic = Graphic();
+            int graphic_height_in_pixel = 200;bool graphic_height_in_pixel_used = false;
+            int graphic_width_in_pixel = 200;bool graphic_width_in_pixel_used = false;
+            bool use_ratio_base = false;
+            std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "height") {graphic_height_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_height_in_pixel_used = true;}
+                else if(attributes[j].name == "ratio_base") {use_ratio_base = true;}
+                else if(attributes[j].name == "width") {graphic_width_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_width_in_pixel_used = true;}
+            }
 
             // Get the datas about the graphic
             scls::Fraction graphic_height = 10;scls::Fraction graphic_width = 10;
+            std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
             // Handle a lot of balises
             for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++) {
                 std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
@@ -191,17 +201,38 @@ namespace pleos {
                     for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                         if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                         else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                        else if(attributes[j].name == "draw") {if(attributes[j].value == "false" || attributes[j].value == "0"){graphic.set_draw_base(false);graphic.set_draw_sub_bases(false);}}
                     }
+                }
+                else if(current_balise_name == "circle") {
+                    // Get the datas about a circle of the graphic
+                    scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;scls::Color color = scls::Color(255, 255, 255);
+                    std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "border_radius") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                        else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
+                        else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                        else if(attributes[j].name == "radius") {radius = scls::Fraction::from_std_string(attributes[j].value);}
+                        else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                        else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                    }
+                    // Add the circle
+                    std::shared_ptr<Circle> circle = *graphic.add_circle(needed_name, Vector(needed_name + std::string("-center") , needed_x, needed_y), radius);
+                    circle.get()->set_border_color(border_color);circle.get()->set_border_radius(border_radius.to_double());circle.get()->set_color(color);
                 }
                 else if(current_balise_name == "form") {
                     // Get the datas about a vector of the graphic
+                    scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
                     std::string needed_name = std::string();std::string needed_points = std::string();
                     for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                        if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                        if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
+                        else if(attributes[j].name == "border_radius") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                        else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
                         else if(attributes[j].name == "points") {needed_points = attributes[j].value;}
                     }
                     // Add the form
-                    graphic.set_form_points(graphic.new_form(needed_name), needed_points);
+                    std::shared_ptr<Form_2D> created_form = graphic.new_form(needed_name, needed_points);
+                    created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
                 }
                 else if(current_balise_name == "point" || current_balise_name == "vec") {
                     // Get the datas about a vector of the graphic
@@ -221,12 +252,35 @@ namespace pleos {
                     if(current_balise_name == "point"){graphic.add_point(Vector(needed_name, needed_x, needed_y));}
                     else if(current_balise_name == "vec"){graphic.add_vector(Vector(needed_name, needed_x, needed_y));}
                 }
+                else if(current_balise_name == "text") {
+                    // Get the datas about a text of the graphic
+                    std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "content") {needed_content = attributes[j].value;}
+                        else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                        else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                    }
+                    // Add the text
+                    graphic.new_text(needed_content, Vector(std::string("text-center") , needed_x, needed_y), text_style);
+                }
+                else if(current_balise_name == "text_style") {
+                    // Get the datas about the style text of the graphic
+                    std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "background_color") {text_style.get()->set_background_color(scls::Color::from_std_string(attributes[j].value));}
+                        else if(attributes[j].name == "font_size") {text_style.get()->set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
+                    }
+                }
             }
             // Set the datas
             graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
 
             // Get the image
-            to_return = graphic.to_image(200, 200);
+            if(use_ratio_base){
+                if(graphic_height_in_pixel_used&&!graphic_width_in_pixel_used){graphic_width_in_pixel = static_cast<double>(graphic_height_in_pixel) * (graphic_width.to_double() / graphic_height.to_double());}
+                else if(!graphic_height_in_pixel_used&&graphic_width_in_pixel_used){graphic_height_in_pixel = static_cast<double>(graphic_width_in_pixel) * (graphic_height.to_double() / graphic_width.to_double());}
+            }
+            to_return = graphic.to_image(graphic_width_in_pixel, graphic_height_in_pixel);
             to_return.get()->draw_border(1, 1, 1, 1, scls::Color(0, 0, 0));
         }
         else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}

@@ -173,6 +173,16 @@ namespace pleos {
             std::shared_ptr<__Graphic_Base> a_graphic_base;
         };
 
+        // Text in a graphic
+        struct Graphic_Text{
+            std::string content;std::shared_ptr<scls::Text_Style> style;scls::Fraction x = 0;scls::Fraction y = 0;
+
+            // Moves an object to a position, from an another position
+            inline void move_from_to(Vector pos_1, Vector pos_2, double proportion){Vector new_pos = pos_1 + (pos_2 - pos_1) * proportion;x = new_pos.x()->value(0).real();y = new_pos.y()->value(0).real();};
+            // Returns the position of the text
+            inline Vector position() const {return Vector("v", x, y);};
+        };
+
         // Graphic constructor
         Graphic(){a_style.get()->set_background_color(scls::Color(0, 0, 0, 0));};
 
@@ -245,6 +255,15 @@ namespace pleos {
         void set_form_points(Form_2D* needed_form, std::string points){std::vector<std::string> cutted = scls::cut_string(points, ";");for(int i = 0;i<static_cast<int>(cutted.size());i++){needed_form->add_point(point_shared_ptr(cutted[i]));}};
         void set_form_points(std::shared_ptr<Form_2D> needed_form, std::string points){set_form_points(needed_form.get(), points);};
 
+        // Creates and returns a triangle (and its point)
+        std::shared_ptr<Form_2D> new_triangle(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3);
+
+        // Handle lines
+        // Draw a line between two points
+        void draw_line(Vector* point_1, Vector* point_2, scls::Color color, double width, double proportion, std::shared_ptr<scls::Image> to_return);
+        // Creates and returns a line (and its points)
+        std::shared_ptr<Form_2D> new_line(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2);
+
         // Handle points
         // Adds a points to the graphic
         inline void add_point(std::shared_ptr<Vector> needed_point){a_points.push_back(needed_point);};
@@ -255,6 +274,11 @@ namespace pleos {
         inline Vector* point(std::string point_name){return point_shared_ptr(point_name).get();};
         // Creates and returns a new point in the graphic
         inline std::shared_ptr<Vector> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>needed=std::make_shared<Vector>(name, x, y);add_point(needed);return needed;};
+
+        // Handle texts
+        // Creates and returns a new text in the graphic
+        inline Graphic_Text* new_text(std::string content, scls::Fraction x, scls::Fraction y, std::shared_ptr<scls::Text_Style> style){a_texts.push_back(std::make_shared<Graphic_Text>());Graphic_Text* current_text=a_texts[a_texts.size() - 1].get();current_text->content = content;current_text->style = style;current_text->x=x;current_text->y=y;return current_text;};
+        inline Graphic_Text* new_text(std::string content, Vector position, std::shared_ptr<scls::Text_Style> style){return new_text(content, position.x()->value(0).real(), position.y()->value(0).real(), style);};
 
         // Handle vectors
         // Adds a vector to the graphic
@@ -277,6 +301,7 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
         inline scls::Text_Style* style() const {return a_style.get();};
+        inline std::vector<std::shared_ptr<Graphic_Text>>& texts(){return a_texts;};
         inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_vectors;};
 
         //******************
@@ -403,6 +428,8 @@ namespace pleos {
         std::vector<std::shared_ptr<Form_2D>> a_forms_2d;
         // Geometrical point
         std::vector<std::shared_ptr<Vector>> a_points;
+        // Text
+        std::vector<std::shared_ptr<Graphic_Text>> a_texts;
         // Geometrical vectors
         std::vector<std::shared_ptr<Vector>> a_vectors;
 

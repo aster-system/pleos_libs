@@ -470,39 +470,45 @@ namespace pleos {
     // Draws a form on the graphic
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
         // Asserts
-        if(needed_form->points().size() < 3){return;}
+        if(needed_form->points().size() < 2){return;}
+        else if(needed_form->points().size() == 2) {draw_line(needed_form->points()[0].get(), needed_form->points()[1].get(), needed_form->border_color(), needed_form->border_radius(), needed_form->link(0).drawing_proportion, to_return);return;}
         // Triangulate the form
         std::vector<std::shared_ptr<Vector>> triangulated_points = needed_form->triangulated_points();
 
         // Draw the inner form
-        scls::Color inner_color = scls::Color(0, 255, 0);
-        for(int i = 0;i<static_cast<int>(triangulated_points.size());i+=3) {
-            std::shared_ptr<Vector> current_point = triangulated_points[i];
-            double first_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-            double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            current_point = triangulated_points[i + 1];
-            double second_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-            double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            current_point = triangulated_points[i + 2];
-            double third_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-            double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            to_return.get()->fill_triangle(first_x, first_y, second_x, second_y, third_x, third_y, inner_color);
-        } triangulated_points.clear();
+        scls::Color inner_color = needed_form->color();inner_color.set_alpha(static_cast<double>(inner_color.alpha()) * needed_form->opacity());
+        if(inner_color.alpha() > 0) {
+            for(int i = 0;i<static_cast<int>(triangulated_points.size());i+=3) {
+                std::shared_ptr<Vector> current_point = triangulated_points[i];
+                double first_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
+                double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                current_point = triangulated_points[i + 1];
+                double second_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
+                double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                current_point = triangulated_points[i + 2];
+                double third_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
+                double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                to_return.get()->fill_triangle(first_x, first_y, second_x, second_y, third_x, third_y, inner_color);
+            } triangulated_points.clear();
+        }
 
         // Draw the links
-        double form_width = 6;
-        std::shared_ptr<Vector> last_point = needed_form->points()[0];
+        std::shared_ptr<Vector> last_point = needed_form->points()[needed_form->points().size() - 1];
         double last_x = graphic_x_to_pixel_x(last_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
         double last_y = graphic_y_to_pixel_y_inversed(last_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
 
         // Link each points
+        scls::Color border_color = needed_form->border_color();border_color.set_alpha(static_cast<double>(border_color.alpha()) * needed_form->opacity());
         for(int j = 0;j<static_cast<int>(needed_form->points().size());j++) {
             std::shared_ptr<Vector> current_point = needed_form->points()[j];
             double needed_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
             double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y_to_double(), to_return);
+            Form_2D::Link current_link;
+            if(j <= 0){current_link = needed_form->last_link();}
+            else{current_link = needed_form->link(j - 1);}
 
             // Apply the proportion
-            double needed_proportion = needed_form->link(j - 1).drawing_proportion;
+            double needed_proportion = current_link.drawing_proportion;
             double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
             double needed_move_y = needed_y - last_y;double needed_move_y_minus = 0;
             if(needed_proportion >= 0) {
@@ -514,15 +520,20 @@ namespace pleos {
                 needed_move_y_minus = needed_move_y * (1.0 + needed_proportion);
             }
 
-            to_return.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, scls::Color(255, 0, 0), form_width);
+            to_return.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, border_color, needed_form->border_radius());
             last_point = current_point; last_x = needed_x; last_y = needed_y;
         }
+    }
 
-        // Link the last point
-        double needed_x = graphic_x_to_pixel_x(needed_form->points()[0]->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double needed_y = graphic_y_to_pixel_y_inversed(needed_form->points()[0]->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+    // Draw a line between two points
+    void Graphic::draw_line(Vector* point_1, Vector* point_2, scls::Color color, double width, double proportion, std::shared_ptr<scls::Image> to_return) {
+        // Draw a line
+        double last_x = graphic_x_to_pixel_x(point_1->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double last_y = graphic_y_to_pixel_y_inversed(point_1->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double needed_x = graphic_x_to_pixel_x(point_2->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(point_2->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
         // Apply the proportion
-        double needed_proportion = needed_form->last_link().drawing_proportion;
+        double needed_proportion = proportion;
         double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
         double needed_move_y = needed_y - last_y;double needed_move_y_minus = 0;
         if(needed_proportion >= 0) {
@@ -535,7 +546,7 @@ namespace pleos {
         }
 
         // Apply the proportion
-        to_return.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, scls::Color(255, 0, 0), form_width);
+        to_return.get()->draw_line(last_x + needed_move_x_minus + width / 2.0, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color, width);
     }
 
     // Draws a point on the graphic
@@ -584,6 +595,25 @@ namespace pleos {
         to_return += "float p = (((current_pos.y - 0.5) + middle_position.y)) * height_multiplier;";
         to_return += "if((y_1 >= p && y_2 <= p) || (y_1 <= p && y_2 >= p)){final_color = vec4(1, 0, 0, 1);}";
         to_return += "FragColor = final_color;}";
+        return to_return;
+    }
+
+    // Creates and returns a line (and its points)
+    std::shared_ptr<Form_2D> Graphic::new_line(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2){
+        std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);
+        to_return.get()->add_point(new_point(name + std::string("-p1"), x_1, y_1));
+        to_return.get()->add_point(new_point(name + std::string("-p2"), x_2, y_2));
+        add_form(to_return);
+        return to_return;
+    }
+
+    // Creates and returns a triangle (and its point)
+    std::shared_ptr<Form_2D> Graphic::new_triangle(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3) {
+        std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);
+        to_return.get()->add_point(new_point(name + std::string("-p1"), x_1, y_1));
+        to_return.get()->add_point(new_point(name + std::string("-p2"), x_2, y_2));
+        to_return.get()->add_point(new_point(name + std::string("-p3"), x_3, y_3));
+        add_form(to_return);
         return to_return;
     }
 
@@ -708,6 +738,14 @@ namespace pleos {
         }
         // Draw the forms
         for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {draw_form(a_forms_2d[i].get(), to_return);}
+        // Draw the texts
+        scls::Text_Image_Generator tig;
+        for(int i = 0;i<static_cast<int>(a_texts.size());i++) {
+            std::shared_ptr<scls::Image> needed_image = tig.image_shared_ptr(a_texts.at(i).get()->content, *a_texts.at(i).get()->style.get());
+            double needed_x = graphic_x_to_pixel_x(a_texts.at(i).get()->x.to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(a_texts.at(i).get()->y.to_double(), to_return);
+            to_return.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
+        }
         // Draw the vectors
         for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {draw_vector(a_vectors[i].get(), to_return);}
 

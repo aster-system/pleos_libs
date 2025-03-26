@@ -158,26 +158,38 @@ namespace pleos {
         inline std::string type_name() const {return type_name(true);};
 
         // Getters and setters
+        inline scls::Color border_color()const{return a_border_color;};
+        inline int border_radius()const{return a_border_radius;};
+        inline scls::Color color()const{return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::vector<std::shared_ptr<Vector>>& exclusion_points(){return a_exclusion_points;};
         inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
         inline Link& link(int position){return a_points_link[position];};
         inline std::string name() const {return a_name;};
+        inline double opacity() const {return a_opacity;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
+        inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
+        inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};
+        inline void set_color(scls::Color new_color){a_color=new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >= a_points_link.size()){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
+        inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
 
     private:
-        // Color of the border of the circle
-        scls::Color a_border_color;
+        // Color of the border of the form
+        scls::Color a_border_color = scls::Color(255, 0, 0);
         // Radius of the border
-        int a_border_radius = 0;
+        int a_border_radius = 6;
+        // Color of the inner form
+        scls::Color a_color = scls::Color(0, 255, 0);
         // Connected object to this vector
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
         // Name of the circle
         std::string a_name = std::string();
+        // Opacity of the form
+        double a_opacity = 1;
 
         // Exclusions points in the circle
         std::vector<std::shared_ptr<Vector>> a_exclusion_points;
