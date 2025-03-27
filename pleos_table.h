@@ -48,16 +48,16 @@ namespace pleos {
         // Cases in the table
         struct Table_Case {
             // Image in the case
-            std::shared_ptr<scls::Image> image;
+            std::shared_ptr<std::shared_ptr<scls::Image>> image;
             // Margin of the case
             int margin = 20;
             // Style of the case
             scls::Text_Style style;
 
             // Height of the case
-            inline int height() const {return image.get()->height();};
+            inline int height() const {return image.get()->get()->height();};
             // Width of the case
-            inline int width() const {return image.get()->width() + margin * 2;};
+            inline int width() const {return image.get()->get()->width() + margin * 2;};
 
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
@@ -69,7 +69,7 @@ namespace pleos {
 
         // Returns the case at a certain position
         Table_Case* case_at(int x, int y);
-        inline std::shared_ptr<scls::Image>& image_at(int x, int y){return case_at(x, y)->image;};
+        inline std::shared_ptr<scls::Image>& image_at(int x, int y){return *(case_at(x, y)->image.get());};
         // Returns the number of column in the table
         inline int column_number() const{return a_cases.size();};
         // Returns the width of a column
@@ -81,6 +81,9 @@ namespace pleos {
         // Returns the total height / width of the image
         inline int total_height() const {int to_return = 0;int needed_width = line_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += line_height(i);};return to_return;};
         inline int total_width() const {int to_return = 0;int needed_width = column_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += column_width(i);};return to_return;};
+
+        // Set the value of an std::strubg case
+        void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = tig->image_shared_ptr(value, *needed_style);};
 
         // Returns the table to an image
         std::shared_ptr<scls::Image> to_image();

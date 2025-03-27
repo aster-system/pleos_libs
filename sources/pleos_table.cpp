@@ -75,7 +75,11 @@ namespace pleos {
     Table::Table_Case* Table::case_at(int x, int y){
         while(a_cases.size() <= x){a_cases.push_back(std::vector<std::shared_ptr<Table::Table_Case>>());}
         while(a_cases[x].size() <= y){a_cases[x].push_back(std::shared_ptr<Table::Table_Case>());}
-        if(a_cases[x][y].get()==0){a_cases[x][y]=std::make_shared<Table::Table_Case>();}
+        if(a_cases[x][y].get()==0){
+            // Create the case
+            a_cases[x][y] = std::make_shared<Table::Table_Case>();
+            a_cases[x][y].get()->image = std::make_shared<std::shared_ptr<scls::Image>>();
+        }
         return a_cases[x][y].get();
     };
 
@@ -118,7 +122,19 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
             for(int j = 0;j<static_cast<int>(a_cases.at(i).size());j++) {
                 Table::Table_Case* current_case = case_at(i, j);
-                scls::Image* current_image = current_case->image.get();
+                scls::Image* current_image = current_case->image.get()->get();
+
+                // Check the merged cases
+                const int temp_i = i;i++;int case_width = 1;
+                while(i < static_cast<int>(a_cases.size())) {
+                    if(a_cases.at(i).size() < j){
+                        Table::Table_Case* analysed_case = case_at(i, j);
+                        if(current_case->image.get() == analysed_case->image.get()){case_width++;}
+                        else{break;}
+                    }
+                    i++;
+                }
+                i = temp_i;
 
                 // Set the background color
                 if(current_case->background_color() != background_color){

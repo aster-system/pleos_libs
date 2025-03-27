@@ -85,7 +85,7 @@ namespace pleos {
                     else if(attributes[i].name == std::string("x")){x = std::stoi(attributes[i].value);}
                     else if(attributes[i].name == std::string("y")){y = std::stoi(attributes[i].value);}
                 }
-                to_return.get()->case_at(x, y)->image = tig.image_shared_ptr(content, needed_style);
+                (*to_return.get()->case_at(x, y)->image.get()) = tig.image_shared_ptr(content, needed_style);
             }
         }
 
