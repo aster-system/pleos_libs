@@ -174,7 +174,7 @@ namespace pleos {
         };
 
         // Text in a graphic
-        struct Graphic_Text{
+        struct Graphic_Text : public __Graphic_Object_Base{
             std::string content;std::shared_ptr<scls::Text_Style> style;scls::Fraction x = 0;scls::Fraction y = 0;
 
             // Moves an object to a position, from an another position
@@ -311,7 +311,7 @@ namespace pleos {
         //******************
 
         // Collision in a graphic object
-        enum Graphic_Collision_Type {GCT_Rect};
+        enum Graphic_Collision_Type {GCT_Line, GCT_Rect};
         class Graphic_Collision {
             // Class representating a collision in a graphic object
         public:
@@ -328,28 +328,45 @@ namespace pleos {
                 double distance;
                 // If the collision happens or not
                 bool happens = false;
-                // Side of the collision
-                char side;
+                // Sides of the collision
+                bool side_bottom = false;
+                bool side_left = false;
+                bool side_right = false;
+                bool side_top = false;
             };
 
             // Graphic_Collision constructor
             Graphic_Collision(std::weak_ptr<Graphic_Base_Object> attached_object):a_attached_object(attached_object){};
 
-            // Checks if a collision occurs with an another collision
-            Collision_Rect_Rect check_collision(Graphic_Collision* collision);
-
             // Getters and setters
             inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
+            inline scls::Fraction direct_x_1() const {return a_x_1;};
+            inline scls::Fraction direct_x_2() const {return a_x_2;};
+            inline scls::Fraction direct_y_1() const {return a_y_1;};
+            inline scls::Fraction direct_y_2() const {return a_y_2;};
             inline scls::Fraction max_x() const {return attached_object()->max_x();};
             inline scls::Fraction max_y() const {return attached_object()->max_y();};
             inline scls::Fraction min_x() const {return attached_object()->min_x();};
             inline scls::Fraction min_y() const {return attached_object()->min_y();};
+            inline void set_type(Graphic_Collision_Type new_type){a_type = new_type;};
+            inline void set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
+            inline void set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
+            inline void set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
+            inline void set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
             inline Graphic_Collision_Type type()const{return a_type;};
+            inline scls::Fraction x_1() const {return attached_object()->x() + a_x_1;};
+            inline scls::Fraction x_2() const {return attached_object()->x() + a_x_2;};
+            inline scls::Fraction y_1() const {return attached_object()->y() + a_y_1;};
+            inline scls::Fraction y_2() const {return attached_object()->y() + a_y_2;};
         private:
             // Attached object
             std::weak_ptr<Graphic_Base_Object> a_attached_object;
             // Type of the collision
             Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
+
+            // Two points (needed for lines)
+            scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
+            scls::Fraction a_x_2 = 0;scls::Fraction a_y_2 = 0;
         };
 
         // Physic case
@@ -373,14 +390,33 @@ namespace pleos {
 
             // Add a collision to the graphic object
             void add_collision(){a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_object));};
+            // Adds a line collision to the graphic object
+            void add_collision(scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2){
+                a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_object));
+                std::shared_ptr<Graphic_Collision> collision=a_collisions.at(a_collisions.size()-1);
+                collision.get()->set_x_1(x_1);collision.get()->set_y_1(y_1);
+                collision.get()->set_x_2(x_2);collision.get()->set_y_2(y_2);
+                collision.get()->set_type(Graphic_Collision_Type::GCT_Line);
+            };
             // Checks if a collision occurs with an another collision
             void check_collision(Graphic_Collision* collision);
 
             // Accelerates the object
             inline void accelerate(scls::Point_3D acceleration){a_velocity += acceleration;};
+            inline void accelerate_x(double acceleration){a_velocity.move_x(acceleration);};
+            // Remove the X / Y velocity
+            inline void remove_x_velocity(){a_velocity.set_x(0);};
+            inline void remove_y_velocity(){a_velocity.set_y(0);};
+
+            // Adds a value to the movement
+            inline void add_next_movement(scls::Point_3D new_next_movement){a_next_movement += new_next_movement;};
+            inline void add_next_movement_x(double new_next_movement){a_next_movement.move_x(new_next_movement);};
+            inline void add_next_movement_y(double new_next_movement){a_next_movement.move_y(new_next_movement);};
+            // Remove the X / Y movement
+            inline void remove_x_movement(){a_next_movement.set_x(0);};
+            inline void remove_y_movement(){a_next_movement.set_y(0);};
 
             // Getters and setters
-            inline void add_next_movement(scls::Point_3D new_next_movement){a_next_movement += new_next_movement;};
             inline Graphic_Base_Object* attached_object()const{return a_attached_object.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline bool is_static() const {return a_static;};

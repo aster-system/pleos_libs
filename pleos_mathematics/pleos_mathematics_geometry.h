@@ -40,6 +40,31 @@ namespace pleos {
 
     //******************
     //
+    // The base of all the next class
+    //
+    //******************
+
+    class __Graphic_Object_Base {
+        // Class representating a base object to display in a graphic
+    public:
+
+        // __Graphic_Object_Base constructor
+        __Graphic_Object_Base(){};
+
+        // Returns a color adapted with the needed opacity
+        scls::Color color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
+
+        // Getters and setters
+        inline double opacity() const {return a_opacity;};
+        inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
+
+    private:
+        // Opacity of the object
+        double a_opacity = 1.0;
+    };
+
+    //******************
+    //
     // The "Vector" class
     //
     //******************
@@ -52,6 +77,7 @@ namespace pleos {
         // Vector constructor
         Vector(std::string name):a_name(name){};
         Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
+        Vector(scls::Formula x, scls::Formula y):Vector(std::string(), x, y){};
         Vector():Vector(""){};
 
         // Returns a vector 3D from a point
@@ -132,7 +158,7 @@ namespace pleos {
     //
     //******************
 
-    class Form_2D {
+    class Form_2D : public __Graphic_Object_Base {
         // Class representating a geometrical form in 2D
     public:
         // Link between the point
@@ -145,6 +171,9 @@ namespace pleos {
         inline void add_exclusion_point(std::shared_ptr<Vector> point){a_exclusion_points.push_back(point);};
         // Adds a point to the form
         inline void add_point(std::shared_ptr<Vector> point){a_points.push_back(point);a_points_link.push_back(Link());};
+        // Moves the points in teh form
+        inline void move_x(scls::Fraction movement){for(int i = 0;i<static_cast<int>(a_points.size());i++){(*a_points[i].get()->x()) += movement;}};
+        inline void move_y(scls::Fraction movement){for(int i = 0;i<static_cast<int>(a_points.size());i++){(*a_points[i].get()->y()) += movement;}};
         // Rotates the form
         inline void rotate(scls::Fraction angle){for(int i = 0;i<static_cast<int>(a_points.size());i++){a_points[i].get()->rotate(angle);}};
 
@@ -166,7 +195,6 @@ namespace pleos {
         inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
         inline Link& link(int position){return a_points_link[position];};
         inline std::string name() const {return a_name;};
-        inline double opacity() const {return a_opacity;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
         inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};
@@ -175,7 +203,6 @@ namespace pleos {
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >= a_points_link.size()){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
-        inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
 
     private:
         // Color of the border of the form
@@ -188,8 +215,6 @@ namespace pleos {
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
         // Name of the circle
         std::string a_name = std::string();
-        // Opacity of the form
-        double a_opacity = 1;
 
         // Exclusions points in the circle
         std::vector<std::shared_ptr<Vector>> a_exclusion_points;
