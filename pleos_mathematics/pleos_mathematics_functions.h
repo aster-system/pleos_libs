@@ -404,6 +404,7 @@ namespace pleos {
             // Accelerates the object
             inline void accelerate(scls::Point_3D acceleration){a_velocity += acceleration;};
             inline void accelerate_x(double acceleration){a_velocity.move_x(acceleration);};
+            inline void accelerate_y(double acceleration){a_velocity.move_y(acceleration);};
             // Remove the X / Y velocity
             inline void remove_x_velocity(){a_velocity.set_x(0);};
             inline void remove_y_velocity(){a_velocity.set_y(0);};
@@ -423,8 +424,11 @@ namespace pleos {
             inline scls::Point_3D next_movement() const {return a_next_movement;};
             inline void set_next_movement(scls::Point_3D new_next_movement){a_next_movement = new_next_movement;};
             inline void set_next_movement(int new_next_movement){set_next_movement(scls::Point_3D(new_next_movement, new_next_movement, new_next_movement));};
+            inline void set_next_movement_x(double new_next_movement_x){a_next_movement.set_x(new_next_movement_x);};
+            inline void set_next_movement_y(double new_next_movement_y){a_next_movement.set_y(new_next_movement_y);};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
+            inline void set_velocity_x(double new_velocity_x){a_velocity.set_x(new_velocity_x);};
             inline bool use_gravity() const {return a_use_gravity;};
             inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
             inline scls::Point_3D& velocity() {return a_velocity;};
@@ -579,8 +583,10 @@ namespace pleos {
         inline void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return){a_datas.draw_vector(needed_point, to_return);};
 
         // Handle other object
+        // Adds a new GUI Object
+        inline void add_other_object(std::shared_ptr<Graphic_GUI_Object> object){object.get()->set_this_object(object);a_gui_objects.push_back(object);};
         // Creates a new GUI object
-        template <typename T = Graphic_GUI_Object, typename G = scls::GUI_Object> std::shared_ptr<T> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<G>(other_name);std::shared_ptr<T>object=std::make_shared<T>(to_return);object.get()->set_this_object(object);a_gui_objects.push_back(object);return object;};
+        template <typename T = Graphic_GUI_Object, typename G = scls::GUI_Object> std::shared_ptr<T> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<G>(other_name);std::shared_ptr<T>object=std::make_shared<T>(to_return);add_other_object(object);return object;};
 
         // Annoying functions to draw the image
         inline int graphic_x_to_pixel_x(double x, int needed_width){return a_datas.graphic_x_to_pixel_x(x, needed_width);};

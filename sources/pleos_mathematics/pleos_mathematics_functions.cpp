@@ -772,6 +772,9 @@ namespace pleos {
         if(!datas_bottom.crossed_in_segment && !datas_right.crossed_in_segment){return Collision_Rect_Rect();}
 
         // Get the differences
+        double slope_x = std::abs(collision_line->x_2().to_double() - collision_line->x_1().to_double());
+        double slope_y = std::abs(collision_line->y_2().to_double() - collision_line->y_1().to_double());
+        double temp = 0;scls::normalize_3d(slope_x, temp, slope_y);std::cout << slope_x << " " << slope_y << std::endl;
         Collision_Rect_Rect to_return;
         to_return.happens = true;
         if(datas_bottom.crossed_in_segment){to_return.side_bottom = true;}
@@ -779,9 +782,27 @@ namespace pleos {
 
         // Check the movement
         if(to_return.side_bottom && to_return.side_right) {
-            if(dynamic_object_1->next_movement().x() > 0){dynamic_object_1->remove_x_movement();}
-            if(dynamic_object_1->next_movement().y() > 0){dynamic_object_1->remove_y_movement();}
-            if(dynamic_object_1->velocity().y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity().y() * 0.05);dynamic_object_1->remove_y_velocity();}
+            double force_distribution = 1.0;
+
+            // Handle next movement
+            if(dynamic_object_1->next_movement().x() > 0 && dynamic_object_1->next_movement().y() < 0){
+                // Handle both axis at once
+                dynamic_object_1->set_next_movement_x(dynamic_object_1->next_movement().x() * slope_x * force_distribution);
+                dynamic_object_1->set_next_movement_y(dynamic_object_1->next_movement().x() * slope_y * force_distribution);
+            }
+            else {
+                if(dynamic_object_1->next_movement().x() > 0){dynamic_object_1->remove_x_movement();}
+                if(dynamic_object_1->next_movement().y() < 0){dynamic_object_1->remove_y_movement();}
+            }
+
+            // Handle velocity
+            if(dynamic_object_1->velocity().x() > 0){
+                dynamic_object_1->set_velocity_x(dynamic_object_1->velocity().x() * slope_x);
+                dynamic_object_1->accelerate_y(dynamic_object_1->velocity().x() * slope_y * 0.5);
+            }
+            else {
+                if(dynamic_object_1->velocity().y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity().y() * 0.1);dynamic_object_1->remove_y_velocity();}
+            }
         }
         if(to_return.side_bottom && !to_return.side_right) {
             if(dynamic_object_1->next_movement().y() < 0){dynamic_object_1->remove_y_movement();}
