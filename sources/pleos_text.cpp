@@ -112,16 +112,20 @@ namespace pleos {
             std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "link"){
                 // Link the node
-                int needed_id = 0;
+                int needed_id = 0;std::string needed_ponderation = std::string();
                 for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                     std::string attribute_name = attributes[j].name;
                     std::string attribute_value = attributes[j].value;
                     if(attribute_name == "id") {needed_id = std::stoi(attribute_value);}
+                    else if(attribute_name == "value") {needed_ponderation = attribute_value;}
                 }
 
                 // Add the link
                 if(needed_id == needed_node){scls::print(std::string("PLEOS Graph"), std::string("Can't link the ") + std::to_string(needed_id) + std::string(" with himself."));}
-                else {graph->link_nodes(needed_node, needed_id);}
+                else {
+                    graph->link_nodes(needed_node, needed_id);
+                    graph->set_link_ponderation(needed_node, needed_id, needed_ponderation, needed_style);
+                }
             }
         }
 	}

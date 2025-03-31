@@ -182,14 +182,17 @@ namespace pleos {
         public:
             // Links for a node in a graph
             enum Link_Type{LT_Middle, LT_Angle, LT_Bottom, LT_Left, LT_Right, LT_Top, LT_X, LT_Y};
-            struct Link{Link_Type type = Link_Type::LT_Middle;std::weak_ptr<Node> target;};
+            struct Link{std::shared_ptr<scls::Image> ponderation;Link_Type type = Link_Type::LT_Middle;std::weak_ptr<Node> target;};
 
             // Node constructor
             Node(E new_value, scls::Fraction x, scls::Fraction y, int id):a_id(id),a_x(x),a_y(y){set_value(new_value);};
             Node(){};
 
             // Links this node with another node
-            inline void link(std::shared_ptr<Node> node){a_links.push_back(Link());a_links[a_links.size()-1].target=node;};
+            inline Link* link(std::shared_ptr<Node> node){Link* temp = link_by_object(node);if(link_by_object(node) == temp){a_links.push_back(Link());a_links[a_links.size()-1].target=node;return &a_links[a_links.size()-1];}return temp;};
+            // Returns a link by the linked object
+            inline Link* link_by_object(Node* node){for(int i = 0;i<static_cast<int>(a_links.size());i++){if(a_links.at(i).target.lock().get() == node){return &a_links[i];}}return 0;};
+            inline Link* link_by_object(std::shared_ptr<Node> node){return link_by_object(node.get());};
 
             // Returns the value into an image
             template <typename X = E> std::enable_if<!std::is_base_of<X,std::string>::value,std::shared_ptr<scls::Image>>::type image_value() {std::shared_ptr<scls::Image> to_return = scls::to_image(a_value.get());return to_return;};
@@ -229,6 +232,10 @@ namespace pleos {
         inline int add_node(E value){return add_node(value, 0, 0);};
         // Links two nodes in the graph
         inline bool link_nodes(int id_1, int id_2){if(id_1!=id_2&&id_1<a_nodes.size()&&id_2<a_nodes.size()){a_nodes[id_1].get()->link(a_nodes[id_2]);return true;}return false;};
+        // Sets the ponderation of a link node
+        inline void set_link_ponderation(int id_1, int id_2, std::shared_ptr<scls::Image> needed_ponderation){if(id_1!=id_2&&id_1<a_nodes.size()&&id_2<a_nodes.size()){Link* needed_link = a_nodes[id_1].get()->link(a_nodes[id_2]);needed_link->ponderation = needed_ponderation;}};
+        inline void set_link_ponderation(int id_1, int id_2, std::string needed_ponderation, scls::Text_Style style, scls::Text_Image_Generator* tig){set_link_ponderation(id_1, id_2, tig->image_shared_ptr(needed_ponderation, style));};
+        inline void set_link_ponderation(int id_1, int id_2, std::string needed_ponderation, scls::Text_Style style){set_link_ponderation(id_1, id_2, scls::to_image(&needed_ponderation, style));};
 
         // Getters and setters
         inline Node* node(int id)const{if(id > a_nodes.size()){return 0;}return a_nodes.at(id).get();};
@@ -354,6 +361,18 @@ namespace pleos {
                                 current_x_start = needed_x[i] + scls::Fraction(images[i].get()->width(), 2);
                                 current_y_start = needed_y[i] + scls::Fraction(images[current_id].get()->height());
                             }//*/
+
+                            // Paste the ponderation
+                            if(links[j].ponderation.get() != 0) {
+                                scls::Fraction x_middle = (current_x_start + current_x_end) / 2;
+                                scls::Fraction y_middle = (current_y_start + current_y_end) / 2;
+
+                                // Put the image at the center
+                                x_middle -= links[j].ponderation.get()->width() / 2;
+                                y_middle -= links[j].ponderation.get()->height() / 2;
+
+                                to_return.get()->paste(links[j].ponderation.get(), x_middle.to_double() + x_offset, y_middle.to_double() + y_offset);
+                            }
 
                             // Draw the link
                             to_return.get()->draw_line(current_x_start.to_double() + x_offset, current_y_start.to_double() + y_offset, current_x_end.to_double() + x_offset, current_y_end.to_double() + y_offset, scls::Color(0, 0, 0), 2);
