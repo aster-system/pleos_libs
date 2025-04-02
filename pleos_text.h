@@ -34,12 +34,15 @@
 #include "pleos_table.h"
 
 // Define a macro to easily add an object
+// Create the object
 #define GUI_PAGE(type, gui, gui_page, function, display_function, display_function_parent) private: std::shared_ptr<type> gui; \
 public: inline type* function() const {return gui.get();} \
 public: void display_function(){display_function_parent();set_current_page(gui_page);function()->set_visible(true);}
 #define GUI_OBJECT(type, gui, function) private: std::shared_ptr<type> gui; \
 public: inline type* function() const {return gui.get();}
+// Get the object
 #define GUI_OBJECT_CREATION(type, gui, name) else if(object_name == name){gui = *parent->new_object<type>(object_name);return gui;}
+// Select the object
 #define GUI_OBJECT_SELECTION(display_function, name) else if(page == name){display_function;}
 
 // The namespace "pleos" is used to simplify the all.
