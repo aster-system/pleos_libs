@@ -79,13 +79,15 @@ namespace pleos {
             std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
             std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "case"){
-                std::string content = std::string();int x = 0;int y = 0;
+                std::string content = std::string();int height = 1;int x = 0;int y = 0;
                 for(int i = 0;i<static_cast<int>(attributes.size());i++) {
                     if(attributes[i].name == std::string("content")){content = attributes[i].value;}
+                    else if(attributes[i].name == std::string("height")){height = std::stoi(attributes[i].value);}
                     else if(attributes[i].name == std::string("x")){x = std::stoi(attributes[i].value);}
                     else if(attributes[i].name == std::string("y")){y = std::stoi(attributes[i].value);}
                 }
                 (*to_return.get()->case_at(x, y)->image.get()) = tig.image_shared_ptr(content, needed_style);
+                to_return.get()->merge_cases(x, y, 1, height);
             }
         }
 

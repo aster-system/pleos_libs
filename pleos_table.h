@@ -51,6 +51,8 @@ namespace pleos {
             std::shared_ptr<std::shared_ptr<scls::Image>> image;
             // Margin of the case
             int margin = 20;
+            // If the case is merged or not
+            bool merged = false;
             // Style of the case
             scls::Text_Style style;
 
@@ -82,7 +84,19 @@ namespace pleos {
         inline int total_height() const {int to_return = 0;int needed_width = line_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += line_height(i);};return to_return;};
         inline int total_width() const {int to_return = 0;int needed_width = column_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += column_width(i);};return to_return;};
 
-        // Set the value of an std::strubg case
+        // Merges cases
+        void merge_cases(int x, int y, int width, int height){
+            for(int i = 0;i<static_cast<int>(width);i++){
+                for(int j = 0;j<static_cast<int>(height);j++){
+                    if(!(i == 0 && j == 0)){
+                        case_at(x + i, y + j);
+                        a_cases[x + i][y + j].get()->image = a_cases[x][y].get()->image;
+                    }
+                }
+            }
+        };
+
+        // Set the value of an std::string case
         void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = tig->image_shared_ptr(value, *needed_style);};
 
         // Returns the table to an image

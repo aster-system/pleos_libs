@@ -129,7 +129,7 @@ namespace pleos {
                 while(i < static_cast<int>(a_cases.size())) {
                     if(a_cases.at(i).size() < j){
                         Table::Table_Case* analysed_case = case_at(i, j);
-                        if(current_case->image.get() == analysed_case->image.get()){case_width++;}
+                        if(current_case->image.get() == analysed_case->image.get()){analysed_case->merged = true;case_width++;}
                         else{break;}
                     }
                     i++;
