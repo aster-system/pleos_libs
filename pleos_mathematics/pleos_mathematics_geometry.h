@@ -197,7 +197,7 @@ namespace pleos {
         inline std::string name() const {return a_name;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
-        inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};
+        inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
         inline void set_color(scls::Color new_color){a_color=new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >= a_points_link.size()){return;}a_points_link[link].drawing_proportion = new_proportion;};

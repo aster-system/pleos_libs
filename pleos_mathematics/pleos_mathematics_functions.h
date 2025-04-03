@@ -255,6 +255,10 @@ namespace pleos {
         void set_form_points(Form_2D* needed_form, std::string points){std::vector<std::string> cutted = scls::cut_string(points, ";");for(int i = 0;i<static_cast<int>(cutted.size());i++){needed_form->add_point(point_shared_ptr(cutted[i]));}};
         void set_form_points(std::shared_ptr<Form_2D> needed_form, std::string points){set_form_points(needed_form.get(), points);};
 
+        // Creates and returns a form (and its point)
+        std::shared_ptr<Form_2D> new_form(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3, scls::Fraction x_4, scls::Fraction y_4);
+        // Creates and returns a square (and its point)
+        std::shared_ptr<Form_2D> new_square(std::string name, scls::Fraction x, scls::Fraction y, scls::Fraction width, scls::Fraction height);
         // Creates and returns a triangle (and its point)
         std::shared_ptr<Form_2D> new_triangle(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3);
 
@@ -578,6 +582,9 @@ namespace pleos {
         inline void add_vector(scls::Fraction x, scls::Fraction y){a_datas.add_vector(Vector(std::string(), x, y));};
         // Draws a vector on the graphic
         inline void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return){a_datas.draw_vector(needed_point, to_return);};
+
+        // Creates and returns a square (and its point)
+        inline std::shared_ptr<Form_2D> new_square(std::string name, scls::Fraction x, scls::Fraction y, scls::Fraction width, scls::Fraction height){return a_datas.new_square(name, x, y, width, height);};
 
         // Handle other object
         // Adds a new GUI Object

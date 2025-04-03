@@ -608,6 +608,20 @@ namespace pleos {
         return to_return;
     }
 
+    // Creates and returns a form (and its point)
+    std::shared_ptr<Form_2D> Graphic::new_form(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3, scls::Fraction x_4, scls::Fraction y_4) {
+        std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);
+        to_return.get()->add_point(new_point(name + std::string("-p1"), x_1, y_1));
+        to_return.get()->add_point(new_point(name + std::string("-p2"), x_2, y_2));
+        to_return.get()->add_point(new_point(name + std::string("-p3"), x_3, y_3));
+        to_return.get()->add_point(new_point(name + std::string("-p4"), x_4, y_4));
+        add_form(to_return);
+        return to_return;
+    }
+
+    // Creates and returns a square (and its point)
+    std::shared_ptr<Form_2D> Graphic::new_square(std::string name, scls::Fraction x, scls::Fraction y, scls::Fraction width, scls::Fraction height) {return new_form(name, x, y, x + width, y, x + width, y + height, x, y + height);}
+
     // Creates and returns a triangle (and its point)
     std::shared_ptr<Form_2D> Graphic::new_triangle(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2, scls::Fraction x_3, scls::Fraction y_3) {
         std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);
@@ -720,10 +734,11 @@ namespace pleos {
         if(draw_base() || draw_sub_bases()) {image_draw_base(to_return);}
 
         // Get the datas for the drawing
-        scls::Fraction image = pixel_x_to_graphic_x(0, to_return);
-        scls::Fraction multiplier = scls::Fraction(1, 1) / scls::Fraction::from_double(pixel_by_case_x());
+        scls::Fraction image = pixel_x_to_graphic_x(0, to_return).normalized(5);
+        scls::Fraction multiplier = (scls::Fraction(1) / scls::Fraction::from_double(pixel_by_case_x())).normalized(5);
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
-        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image; image += multiplier;}
+        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image.normalized(5);image += multiplier;std::cout << "E " << screen_pos[i] << std::endl;}
+        std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << std::endl;
         // Draw the functions
         for(int i = 0;i<static_cast<int>(a_functions.size());i++) {image_draw_function(to_return, a_functions[i], screen_pos);}
 
