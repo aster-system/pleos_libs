@@ -465,7 +465,7 @@ namespace pleos {
     Graphic::Graphic_Function::Graphic_Function(std::shared_ptr<Function_Studied> function_studied):a_function_studied(function_studied){}
 
     // Adds a function to the graphic
-    void Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);a_functions.push_back(new_function);a_graphic_base.get()->a_function_number++;}
+    std::shared_ptr<Graphic::Graphic_Function> Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);a_functions.push_back(new_function);a_graphic_base.get()->a_function_number++;return new_function;}
 
     // Draws a form on the graphic
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
@@ -663,6 +663,9 @@ namespace pleos {
     }
     // Draw a function on the image
     void Graphic::image_draw_function(std::shared_ptr<scls::Image> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos) {
+        // Asserts
+        if(needed_function.get()->definition_set() == 0) {scls::print("Warning", "PLEOS Graphic", std::string("The \"") + needed_function.get()->name() + std::string("\" function has no definition interval calculated."));return;}
+
         // Get the values
         scls::Formula needed_formula = needed_function.get()->formula();
         std::vector<Needed_Pos> needed_pos = std::vector<Needed_Pos>(to_return.get()->width() + 1);
@@ -697,6 +700,19 @@ namespace pleos {
                 value = needed_pos[i].previous_pos.formula_base()->value_to_fraction();
                 needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
                 needed_y[i].previous_pos_used = true;
+            }
+        }
+
+        // Area under the curve
+        for(int i = 0;i<static_cast<int>(needed_function.get()->curve_areas_number());i++) {
+            scls::Fraction current_x = needed_function.get()->curve_area_start(i);
+            int rect_number = needed_function.get()->curve_area_rectangle_number(i);
+            for(int j = 0;j<rect_number;j++) {
+                scls::Fraction needed_value = needed_formula.value(current_x).real();
+                if(needed_value != 0) {
+                    to_return.get()->fill_rect(graphic_x_to_pixel_x(current_x.to_double(), to_return), graphic_y_to_pixel_y(-needed_value.to_double(), to_return), scls::Fraction(pixel_by_case_x(), rect_number).to_double(), (needed_value * pixel_by_case_y()).to_double(), scls::Color(0, 255, 0));
+                }
+                current_x += scls::Fraction(1, rect_number);
             }
         }
 

@@ -157,16 +157,27 @@ namespace pleos {
             // Graphic_Function constructor
             Graphic_Function(std::shared_ptr<Function_Studied> function_studied);
 
+            // Add a curve area
+            inline void add_curve_area(scls::Fraction start, scls::Fraction end, int rectangle_number){Curve_Area to_add;to_add.area_start = start;to_add.area_end=end;to_add.rectangle_number=rectangle_number;a_curve_areas.push_back(to_add);};
+
             // Getters and setters
+            inline scls::Fraction curve_area_end(int n){return a_curve_areas.at(n).area_end;};
+            inline int curve_areas_number(){return a_curve_areas.size();};
+            inline scls::Fraction curve_area_start(int n){return a_curve_areas.at(n).area_start;};
+            inline int curve_area_rectangle_number(int n){return a_curve_areas.at(n).rectangle_number;};
             inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set.get();};
             inline scls::Formula& formula(){return a_function_studied.get()->function_formula;};
             inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
             inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
+            inline std::string name() const {return a_function_studied.get()->name();};
             inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
             inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
             inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
 
         private:
+            // Needed curves area
+            struct Curve_Area{scls::Fraction area_end = 1;scls::Fraction area_start = 0;int rectangle_number = 10;};
+            std::vector<Curve_Area> a_curve_areas;
             // Formula of the function
             std::shared_ptr<Function_Studied> a_function_studied;
             // Datas about the plane
@@ -208,7 +219,7 @@ namespace pleos {
         void image_draw_function(std::shared_ptr<scls::Image> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos);
 
         // Adds a function to the graphic
-        void add_function(std::shared_ptr<Function_Studied> function_studied);
+        std::shared_ptr<Graphic_Function> add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
         inline void reset(){a_forms_2d.clear();a_functions.clear();a_points.clear();a_vectors.clear();};
         // Returns the image of the graphic

@@ -240,6 +240,23 @@ namespace pleos {
                     std::shared_ptr<Form_2D> created_form = graphic.new_form(needed_name, needed_points);
                     created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
                 }
+                else if(current_balise_name == "fun") {
+                    // Get the datas about a function of the graphic
+                    std::string needed_expression = std::string();
+                    std::string needed_name = std::string("f");
+                    std::string needed_unknown = std::string("x");
+                    for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                        if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
+                        else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                    }
+                    // Add the function
+                    std::shared_ptr<Function_Studied> needed_function = std::make_shared<Function_Studied>();
+                    needed_function.get()->set_formula(scls::string_to_formula(needed_expression));
+                    needed_function.get()->set_name(needed_name);
+                    function_definition_set(needed_function.get(), 0);
+                    std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
+                    fun.get()->add_curve_area(0, 1, 10);
+                }
                 else if(current_balise_name == "point" || current_balise_name == "vec") {
                     // Get the datas about a vector of the graphic
                     std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
