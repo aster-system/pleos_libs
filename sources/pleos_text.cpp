@@ -240,7 +240,7 @@ namespace pleos {
                     std::shared_ptr<Form_2D> created_form = graphic.new_form(needed_name, needed_points);
                     created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
                 }
-                else if(current_balise_name == "fun") {
+                else if(current_balise_name == "fun" || current_balise_name == "function") {
                     // Get the datas about a function of the graphic
                     std::string needed_expression = std::string();
                     std::string needed_name = std::string("f");
@@ -249,13 +249,35 @@ namespace pleos {
                         if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
                         else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
                     }
-                    // Add the function
+
+                    // Create the function
                     std::shared_ptr<Function_Studied> needed_function = std::make_shared<Function_Studied>();
+                    std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
+
+                    // Check the inner balises
+                    std::vector<std::shared_ptr<scls::XML_Text>>& sub_texts = current_text->sub_texts()[i].get()->sub_texts();
+                    for(int j = 0;j<static_cast<int>(sub_texts.size());j++) {
+                        std::vector<scls::XML_Attribute>& sub_texts_attributes = sub_texts[j].get()->xml_balise_attributes();
+                        std::string sub_balise_content = sub_texts[j].get()->xml_balise();
+                        std::string sub_balise_name = sub_texts[j].get()->xml_balise_name();
+
+                        // Check a lot of attributes
+                        if(sub_balise_name == std::string("curve_area")){
+                            // Get a curve area
+                            scls::Fraction area_end = 1;scls::Fraction area_start = 0;int rectangle_number = 10;
+                            for(int k = 0;k<static_cast<int>(sub_texts_attributes.size());k++) {
+                                if(sub_texts_attributes[k].name == "area_end") {area_end = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
+                                else if(sub_texts_attributes[k].name == "area_start") {area_start = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
+                                else if(sub_texts_attributes[k].name == "number" || sub_texts_attributes[k].name == "rectangle_number") {rectangle_number = std::stoi(sub_texts_attributes[k].value);}
+                            }
+                            fun.get()->add_curve_area(area_start, area_end, rectangle_number);
+                        }
+                    }
+
+                    // Add the function
                     needed_function.get()->set_formula(scls::string_to_formula(needed_expression));
                     needed_function.get()->set_name(needed_name);
                     function_definition_set(needed_function.get(), 0);
-                    std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
-                    fun.get()->add_curve_area(0, 1, 10);
                 }
                 else if(current_balise_name == "point" || current_balise_name == "vec") {
                     // Get the datas about a vector of the graphic

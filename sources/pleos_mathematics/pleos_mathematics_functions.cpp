@@ -85,7 +85,7 @@ namespace pleos {
     }
 
     // Returns the derivation of a function
-    scls::Formula function_derivation_monomonial(scls::__Monomonial current_monomonial, std::string& redaction) {
+    scls::Formula function_derivation_monomonial(scls::__Monomonial current_monomonial, std::string* redaction) {
         // Do the calculation
         scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown("x");
         scls::Formula result;
@@ -99,56 +99,67 @@ namespace pleos {
             }
         }
 
-        // Write the redaction
-        redaction += "La forme dérivée de la forme " + current_monomonial.to_std_string() + " est " + result.to_std_string() + ". ";
+        if(redaction == 0) {
+            // Write the redaction
+            (*redaction) += "La forme dérivée de la forme " + current_monomonial.to_std_string() + " est " + result.to_std_string() + ". ";
+        }
 
         return result;
     }
-    scls::Formula function_derivation_polymonial(Function_Studied current_function, std::string& redaction) {
+    scls::Formula function_derivation_polymonial(Function_Studied* current_function, std::string* redaction) {
         // Do the calculation
         scls::Formula result;
 
         // Write the redaction
-        scls::Polymonial needed_polymonial = current_function.function_formula.to_polymonial();
-        redaction += "Or, cette fonction n'est qu'un simple polymône. ";
-        redaction += "Pour étudier sa dérivée, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
+        scls::Polymonial needed_polymonial = current_function->function_formula.to_polymonial();
+        if(redaction != 0) {
+            (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
+            (*redaction) += "Pour étudier sa dérivée, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
+        }
+
         // Study each monomonials
         for(int i = 0;i<static_cast<int>(needed_polymonial.monomonials().size());i++) {
             result += function_derivation_monomonial(needed_polymonial.monomonials()[i], redaction);
         }
-        redaction += "Donc, la forme dérivée de " + needed_polymonial.to_std_string() + " est " + result.to_std_string() + ". ";
+
+        // Finish the redaction
+        if(redaction != 0) {(*redaction) += "Donc, la forme dérivée de " + needed_polymonial.to_std_string() + " est " + result.to_std_string() + ". ";}
 
         return result;
     }
-    scls::Formula function_derivation(Function_Studied current_function, std::string& redaction) {
+    scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction) {
         // Do the calculation
         scls::Formula result;
 
         // Write the redaction
-        redaction += "Nous cherchons la dérivée de la fonction " + current_function.function_name + "(" + current_function.function_unknown + "). ";
-        if(current_function.function_formula.is_simple_polymonial()) {
-            // The function is a simple polymonial
-            result = function_derivation_polymonial(current_function, redaction);
-        } else if(current_function.function_formula.applied_function() == 0) {
+        if(redaction != 0){(*redaction) += "Nous cherchons la dérivée de la fonction " + current_function->function_name + ". ";}
+
+        // Check the type of function
+        if(current_function->function_formula.is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction);}
+        else if(current_function->function_formula.applied_function() == 0) {
             // The function is more complicated
-            std::string function_name = current_function.function_name + "_";
-            scls::Formula needed_added_element = current_function.function_formula.added_element();
-            redaction += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function.function_unknown + ") = " + needed_added_element.to_std_string() + ". ";
-            Function_Studied fs; fs.function_formula = needed_added_element;
-            fs.function_number = current_function.function_number + 1; fs.function_unknown = current_function.function_unknown;
-            scls::Formula added_element_derivate = function_derivation(fs, redaction);
+            std::string function_name = current_function->function_name + "_";
+            scls::Formula needed_added_element = current_function->function_formula.added_element();
+            if(redaction != 0) {
+                (*redaction) += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + needed_added_element.to_std_string() + ". ";
+            }
+            Function_Studied fs;fs.set_formula(needed_added_element);fs.set_name(current_function->name());
+            scls::Formula added_element_derivate = function_derivation(&fs, redaction);
 
             // Calculate the denominator
-            scls::Formula* needed_denominator = current_function.function_formula.denominator();
-            redaction += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function.function_unknown + ") = " + needed_denominator->to_std_string() + ". ";
-            fs.function_formula = *needed_denominator;
-            fs.function_number = current_function.function_number + 1; fs.function_unknown = current_function.function_unknown;
-            scls::Formula denominator_derivate = function_derivation(fs, redaction);
+            scls::Formula* needed_denominator = current_function->function_formula.denominator();
+            if(redaction == 0) {
+                (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + needed_denominator->to_std_string() + ". ";
+            }
+            fs.set_formula(*needed_denominator);fs.set_name(current_function->name());
+            scls::Formula denominator_derivate = function_derivation(&fs, redaction);
 
             // Do the division
             result = ((added_element_derivate * (*needed_denominator)) - (needed_added_element * denominator_derivate)) / ((*needed_denominator) * (*needed_denominator));
-            redaction += "Finalement, appliquons la formule de division de formes dérivées. ";
-            redaction += "Au final, la dérivé de " + current_function.function_name + " est " + current_function.function_name + "' tel que " + current_function.function_name + "'(" + current_function.function_unknown + ") = " + result.to_std_string() + ". ";
+            if(redaction != 0) {
+                (*redaction) += "Finalement, appliquons la formule de division de formes dérivées. ";
+                (*redaction) += "Au final, la dérivé de " + current_function->function_name + " est " + current_function->function_name + "' tel que " + current_function->function_name + "'(" + current_function->function_unknown + ") = " + result.to_std_string() + ". ";
+            }
         }
 
         return result;
@@ -693,11 +704,11 @@ namespace pleos {
         struct Needed_Pos_Screen {int pos;int previous_pos;bool previous_pos_used = false;};
         std::vector<Needed_Pos_Screen> needed_y = std::vector<Needed_Pos_Screen>(to_return.get()->width() + 1);
         for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){
-            scls::Fraction value = needed_pos[i].pos.formula_base()->value_to_fraction();
+            scls::Fraction value = needed_pos[i].pos.formula_base()->value_to_fraction().normalized();
             needed_y[i].pos = graphic_y_to_pixel_y(value.to_double(), to_return);
             // Check the previous pos
             if(needed_pos[i].previous_pos_used) {
-                value = needed_pos[i].previous_pos.formula_base()->value_to_fraction();
+                value = needed_pos[i].previous_pos.formula_base()->value_to_fraction().normalized();
                 needed_y[i].previous_pos = graphic_y_to_pixel_y(value.to_double(), to_return);
                 needed_y[i].previous_pos_used = true;
             }
@@ -705,14 +716,17 @@ namespace pleos {
 
         // Area under the curve
         for(int i = 0;i<static_cast<int>(needed_function.get()->curve_areas_number());i++) {
+            int border_width = 1;
             scls::Fraction current_x = needed_function.get()->curve_area_start(i);
             int rect_number = needed_function.get()->curve_area_rectangle_number(i);
+            scls::Fraction rect_width = (needed_function.get()->curve_area_end(i) - needed_function.get()->curve_area_start(i)) / rect_number;
             for(int j = 0;j<rect_number;j++) {
                 scls::Fraction needed_value = needed_formula.value(current_x).real();
                 if(needed_value != 0) {
-                    to_return.get()->fill_rect(graphic_x_to_pixel_x(current_x.to_double(), to_return), graphic_y_to_pixel_y(-needed_value.to_double(), to_return), scls::Fraction(pixel_by_case_x(), rect_number).to_double(), (needed_value * pixel_by_case_y()).to_double(), scls::Color(0, 255, 0));
+                    to_return.get()->draw_rect(graphic_x_to_pixel_x(current_x.to_double(), to_return), graphic_y_to_pixel_y(-needed_value.to_double(), to_return), (rect_width * pixel_by_case_x()).to_double(), (needed_value * pixel_by_case_y()).to_double(), border_width, scls::Color(255, 0, 0));
+                    to_return.get()->fill_rect(graphic_x_to_pixel_x(current_x.to_double(), to_return) + border_width, graphic_y_to_pixel_y(-needed_value.to_double(), to_return) + border_width, (rect_width * pixel_by_case_x()).to_double() - 2 * border_width, (needed_value * pixel_by_case_y()).to_double() - 2 * border_width, scls::Color(0, 255, 0));
                 }
-                current_x += scls::Fraction(1, rect_number);
+                current_x += rect_width;
             }
         }
 
@@ -753,8 +767,7 @@ namespace pleos {
         scls::Fraction image = pixel_x_to_graphic_x(0, to_return).normalized(5);
         scls::Fraction multiplier = (scls::Fraction(1) / scls::Fraction::from_double(pixel_by_case_x())).normalized(5);
         std::vector<scls::Fraction> screen_pos = std::vector<scls::Fraction>(to_return.get()->width() + 1);
-        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image.normalized(5);image += multiplier;std::cout << "E " << screen_pos[i] << std::endl;}
-        std::cout << "TTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTTT" << std::endl;
+        for(int i = 0;i<static_cast<int>(to_return.get()->width()) + 1;i++){screen_pos[i] = image.normalized(5);image += multiplier;}
         // Draw the functions
         for(int i = 0;i<static_cast<int>(a_functions.size());i++) {image_draw_function(to_return, a_functions[i], screen_pos);}
 

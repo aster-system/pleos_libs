@@ -101,6 +101,9 @@ namespace pleos {
         Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){
             std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;
+            defined_balises.get()->set_defined_balise("function", current_balise);
+            current_balise = std::make_shared<scls::Balise_Style_Datas>();
+            current_balise.get()->has_content = true;
             defined_balises.get()->set_defined_balise("graph", current_balise);
             current_balise = std::make_shared<scls::Balise_Style_Datas>();
             current_balise.get()->has_content = true;

@@ -73,7 +73,7 @@ namespace pleos {
     // Returns the definition set of a function
     scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction);
     // Returns the derivation of a function
-    scls::Formula function_derivation(Function_Studied current_function, std::string& redaction);
+    scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction);
     // Returns the image of a function
     scls::__Formula_Base::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
     // Returns the limit of a function / polymonial in + infinity
