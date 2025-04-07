@@ -78,6 +78,8 @@ namespace pleos {
     scls::__Formula_Base::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction);
     // Returns the limit of a function / polymonial in + infinity
     scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction);
+    // Returns the primitive of a function
+    scls::Formula function_primitive(Function_Studied* current_function, std::string* redaction);
     // Returns the set of roots of a function
     scls::Set_Number function_roots(Function_Studied* current_function, std::string& redaction);
     // Returns the set of a positive function

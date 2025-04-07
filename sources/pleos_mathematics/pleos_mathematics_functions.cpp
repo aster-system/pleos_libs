@@ -136,7 +136,15 @@ namespace pleos {
 
         // Check the type of function
         if(current_function->function_formula.is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction);}
-        else if(current_function->function_formula.applied_function() == 0) {
+        else if(current_function->function_formula.applied_function() != 0) {
+            // Check the applied function
+            if(redaction != 0) {
+                (*redaction) += "De plus, nous voyons que la fonction \"" + current_function->function_formula.applied_function()->name() + "\" est appliquée sur la forme : prenons la en compte. ";
+            }
+
+            result = *current_function->function_formula.applied_function()->derivate_value(current_function->function_formula).get();
+        }
+        else if(current_function->function_formula.denominator() != 0) {
             // The function is more complicated
             std::string function_name = current_function->function_name + "_";
             scls::Formula needed_added_element = current_function->function_formula.added_element();
@@ -145,6 +153,10 @@ namespace pleos {
             }
             Function_Studied fs;fs.set_formula(needed_added_element);fs.set_name(current_function->name());
             scls::Formula added_element_derivate = function_derivation(&fs, redaction);
+            for(int i = 0;i<static_cast<int>(current_function->function_formula.formulas_add().size());i++) {
+                fs.set_formula(*current_function->function_formula.formulas_add()[i].basic_formula());
+                added_element_derivate += function_derivation(&fs, redaction);
+            }
 
             // Calculate the denominator
             scls::Formula* needed_denominator = current_function->function_formula.denominator();
@@ -156,12 +168,12 @@ namespace pleos {
 
             // Do the division
             result = ((added_element_derivate * (*needed_denominator)) - (needed_added_element * denominator_derivate)) / ((*needed_denominator) * (*needed_denominator));
-            if(redaction != 0) {
-                (*redaction) += "Finalement, appliquons la formule de division de formes dérivées. ";
-                (*redaction) += "Au final, la dérivé de " + current_function->function_name + " est " + current_function->function_name + "' tel que " + current_function->function_name + "'(" + current_function->function_unknown + ") = " + result.to_std_string() + ". ";
-            }
+            if(redaction != 0) {(*redaction) += std::string("Finalement, appliquons la formule de division de formes dérivées. ");}
         }
 
+        if(redaction != 0) {
+            (*redaction) += "Au final, la dérivée de " + current_function->function_name + " est " + current_function->function_name + "' tel que " + current_function->function_name + "'(" + current_function->function_unknown + ") = " + result.to_std_string() + ". ";
+        }
         return result;
     }
 
@@ -257,6 +269,60 @@ namespace pleos {
         }
 
         return to_return;
+    }
+
+    // Returns the primitive of a function
+    scls::Formula function_primitive_monomonial(scls::__Monomonial current_monomonial, std::string* redaction) {
+        // Do the calculation
+        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown("x");
+        scls::Formula result;
+        if(needed_unknown != 0) {
+            // Basic exponential form
+            scls::Fraction new_exponent = needed_unknown->exponent().real() + 1;
+            if(new_exponent != 0) {result = scls::__Monomonial(current_monomonial.factor() / new_exponent, "x", new_exponent);}
+            else {result = scls::__Monomonial(current_monomonial.factor().real(), "x", 1);}
+        }
+        else {result = scls::__Monomonial(current_monomonial.factor().real(), "x", 1);}
+
+        if(redaction == 0) {
+            // Write the redaction
+            (*redaction) += "La forme primitive de la forme " + current_monomonial.to_std_string() + " est " + result.to_std_string() + ". ";
+        }
+
+        return result;
+    }
+    scls::Formula function_primitive_polymonial(Function_Studied* current_function, std::string* redaction) {
+        // Do the calculation
+        scls::Formula result;
+
+        // Write the redaction
+        scls::Polymonial needed_polymonial = current_function->function_formula.to_polymonial();
+        if(redaction != 0) {
+            (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
+            (*redaction) += "Pour étudier sa primitive, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
+        }
+
+        // Study each monomonials
+        for(int i = 0;i<static_cast<int>(needed_polymonial.monomonials().size());i++) {
+            result += function_primitive_monomonial(needed_polymonial.monomonials()[i], redaction);
+        }
+
+        // Finish the redaction
+        if(redaction != 0) {(*redaction) += "Donc, la forme primitive de " + needed_polymonial.to_std_string() + " est " + result.to_std_string() + ". ";}
+
+        return result;
+    }
+    scls::Formula function_primitive(Function_Studied* current_function, std::string* redaction) {
+        // Do the calculation
+        scls::Formula result;
+
+        // Write the redaction
+        if(redaction != 0){(*redaction) += "Nous cherchons la primitive de la fonction " + current_function->function_name + ". ";}
+
+        // Check the type of function
+        if(current_function->function_formula.is_simple_polymonial()) {result = function_primitive_polymonial(current_function, redaction);}
+
+        return result;
     }
 
     // Returns the set of roots of a function
