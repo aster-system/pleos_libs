@@ -48,15 +48,16 @@ namespace pleos {
 
         // Fraction part
         std::shared_ptr<scls::Set_Number> denominator_null;
-        if(function_studied.denominator() != 0) {
+        std::shared_ptr<scls::__Formula_Base> denominator = function_studied.denominator();
+        if(denominator.get() != 0) {
             // Do the redaction
             if(redaction != 0) {
-                (*redaction) += "Cette forme contient un dénominateur global " + function_studied.denominator()->to_std_string() + ". ";
-                (*redaction) += "Donc, elle n'est pas définie pour " + function_studied.denominator()->to_std_string() + " = 0. ";
+                (*redaction) += "Cette forme contient un dénominateur global " + denominator.get()->to_std_string() + ". ";
+                (*redaction) += "Donc, elle n'est pas définie pour " + denominator.get()->to_std_string() + " = 0. ";
             }
 
             // Get the needed value
-            Function_Studied fs; fs.function_formula = *function_studied.denominator();
+            Function_Studied fs; fs.function_formula = *denominator.get();
             fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
             if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, s));}
             else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, *redaction));}
@@ -127,6 +128,49 @@ namespace pleos {
 
         return result;
     }
+    scls::Formula function_derivation_factor(scls::__Formula_Base::Formula_Factor* current_factor, Function_Studied* current_function, std::string* redaction) {
+        scls::Formula added_element_derivate;
+        for(int i = 0;i<static_cast<int>(current_factor->factors().size());i++) {
+            Function_Studied fs;fs.set_formula(*current_factor->factors().at(i).get());
+            added_element_derivate += function_derivation(&fs, redaction);
+        }
+
+        return added_element_derivate;
+    }
+    scls::Formula function_derivation_sum(scls::__Formula_Base::Formula_Sum* current_sum, Function_Studied* current_function, std::string* redaction) {
+        scls::Formula added_element_derivate;
+        for(int i = 0;i<static_cast<int>(current_sum->formulas_add().size());i++) {
+            added_element_derivate += function_derivation_factor(current_sum->formulas_add().at(i).get(), current_function, redaction);
+        }
+
+        return added_element_derivate;
+    }
+    scls::Formula function_derivation_fraction(scls::__Formula_Base::Formula_Fraction* current_fraction, Function_Studied* current_function, std::string* redaction) {
+        // The function is more complicated
+        std::string function_name = current_function->function_name + "_";
+        scls::Formula numerator = (*current_fraction->numerator());
+        if(current_fraction->denominator() != 0 && redaction != 0) {
+            (*redaction) += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + numerator.to_std_string() + ". ";
+        }
+        scls::Formula numerator_derivate = function_derivation_sum(current_fraction->numerator(), current_function, redaction);
+
+        scls::Formula result;
+        if(current_fraction->denominator() != 0) {
+            // Calculate the denominator
+            if(redaction == 0) {
+                (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + current_fraction->denominator()->to_std_string() + ". ";
+            }
+            scls::Formula denominator_derivate = function_derivation_sum(current_fraction->denominator(), current_function, redaction);
+
+            // Do the division
+            scls::__Formula_Base denominator = *current_fraction->denominator();
+            result = ((numerator_derivate * denominator) - (numerator * denominator_derivate)) / (denominator * denominator);
+            if(redaction != 0) {(*redaction) += std::string("Finalement, appliquons la formule de division de formes dérivées. ");}
+        }
+        else{result=numerator_derivate;}
+
+        return result;
+    }
     scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction) {
         // Do the calculation
         scls::Formula result;
@@ -135,6 +179,7 @@ namespace pleos {
         if(redaction != 0){(*redaction) += "Nous cherchons la dérivée de la fonction " + current_function->function_name + ". ";}
 
         // Check the type of function
+        std::shared_ptr<scls::__Formula_Base> denominator = current_function->function_formula.denominator();
         if(current_function->function_formula.is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction);}
         else if(current_function->function_formula.applied_function() != 0) {
             // Check the applied function
@@ -144,35 +189,10 @@ namespace pleos {
 
             result = *current_function->function_formula.applied_function()->derivate_value(current_function->function_formula).get();
         }
-        else if(current_function->function_formula.denominator() != 0) {
-            // The function is more complicated
-            std::string function_name = current_function->function_name + "_";
-            scls::Formula needed_added_element = current_function->function_formula.added_element();
-            if(redaction != 0) {
-                (*redaction) += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + needed_added_element.to_std_string() + ". ";
-            }
-            Function_Studied fs;fs.set_formula(needed_added_element);fs.set_name(current_function->name());
-            scls::Formula added_element_derivate = function_derivation(&fs, redaction);
-            for(int i = 0;i<static_cast<int>(current_function->function_formula.formulas_add().size());i++) {
-                fs.set_formula(*current_function->function_formula.formulas_add()[i].basic_formula());
-                added_element_derivate += function_derivation(&fs, redaction);
-            }
-
-            // Calculate the denominator
-            scls::Formula* needed_denominator = current_function->function_formula.denominator();
-            if(redaction == 0) {
-                (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + needed_denominator->to_std_string() + ". ";
-            }
-            fs.set_formula(*needed_denominator);fs.set_name(current_function->name());
-            scls::Formula denominator_derivate = function_derivation(&fs, redaction);
-
-            // Do the division
-            result = ((added_element_derivate * (*needed_denominator)) - (needed_added_element * denominator_derivate)) / ((*needed_denominator) * (*needed_denominator));
-            if(redaction != 0) {(*redaction) += std::string("Finalement, appliquons la formule de division de formes dérivées. ");}
-        }
+        else {result = function_derivation_fraction(current_function->function_formula.fraction(), current_function, redaction);}
 
         if(redaction != 0) {
-            (*redaction) += "Au final, la dérivée de " + current_function->function_name + " est " + current_function->function_name + "' tel que " + current_function->function_name + "'(" + current_function->function_unknown + ") = " + result.to_std_string() + ". ";
+            (*redaction) += "Au final, la dérivée de " + current_function->function_name + " est " + current_function->function_name + "' tel que :</br></br><math><mi>" + current_function->function_name + "'</mi><mi>(" + current_function->function_unknown + ")</mi><mo>=</mo>" + result.to_mathml() + "</math></br></br>";
         }
         return result;
     }
