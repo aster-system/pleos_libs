@@ -268,7 +268,7 @@ namespace pleos {
 
             // Include the separation
             int image_end_size = 40; scls::Text_Style style_end = style; style_end.set_font_size(image_end_size);
-            int image_start_size = 40;scls::Text_Style style_start = style; style_start.set_font_size(image_end_size);
+            scls::Text_Style style_start = style; style_start.set_font_size(image_end_size);
             std::shared_ptr<scls::Image> image_start = generator->image_shared_ptr("(", style_start);
             std::shared_ptr<scls::Image> image_end = generator->image_shared_ptr(")", style_end);
             int separation_width = style.font_size();

@@ -41,7 +41,26 @@ namespace pleos {
 	//
 	//*********
 
-	class Table {
+	class Illustrator {
+	    // Class representating a basic illustrator for PLEOS
+    public:
+        // Illustrator constructor
+        Illustrator(){};
+
+        // Handle the title
+        std::shared_ptr<scls::Image> title_image(scls::Text_Image_Generator* tig);
+
+        // Title of the illustrator
+        inline void set_title(std::string new_title){a_title = new_title;};
+        inline std::string title()const{return a_title;};
+        inline scls::Text_Style* title_style() const {return a_title_style.get();};
+    private:
+        // Title of the illustration
+        std::string a_title = std::string();
+        std::shared_ptr<scls::Text_Style> a_title_style = std::make_shared<scls::Text_Style>();
+	};
+
+	class Table : public Illustrator {
         // Class representating a more table handler for PLEOS
     public:
 
@@ -52,14 +71,18 @@ namespace pleos {
             // Margin of the case
             int margin = 20;
             // If the case is merged or not
-            bool merged = false;
+            enum Merge_State {MS_No, MS_Merged, MS_Merged_Main};
+            Merge_State merged = MS_No;
+            int merged_height = 1;int merged_width = 1;
+            // If the case use a right border or not
+            bool right_border = true;
             // Style of the case
             scls::Text_Style style;
 
             // Height of the case
-            inline int height() const {return image.get()->get()->height();};
+            inline int height() const {if(image.get() == 0 || image.get()->get() == 0){return 0;} return image.get()->get()->height();};
             // Width of the case
-            inline int width() const {return image.get()->get()->width() + margin * 2;};
+            inline int width() const {if(image.get() == 0 || image.get()->get() == 0){return 0;}return image.get()->get()->width() + margin * 2;};
 
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
@@ -67,15 +90,18 @@ namespace pleos {
         };
 
         // Table constructor
-        Table(){};
+        Table():Illustrator(){};
 
         // Returns the case at a certain position
         Table_Case* case_at(int x, int y);
         inline std::shared_ptr<scls::Image>& image_at(int x, int y){return *(case_at(x, y)->image.get());};
+        // Checks the merge of the case
+        void check_merge();
         // Returns the number of column in the table
         inline int column_number() const{return a_cases.size();};
         // Returns the width of a column
         int column_width(int column) const;
+        int column_width(int column, int width) const;
         // Returns the number of lines in the table
         int line_number() const;
         // Returns the height of a line
@@ -86,6 +112,7 @@ namespace pleos {
 
         // Merges cases
         void merge_cases(int x, int y, int width, int height){
+            case_at(x, y)->merged_height = height;case_at(x, y)->merged_width = width;
             for(int i = 0;i<static_cast<int>(width);i++){
                 for(int j = 0;j<static_cast<int>(height);j++){
                     if(!(i == 0 && j == 0)){
@@ -102,9 +129,18 @@ namespace pleos {
         // Returns the table to an image
         std::shared_ptr<scls::Image> to_image();
 
+        // Getters and setters
+        inline int column_separation() const {return a_column_separation;};
+        inline int minimum_case_width() const {return a_minimum_case_width;};
+        inline void set_minimum_case_width(int new_minimum_case_width) {a_minimum_case_width = new_minimum_case_width;};
     private:
         // Cases in the table ([x][y])
         std::vector<std::vector<std::shared_ptr<Table_Case>>> a_cases;
+
+        // Separation between two columns
+        int a_column_separation = 2;
+        // Minimum width of a case
+        int a_minimum_case_width = 0;
     };
 }
 

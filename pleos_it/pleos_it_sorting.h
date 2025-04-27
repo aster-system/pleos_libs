@@ -87,4 +87,4 @@ namespace pleos {
     std::shared_ptr<scls::Image> algorithms_sort_image(Sort_Datas* datas, int image_width);
 }
 
-#endif PLEOS_IT_SORTING
+#endif // PLEOS_IT_SORTING

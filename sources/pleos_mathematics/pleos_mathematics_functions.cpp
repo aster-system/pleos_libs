@@ -35,53 +35,195 @@ namespace pleos {
     //
     //******************
 
+    // Returns the text for the table to xml
+    std::string Function_Table::to_xml(std::string* redaction) {
+        std::string to_return = std::string("<table>");
+
+        // Check if the sign has been calculated
+        for(int i = 0;i<static_cast<int>(a_studied_function.size());i++) {if(a_studied_function.at(i).get()->sign_set() == 0){function_sign(a_studied_function.at(i).get(), redaction);}}
+
+        // Create the table
+        Function_Studied* current_function = a_studied_function.at(0).get();
+        to_return += std::string("<case x=0 y=1 content=\"") + current_function->name() + std::string("(") + current_function->unknown() + std::string(")") + std::string("\">");
+        to_return += std::string("<case x=0 y=0 content=\"") + current_function->unknown() + std::string("\">");
+
+        // Get the x values
+        bool end_infinite = false;bool start_infinite = false;
+        std::vector<scls::Fraction> x_values = std::vector<scls::Fraction>();
+        for(int i = 0;i<static_cast<int>(a_studied_function.size());i++) {
+            current_function = a_studied_function.at(i).get();
+
+            // Get each definition values
+            scls::Set_Number* definition_set = current_function->definition_set();
+            scls::Set_Number* sign_set = current_function->sign_set();
+
+            // Add the needed values
+            for(int j = 0;j<static_cast<int>(definition_set->intervals().size());j++) {
+                if(!definition_set->intervals().at(j).end_infinite()){x_values.push_back(definition_set->intervals().at(j).end());}else{end_infinite=true;}
+                if(!definition_set->intervals().at(j).start_infinite()){x_values.push_back(definition_set->intervals().at(j).start());}else{start_infinite=true;}
+            }
+            for(int j = 0;j<static_cast<int>(sign_set->intervals().size());j++) {
+                if(!sign_set->intervals().at(j).end_infinite()){x_values.push_back(sign_set->intervals().at(j).end());}else{end_infinite=true;}
+                if(!sign_set->intervals().at(j).start_infinite()){x_values.push_back(sign_set->intervals().at(j).start());}else{start_infinite=true;}
+            }
+            scls::sort_fractions(x_values);
+            scls::remove_duplication_sorted_fractions(x_values);
+        }
+
+        // Adds the x values
+        int current_case_x = 1;
+        // First value
+        if(start_infinite) {
+            to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=0 content=\"-inf\">");
+            current_case_x++;
+            to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=0>");
+            current_case_x++;
+        }
+        // Other values
+        for(int i = 0;i<static_cast<int>(x_values.size());i++) {
+            to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=0 content=\"") + x_values.at(i).to_std_string() + std::string("\">");
+            current_case_x++;
+            if(i < static_cast<int>(x_values.size()) - 1 || end_infinite) {
+                to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=0>");
+                current_case_x++;
+            }
+        }
+        // Last value
+        if(end_infinite) {
+            to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=0 content=\"+inf\">");
+            current_case_x++;
+        }
+
+        // Draw the table
+        for(int i = 0;i<static_cast<int>(a_studied_function.size());i++) {
+            int current_case_y = i + 1;
+            current_function = a_studied_function.at(i).get();
+
+            // Get each definition values
+            scls::Set_Number* definition_set = current_function->definition_set();
+            scls::Set_Number* roots_set = current_function->roots();
+            scls::Set_Number* sign_set = current_function->sign_set();
+
+            // Handle the first value
+            current_case_x = 1;
+            if(start_infinite) {
+                to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(">");
+                current_case_x++;
+
+                // Sign
+                scls::Fraction needed_value = 0;if(x_values.size()>0){needed_value=x_values.at(0);}
+                if(sign_set->is_in(needed_value - 1)) {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"+\">");}
+                else {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"-\">");}
+                current_case_x++;
+            }
+
+            // Add the needed values
+            for(int j = 0;j<static_cast<int>(x_values.size());j++) {
+                // Current needed value
+                scls::Fraction current_value = x_values.at(j);scls::Fraction needed_value = current_value;
+                if(j < static_cast<int>(x_values.size()) - 1){needed_value = (needed_value + x_values.at(j + 1)) / 2;}
+                else{needed_value += 1;}
+
+                // Needed conclusion
+                if(roots_set->is_in(current_value)) {
+                    to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"0\">");
+                    current_case_x++;
+
+                    // Sign
+                    if(sign_set->is_in(needed_value)) {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"+\">");}
+                    else {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"-\">");}
+                    current_case_x++;
+                }
+                else if(definition_set->is_in(current_value)) {
+                    to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"") + current_function->formula()->value(needed_value).real().to_std_string() + std::string("\">");
+                    current_case_x++;
+
+                    // Sign
+                    if(sign_set->is_in(needed_value)) {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"+\">");}
+                    else {to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"-\">");}
+                    current_case_x++;
+                }
+                else {
+
+                    to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"||\">");
+                    current_case_x++;
+                    to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(" content=\"||\">");
+                    current_case_x++;
+                }
+            }
+
+            // Handle the last value
+            if(end_infinite) {
+                to_return += std::string("<case right_border=0 x=") + std::to_string(current_case_x) + std::string(" y=") + std::to_string(current_case_y) + std::string(">");
+                current_case_x++;
+            }
+        }
+
+        // Finish the table
+        to_return += std::string("</table>");
+        return to_return;
+    }
+
     // Returns the definition set of a function
-    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction) {
-        // Create the redaction
-        scls::Formula& function_studied = current_function->function_formula;
+    scls::Set_Number function_definition_set_fraction(scls::__Formula_Base* denominator, Function_Studied* current_function, std::string* redaction) {
+        // Do the redaction
         scls::Set_Number to_return = scls::Set_Number::set_real();
+        if(redaction != 0) {
+            (*redaction) += "Cette forme contient un dénominateur global " + denominator->to_std_string() + ". ";
+            (*redaction) += "Donc, elle n'est pas définie pour " + denominator->to_std_string() + " = 0. ";
+        }
+
+        // Get the needed value
+        std::shared_ptr<scls::Set_Number> denominator_null;
+        std::shared_ptr<Function_Studied> fs = Function_Studied::new_function_studied_shared_ptr(*denominator);
+        fs.get()->set_function_unknown(current_function->unknown());
+        denominator_null = std::make_shared<scls::Set_Number>(function_roots(fs.get(), redaction));
+        scls::Fraction needed_value;if(denominator_null.get()->numbers().size() > 0){needed_value = denominator_null.get()->numbers().at(0).real();}
+
+        // TEMPORARY SET THE INTERVAL
+        to_return = scls::Set_Number::real();
+        if(denominator_null.get()->numbers().size() > 0){to_return.exclude(denominator_null.get()->numbers().at(0).real());}
+        if(denominator_null.get()->numbers().size() > 1){to_return.exclude(denominator_null.get()->numbers().at(1).real());}
+
+        //scls::Interval interval = scls::Interval(needed_value - 1, true, needed_value, false);interval.set_start_infinite(true);to_return.add_interval(interval);
+        //if(denominator_null.get()->numbers().size() > 1){needed_value = denominator_null.get()->numbers().at(1).real();}
+        //interval = scls::Interval(needed_value, false, needed_value + 1, true);interval.set_end_infinite(true);to_return.add_interval(interval);
 
         // Do the redaction
         if(redaction != 0) {
-            (*redaction) += "Nous cherchons l'ensemble de définition maximale de la forme " + function_studied.to_std_string() + ". ";
-        }
-
-        // Fraction part
-        std::shared_ptr<scls::Set_Number> denominator_null;
-        std::shared_ptr<scls::__Formula_Base> denominator = function_studied.denominator();
-        if(denominator.get() != 0) {
-            // Do the redaction
-            if(redaction != 0) {
-                (*redaction) += "Cette forme contient un dénominateur global " + denominator.get()->to_std_string() + ". ";
-                (*redaction) += "Donc, elle n'est pas définie pour " + denominator.get()->to_std_string() + " = 0. ";
-            }
-
-            // Get the needed value
-            Function_Studied fs; fs.function_formula = *denominator.get();
-            fs.function_number = current_function->function_number + 1; fs.function_unknown = current_function->function_unknown;
-            if(redaction == 0) {std::string s;denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, s));}
-            else {denominator_null = std::make_shared<scls::Set_Number>(function_roots(&fs, *redaction));}
-            scls::Fraction needed_value;if(denominator_null.get()->numbers().size() > 0){needed_value = denominator_null.get()->numbers().at(0).real();}
-
-            // TEMPORARY SET THE INTERVAL
-            to_return = scls::Set_Number();
-            scls::Interval interval = scls::Interval(needed_value - 1, true, needed_value, false);interval.set_start_infinite(true);to_return.add_interval(interval);
-            interval = scls::Interval(needed_value, false, needed_value + 1, true);interval.set_end_infinite(true);to_return.add_interval(interval);
-
-            // Do the redaction
-            if(redaction != 0) {
-                (*redaction) += "Donc, la forme " + function_studied.to_std_string() + " n'est pas définie pour x appartenant à " + denominator_null.get()->to_std_string() + ". ";
-            }
-        }
-
-        // Finish the redaction
-        if(redaction != 0) {
-            if(to_return == scls::Set_Number::set_real()) {(*redaction) += std::string("Or, cette fonction ne contient aucune forme pouvant amener à une valeur interdite. ");}
-            (*redaction) += std::string("Donc, cette fonction est définie sur l'ensemble ") + to_return.to_std_string() + std::string(". ");
+            (*redaction) += "Donc, la forme " + current_function->formula()->to_std_string() + " n'est pas définie pour x appartenant à " + denominator_null.get()->to_std_string() + ". ";
         }
 
         // Return the result
-        current_function->definition_set = std::make_shared<scls::Set_Number>(to_return);
+        return to_return;
+    }
+    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction) {
+        // Create the redaction
+        scls::Formula* function_studied = current_function->formula();
+        scls::Set_Number to_return = scls::Set_Number::set_real();
+
+        // Do the redaction
+        if(redaction != 0) {(*redaction) += "Nous cherchons l'ensemble de définition maximale de la forme " + function_studied->to_std_string() + ". ";}
+
+        if(!function_studied->is_basic()) {
+            // Handle functions
+            scls::Set_Number current_definition_set = function_studied->applied_function()->definition_set();
+            if(redaction != 0) {(*redaction) += "Cette forme est soumise à la fonction \"" + function_studied->applied_function()->name() + "\", définie sur l'ensemble " + current_definition_set.to_std_string() + ". ";}
+        }
+        else {
+            // Fraction part
+            std::shared_ptr<scls::__Formula_Base> denominator = function_studied->denominator();
+            if(denominator.get() != 0) {to_return = function_definition_set_fraction(denominator.get(), current_function, redaction);}
+
+            // Finish the redaction
+            if(redaction != 0) {
+                if(to_return == scls::Set_Number::set_real()) {(*redaction) += std::string("Or, cette fonction ne contient aucune forme pouvant amener à une valeur interdite. ");}
+                (*redaction) += std::string("Donc, cette fonction est définie sur l'ensemble ") + to_return.to_std_string() + std::string(". ");
+            }
+        }
+
+        // Return the result
+        current_function->set_definition_set(to_return);
         return to_return;
     }
 
@@ -112,7 +254,7 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        scls::Polymonial needed_polymonial = current_function->function_formula.to_polymonial();
+        scls::Polymonial needed_polymonial = current_function->formula()->to_polymonial();
         if(redaction != 0) {
             (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
             (*redaction) += "Pour étudier sa dérivée, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
@@ -131,8 +273,8 @@ namespace pleos {
     scls::Formula function_derivation_factor(scls::__Formula_Base::Formula_Factor* current_factor, Function_Studied* current_function, std::string* redaction) {
         scls::Formula added_element_derivate;
         for(int i = 0;i<static_cast<int>(current_factor->factors().size());i++) {
-            Function_Studied fs;fs.set_formula(*current_factor->factors().at(i).get());
-            added_element_derivate += function_derivation(&fs, redaction);
+            std::shared_ptr<Function_Studied> fs = Function_Studied::new_function_studied_shared_ptr(*current_factor->factors().at(i).get(), current_function);
+            added_element_derivate += function_derivation(fs.get(), redaction);
         }
 
         return added_element_derivate;
@@ -147,10 +289,10 @@ namespace pleos {
     }
     scls::Formula function_derivation_fraction(scls::__Formula_Base::Formula_Fraction* current_fraction, Function_Studied* current_function, std::string* redaction) {
         // The function is more complicated
-        std::string function_name = current_function->function_name + "_";
+        std::string function_name = current_function->name() + "_";
         scls::Formula numerator = (*current_fraction->numerator());
         if(current_fraction->denominator() != 0 && redaction != 0) {
-            (*redaction) += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + numerator.to_std_string() + ". ";
+            (*redaction) += "Premièrement, étudions " + function_name + " tel que " + function_name + "(" + current_function->unknown() + ") = " + numerator.to_std_string() + ". ";
         }
         scls::Formula numerator_derivate = function_derivation_sum(current_fraction->numerator(), current_function, redaction);
 
@@ -158,7 +300,7 @@ namespace pleos {
         if(current_fraction->denominator() != 0) {
             // Calculate the denominator
             if(redaction == 0) {
-                (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->function_unknown + ") = " + current_fraction->denominator()->to_std_string() + ". ";
+                (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->unknown() + ") = " + current_fraction->denominator()->to_std_string() + ". ";
             }
             scls::Formula denominator_derivate = function_derivation_sum(current_fraction->denominator(), current_function, redaction);
 
@@ -176,37 +318,37 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        if(redaction != 0){(*redaction) += "Nous cherchons la dérivée de la fonction " + current_function->function_name + ". ";}
+        if(redaction != 0){(*redaction) += "Nous cherchons la dérivée de la fonction " + current_function->name() + ". ";}
 
         // Check the type of function
-        std::shared_ptr<scls::__Formula_Base> denominator = current_function->function_formula.denominator();
-        if(current_function->function_formula.is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction);}
-        else if(current_function->function_formula.applied_function() != 0) {
+        std::shared_ptr<scls::__Formula_Base> denominator = current_function->formula()->denominator();
+        if(current_function->formula()->is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction);}
+        else if(current_function->formula()->applied_function() != 0) {
             // Check the applied function
             if(redaction != 0) {
-                (*redaction) += "De plus, nous voyons que la fonction \"" + current_function->function_formula.applied_function()->name() + "\" est appliquée sur la forme : prenons la en compte. ";
+                (*redaction) += "De plus, nous voyons que la fonction \"" + current_function->formula()->applied_function()->name() + "\" est appliquée sur la forme : prenons la en compte. ";
             }
 
-            result = *current_function->function_formula.applied_function()->derivate_value(current_function->function_formula).get();
+            result = *current_function->formula()->applied_function()->derivate_value(*current_function->formula()).get();
         }
-        else {result = function_derivation_fraction(current_function->function_formula.fraction(), current_function, redaction);}
+        else {result = function_derivation_fraction(current_function->formula()->fraction(), current_function, redaction);}
 
         if(redaction != 0) {
-            (*redaction) += "Au final, la dérivée de " + current_function->function_name + " est " + current_function->function_name + "' tel que :</br></br><math><mi>" + current_function->function_name + "'</mi><mi>(" + current_function->function_unknown + ")</mi><mo>=</mo>" + result.to_mathml() + "</math></br></br>";
+            (*redaction) += "Au final, la dérivée de " + current_function->name() + " est " + current_function->name() + "' tel que :</br></br><math><mi>" + current_function->name() + "'</mi><mi>(" + current_function->unknown() + ")</mi><mo>=</mo>" + result.to_mathml() + "</math></br></br>";
         }
         return result;
     }
 
     // Returns the image of a function
-    scls::__Formula_Base::Formula function_image(Function_Studied current_function, scls::Formula needed_value, std::string& redaction) {
+    scls::__Formula_Base::Formula function_image(Function_Studied* current_function, scls::Formula needed_value, std::string& redaction) {
         // Do the ccalculation
-        scls::__Formula_Base::Formula result = current_function.function_formula.replace_unknown(current_function.function_unknown, needed_value);
+        scls::__Formula_Base::Formula result = current_function->formula()->replace_unknown(current_function->unknown(), needed_value);
 
         // Write the redaction
-        redaction += "Nous cherchons la valeur de " + current_function.function_name + "(" + needed_value.to_std_string() + "). ";
-        redaction += "Pour cela, remplaceons " + current_function.function_unknown + " par " + needed_value.to_std_string() + " dans " + current_function.function_name + ".</br>";
-        redaction += current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + "</br>";
-        redaction += "Donc, " + current_function.function_name + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + ". ";
+        redaction += "Nous cherchons la valeur de " + current_function->name() + "(" + needed_value.to_std_string() + "). ";
+        redaction += "Pour cela, remplaceons " + current_function->unknown() + " par " + needed_value.to_std_string() + " dans " + current_function->name() + ".</br>";
+        redaction += current_function->name() + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + "</br>";
+        redaction += "Donc, " + current_function->name() + "(" + needed_value.to_std_string() + ") = " + result.to_std_string() + ". ";
         return result;
     }
 
@@ -217,13 +359,13 @@ namespace pleos {
         redaction += "Le monôme " + current_monomonial.to_std_string() + " a pour limite " + current_limit.to_std_string() + ". ";
         return current_limit;
     }
-    scls::Limit __function_limit_monomonials(Function_Studied current_function, scls::Polymonial polymonial, scls::Limit needed_limit, std::string& redaction) {
+    scls::Limit __function_limit_monomonials(Function_Studied* current_function, scls::Polymonial polymonial, scls::Limit needed_limit, std::string& redaction) {
         // Cut the formula by monomonial
         redaction += "Comme cette forme est un simple polynôme, étudions les limites de chaque monôme. ";
         std::vector<scls::Limit> limits;
         int monomonial_number = static_cast<int>(polymonial.monomonials().size());
         for(int i = 0;i<monomonial_number;i++) {
-            scls::Limit result = polymonial_limit(polymonial.monomonials().at(i), needed_limit, current_function.function_unknown, redaction);
+            scls::Limit result = polymonial_limit(polymonial.monomonials().at(i), needed_limit, current_function->unknown(), redaction);
             limits.push_back(result); redaction += " ";
         }
 
@@ -248,44 +390,38 @@ namespace pleos {
         else{final_limit.set_special_value(special);}
         return final_limit;
     }
-    scls::Limit function_limit(Function_Studied current_function, scls::Limit needed_limit, std::string& redaction) {
+    scls::Limit function_limit(Function_Studied* current_function, scls::Limit needed_limit, std::string& redaction) {
         // Create the redaction
-        scls::Formula& function_studied = current_function.function_formula;
+        scls::Formula* function_studied = current_function->formula();
         scls::Limit to_return = scls::Limit();
 
         // Only one polymonial
-        if(function_studied.is_simple_polymonial()) {
-            if(function_studied.denominator() != 0) {
+        if(function_studied->is_simple_polymonial()) {
+            if(function_studied->denominator() != 0) {
                 // The limit contains a fraction
                 redaction += "Cette forme est une division, nous avons besoin des limites du numérateur et du dénominateur pour avoir sa limite. ";
             }
 
             // Start the search
-            redaction += "Nous cherchons la limite de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ", en " + needed_limit.to_std_string() + ". ";
-            scls::Polymonial polymonial = function_studied;
+            redaction += "Nous cherchons la limite de " + current_function->name() + ", qui peut s'écrire " + function_studied->to_std_string() + ", en " + needed_limit.to_std_string() + ". ";
+            scls::Polymonial polymonial = function_studied->to_polymonial();
 
             // Handle the polymonial monomonial by monomonial
             to_return = __function_limit_monomonials(current_function, polymonial, needed_limit, redaction);
 
             // Handle possible errors
-            if(to_return.is_error_ipi() && current_function.function_number <= 1) {
+            if(to_return.is_error_ipi() && current_function->level() <= 1) {
                 redaction += "Or, nous avons une forme indéterminée \"infini + ou - infini\". ";
                 redaction += "Pour lever l'indétermination, factorisons toute la forme par le monôme du plus haut degré, et calculons sa limite. ";
-                Function_Studied needed_function; scls::Polymonial needed_monomonial = scls::Polymonial(scls::Complex(1), current_function.function_unknown, polymonial.degree(current_function.function_unknown));
-                needed_function.function_formula = function_studied / needed_monomonial;
-                needed_function.function_name = current_function.function_name;
-                needed_function.function_number = current_function.function_number + 1;
-                scls::Limit result = function_limit(needed_function, needed_limit, redaction);
+                scls::Polymonial needed_monomonial = scls::Polymonial(scls::Complex(1), current_function->unknown(), polymonial.degree(current_function->unknown()));
+                std::shared_ptr<Function_Studied> needed_function = Function_Studied::new_function_studied_shared_ptr((*function_studied) / needed_monomonial, current_function);
+                needed_function.get()->set_name(current_function->name());
+                scls::Limit result = function_limit(needed_function.get(), needed_limit, redaction);
                 redaction += "Maintenant, calculons la limite de " + needed_monomonial.to_std_string() + ", qui est de +infini. ";
-                if(result.value() > 0) {
-                    redaction += "Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est +infini. ";
-                } else {
-                    redaction += "Par produit de limites, la limite de f pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est -infini. ";
-                }
-            } else {
-                // Finish the redaction
-                redaction += "Par somme de limites, la limite de " + current_function.function_name + " pour " + current_function.function_unknown + " tendant vers " + needed_limit.to_std_string() + " est " + to_return.to_std_string() + ". ";
+                if(result.value() > 0) {redaction += std::string("Par produit de limites, la limite de f pour ") + current_function->unknown() + " tendant vers " + needed_limit.to_std_string() + " est +infini. ";}
+                else {redaction += std::string("Par produit de limites, la limite de f pour ") + current_function->unknown() + " tendant vers " + needed_limit.to_std_string() + " est -infini. ";}
             }
+            else {redaction += std::string("Par somme de limites, la limite de ") + current_function->name() + " pour " + current_function->unknown() + " tendant vers " + needed_limit.to_std_string() + " est " + to_return.to_std_string() + ". ";}
         }
 
         return to_return;
@@ -316,7 +452,7 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        scls::Polymonial needed_polymonial = current_function->function_formula.to_polymonial();
+        scls::Polymonial needed_polymonial = current_function->formula()->to_polymonial();
         if(redaction != 0) {
             (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
             (*redaction) += "Pour étudier sa primitive, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
@@ -337,172 +473,273 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        if(redaction != 0){(*redaction) += "Nous cherchons la primitive de la fonction " + current_function->function_name + ". ";}
+        if(redaction != 0){(*redaction) += "Nous cherchons la primitive de la fonction " + current_function->name() + ". ";}
 
         // Check the type of function
-        if(current_function->function_formula.is_simple_polymonial()) {result = function_primitive_polymonial(current_function, redaction);}
+        if(current_function->formula()->is_simple_polymonial()) {result = function_primitive_polymonial(current_function, redaction);}
 
         return result;
     }
 
     // Returns the set of roots of a function
-    scls::Set_Number function_roots(Function_Studied* current_function, std::string& redaction) {
-        // Create the redaction
-        scls::Formula& function_studied = current_function->function_formula;
-        redaction += "Nous cherchons les racines de " + function_studied.to_std_string() + ". ";
+    scls::Set_Number function_roots_polymonial(scls::Polymonial polymonial, Function_Studied* current_function, std::string* redaction) {
+        int degree = polymonial.degree(current_function->unknown()).real().to_int();
         scls::Set_Number to_return = scls::Set_Number();
+        if(polymonial.is_known()) {
+            // Only one number
+            scls::Fraction number = static_cast<scls::Complex>(polymonial.known_monomonial()).real();
+            if(redaction != 0){(*redaction) += "Or, " + polymonial.to_std_string() + " n'est pas égal à 0, cette forme n'a donc pas de racines. ";}
+        }
+        else if(degree == 1) {
+            // Calculate the known and unknown parts
+            scls::Complex known_part = polymonial.known_monomonial().factor();
+            scls::Complex unknown_part = polymonial.unknown_monomonials()[0].factor();
 
-        // Only one polymonial
-        if(function_studied.is_simple_polymonial()) {
-            scls::Polymonial polymonial = function_studied;
-            int degree = polymonial.degree(current_function->function_unknown).real().to_int();
-            if(polymonial.is_known()) {
-                // Only one number
-                scls::Fraction number = static_cast<scls::Complex>(polymonial.known_monomonial()).real();
-                redaction += "Or, " + function_studied.to_std_string() + " n'est pas égal à 0, cette forme n'a donc pas de racines. ";
+            // Create the redaction
+            if(redaction != 0) {
+                (*redaction) += "Or, cette forme est une forme affine. ";
+                (*redaction) += "Pour étudier son unique racine, nous devons étudier les deux parties qui la constitue. ";
+                (*redaction) += "La partie connue du polynôme vaut " + known_part.to_std_string_simple() + ". ";
             }
-            else if(degree == 1) {
-                // Calculate the known and unknown parts
-                scls::Complex known_part = polymonial.known_monomonial().factor();
-                scls::Complex unknown_part = polymonial.unknown_monomonials()[0].factor();
 
-                // Create the redaction
-                redaction += "Or, cette forme est une forme affine. ";
-                redaction += "Pour étudier son unique racine, nous devons étudier les deux parties qui la constitue. ";
-                redaction += "La partie connue du polynôme vaut " + known_part.to_std_string_simple() + ". ";
-
-                // Calculate the solution
-                known_part *= -1;
-                scls::Complex solution = known_part / unknown_part;
-                bool inverse_sign = false;
-                if((known_part.real() < 0 && unknown_part.real() > 0)) inverse_sign = true;
-                redaction += "Donc, la racine de cette forme est atteinte quand l'équation " + unknown_part.to_std_string_simple() + " * n = " + known_part.to_std_string_simple() + " fonctionne. ";
-                redaction += "Or, cette équation est vérifiée pour n = " + solution.to_std_string_simple() + ". ";
-                redaction += "Donc, " + function_studied.to_std_string() + " admet pour racine " + solution.to_std_string_simple() + ". ";
-                to_return.add_number(solution);
-                scls::Interval interval;
+            // Calculate the solution
+            known_part *= -1;
+            scls::Complex solution = known_part / unknown_part;
+            bool inverse_sign = false;
+            if((known_part.real() < 0 && unknown_part.real() > 0)) inverse_sign = true;
+            if(redaction != 0) {
+                (*redaction) += "Donc, la racine de cette forme est atteinte quand l'équation " + unknown_part.to_std_string_simple() + " * n = " + known_part.to_std_string_simple() + " fonctionne. ";
+                (*redaction) += "Or, cette équation est vérifiée pour n = " + solution.to_std_string_simple() + ". ";
+                (*redaction) += "Donc, " + polymonial.to_std_string() + " admet pour racine " + solution.to_std_string_simple() + ". ";
             }
-            else if(degree == 2) {
-                // Calculate the known and unknown parts
-                scls::Complex a_part = polymonial.monomonial(current_function->function_unknown, 2).factor();
-                scls::Complex b_part = polymonial.monomonial(current_function->function_unknown).factor();
-                scls::Complex c_part = polymonial.known_monomonial().factor();
-                scls::Complex discriminant_complex = b_part * b_part - 4 * a_part * c_part;
+            to_return.add_number(solution);
+            scls::Interval interval;
+        }
+        else if(degree == 2) {
+            // Calculate the known and unknown parts
+            scls::Complex a_part = polymonial.monomonial(current_function->unknown(), 2).factor();
+            scls::Complex b_part = polymonial.monomonial(current_function->unknown()).factor();
+            scls::Complex c_part = polymonial.known_monomonial().factor();
+            scls::Complex discriminant_complex = b_part * b_part - 4 * a_part * c_part;
 
-                // Create the redaction for the discriminant
-                redaction += "Or, cette forme est un polynôme de degré 2. ";
-                redaction += "Pour étudier ses racines, nous devons étudier les trois parties qui la constitue. ";
-                redaction += "Commençons par calculer le discriminant d de cette forme. ";
-                redaction += " d = b * b - 4 * a * c = " + discriminant_complex.to_std_string_simple() + ". ";
+            // Create the redaction for the discriminant
+            if(redaction != 0) {
+                (*redaction) += "Or, cette forme est un polynôme de degré 2. ";
+                (*redaction) += "Pour étudier ses racines, nous devons étudier les trois parties qui la constitue. ";
+                (*redaction) += "Commençons par calculer le discriminant d de cette forme. ";
+                (*redaction) += " d = b * b - 4 * a * c = " + discriminant_complex.to_std_string_simple() + ". ";
+            }
 
-                // Search the needed roots
-                scls::Fraction discriminant = discriminant_complex.real();
-                if(discriminant < 0) {redaction += "Or, d &lt; 0, donc cette forme n'a pas de solution dans l'ensemble des réels. ";}
-                else if(discriminant == 0) {
-                    scls::Fraction solution = ((b_part * -1) / (2 * a_part)).real();
-                    redaction += "Or, d = 0, donc cette forme a une solution dans l'ensemble des réels. ";
-                    redaction += "Cette solution est n = -b/2a = " + solution.to_std_string() + ". ";
-                    to_return.add_number(solution);
-                } else {
-                    scls::Fraction sqrt_d = scls::Fraction(std::sqrt(discriminant.to_double()) * 1000000.0, 1000000.0);
-                    scls::Fraction solution_1 = (((b_part * -1) + sqrt_d) / (2 * a_part)).real();
-                    scls::Fraction solution_2 = (((b_part * -1) - sqrt_d) / (2 * a_part)).real();
-                    redaction += "Or, d > 0, donc cette forme a deux solutions dans l'ensemble des réels. ";
-                    redaction += "La première solution est x1 = (-b + sqrt(d))/2a, qui est à peu prés égal à " + scls::format_number_to_text(solution_1.to_double()) + ". ";
-                    redaction += "La deuxième solution est x2 = (-b - sqrt(d))/2a, qui est à peu prés égal à " + scls::format_number_to_text(solution_2.to_double()) + ". ";
-                    to_return.add_number(solution_1); to_return.add_number(solution_2);
+            // Search the needed roots
+            scls::Fraction discriminant = discriminant_complex.real();
+            if(discriminant < 0) {if(redaction != 0){(*redaction) += "Or, d &lt; 0, donc cette forme n'a pas de solution dans l'ensemble des réels. ";} }
+            else if(discriminant == 0) {
+                scls::Fraction solution = ((b_part * -1) / (2 * a_part)).real();
+                if(redaction != 0) {
+                    (*redaction) += "Or, d = 0, donc cette forme a une solution dans l'ensemble des réels. ";
+                    (*redaction) += "Cette solution est n = -b/2a = " + solution.to_std_string() + ". ";
                 }
+                to_return.add_number(solution);
+            }
+            else {
+                scls::Fraction sqrt_d = scls::Fraction(std::sqrt(discriminant.to_double()) * 1000000.0, 1000000.0);
+                scls::Fraction solution_1 = (((b_part * -1) + sqrt_d) / (2 * a_part)).real();
+                scls::Fraction solution_2 = (((b_part * -1) - sqrt_d) / (2 * a_part)).real();
+                if(redaction != 0) {
+                    (*redaction) += "Or, d > 0, donc cette forme a deux solutions dans l'ensemble des réels. ";
+                    (*redaction) += "La première solution est x1 = (-b + sqrt(d))/2a, qui est à peu prés égal à " + scls::format_number_to_text(solution_1.to_double()) + ". ";
+                    (*redaction) += "La deuxième solution est x2 = (-b - sqrt(d))/2a, qui est à peu prés égal à " + scls::format_number_to_text(solution_2.to_double()) + ". ";
+                }
+                to_return.add_number(solution_1); to_return.add_number(solution_2);
             }
         }
 
         return to_return;
     }
+    scls::Set_Number function_roots_fraction(scls::Formula::Formula_Fraction* fraction, Function_Studied* current_function, std::string* redaction) {
+        // Create the redaction
+        if(redaction != 0){(*redaction) += "Or, cette forme est une fonction. Ces racines sont donc les mêmes que celles de sont numérateur. ";}
+
+        // Create the function
+        std::shared_ptr<Function_Studied> fs = Function_Studied::new_function_studied_shared_ptr(*fraction->numerator(), current_function);
+        fs.get()->set_name(current_function->name() + std::string("_num"));fs.get()->set_function_unknown(current_function->unknown());
+        return function_roots(fs.get(), redaction);
+    }
+    scls::Set_Number function_roots(Function_Studied* current_function, std::string* redaction) {
+        // Create the redaction
+        scls::Formula* function_studied = current_function->formula();
+        scls::Set_Number to_return = scls::Set_Number();
+        if(redaction != 0){(*redaction) += "Nous cherchons les racines de " + function_studied->to_std_string() + ". ";}
+
+        // Handle function
+        std::shared_ptr<scls::Formula::__Formula_Base_Function> applied_function = function_studied->applied_function_shared_ptr();
+        function_studied->clear_applied_function();function_studied->check_formula();
+
+        // Select the good study to do
+        if(function_studied->is_simple_polymonial()) {to_return = function_roots_polymonial(function_studied->to_polymonial(), current_function, redaction);}
+        else if(function_studied->is_simple_fraction()){to_return = function_roots_fraction(function_studied->fraction(), current_function, redaction);}
+
+        current_function->set_roots(to_return);
+        return to_return;
+    }
 
     // Returns the set of a positive function
-    scls::Set_Number function_sign(Function_Studied current_function, std::string& redaction) {
-        // Create the redaction
-        scls::Formula& function_studied = current_function.function_formula;
-        redaction += "Nous cherchons le signe de " + current_function.function_name + ", qui peut s'écrire " + function_studied.to_std_string() + ". ";
+    scls::Set_Number function_sign_polymonial(scls::Polymonial polymonial, Function_Studied* current_function, std::string* redaction) {
         scls::Set_Number to_return = scls::Set_Number();
+        int degrees = polymonial.degree(current_function->name()).real().to_int();
+        if(current_function->roots() == 0){function_roots(current_function, redaction);}
+        int roots_number = current_function->roots()->cardinal();
+        if(roots_number == 0) {
+            // Only one number
+            scls::Fraction number = polymonial.replace_unknown(current_function->unknown(), 0).known_monomonial().factor().real();
+            if(number < 0) {if(redaction != 0){(*redaction) += std::string("Or, ") + current_function->formula()->to_std_string() + " &lt; 0, cette forme est donc négative sur N.";}}
+            else if(number > 0) {
+                if(redaction != 0){(*redaction) += std::string("Or, ") + current_function->formula()->to_std_string() + " &gt; 0, cette forme est donc positive sur N.";}
 
-        // Only one polymonial
-        if(function_studied.is_simple_polymonial()) {
-            scls::Polymonial polymonial = function_studied;
-            int degree = polymonial.degree("n").real().to_int();
-            if(polymonial.is_known()) {
-                // Only one number
-                scls::Fraction number = static_cast<scls::Complex>(polymonial.known_monomonial()).real();
-                if(number < 0) {
-                    redaction += "Or, " + function_studied.to_std_string() + " &lt; 0, cette forme est donc négative sur N.";
-                } else if(number > 0) {
-                    redaction += "Or, " + function_studied.to_std_string() + " &gt; 0, cette forme est donc positive sur N.";
-                    // Create the needed interval
-                    scls::Interval interval; interval.set_start_infinite(true); interval.set_end_infinite(true);
-                    to_return = interval;
-                } else {
-                    redaction += "Or, " + current_function.function_name + " = 0, cette forme est donc nulle sur N.";
+                // Create the needed interval
+                scls::Interval interval; interval.set_start_infinite(true); interval.set_end_infinite(true);
+                to_return = interval;
+            }
+            else {if(redaction != 0){(*redaction) += std::string("Or, ") + current_function->formula()->to_std_string() + " = 0, cette forme est donc nulle sur N.";}}
+        }
+        else {
+            // Create the redaction
+            if(redaction != 0) {
+                if(roots_number == 1) {
+                    (*redaction) += "Cette forme a une racine. ";
+                    (*redaction) += "Pour étudier son signe total, nous allons étudier une valeur avant et une valeur après cette racine. ";
                 }
-                // Add the type of sequence in the redaction
-                if(current_function.type == Studied_Type::ST_Sequence && number != 0) {
-                    redaction += "</br>De plus, nous pouvons constater que s est une suite arithmétique de raison " + number.to_std_string() + ".";
+                else {
+                    (*redaction) += "Cette forme a " + std::to_string(roots_number) + " racines. ";
+                    (*redaction) += "Pour étudier son signe total, nous allons étudier une valeur avant et une valeur après ces racines. ";
                 }
-            } else if(polymonial.degree("n") == 1) {
-                // Calculate the known and unknown parts
-                scls::Complex known_part = polymonial.known_monomonial().factor();
-                scls::Complex unknown_part = polymonial.unknown_monomonials()[0].factor();
+            }
 
-                // Create the redaction
-                redaction += "Or, cette forme est une forme affine.";
-                redaction += " Pour étudier son signe, nous devons étudier les deux parties qui la constitue.";
-                redaction += " La partie connue du polynôme vaut " + known_part.to_std_string_simple() + ".";
+            // Last studied value
+            scls::Fraction current_root = current_function->roots()->intervals().at(0).start();
+            scls::Fraction last_root = current_function->roots()->intervals().at(0).start();
+            bool last_is_first = true;
+            scls::Fraction last_number = polymonial.replace_unknown(current_function->unknown(), current_root - 1).known_monomonial().factor().real();
 
-                // Calculate the solution
-                known_part *= -1;
-                scls::Complex solution = known_part / unknown_part;
-                bool inverse_sign = false;
-                if((known_part.real() < 0 && unknown_part.real() > 0)) inverse_sign = true;
-                redaction += " Donc, la différence est négative quand l'équation " + unknown_part.to_std_string_simple() + " * n &lt; " + known_part.to_std_string_simple() + " fonctionne.";
-                if(inverse_sign) {
-                    redaction += " Or, cette équation est vérifiée pour n &lt; " + solution.to_std_string_simple() + ".";
-                    redaction += " Donc, " + function_studied.to_std_string() + " &lt; 0 &lt;=&gt; n &lt; " + solution.to_std_string_simple() + ".";
-                    scls::Interval interval; interval.set_start(solution.real()); interval.set_end_infinite(true);
-                    to_return = interval;
-                } else {
-                    redaction += " Or, cette équation est vérifiée pour n &gt; " + solution.to_std_string_simple() + ".";
-                    redaction += " Donc, " + function_studied.to_std_string() + " &lt; 0 &lt;=&gt; n &gt; " + solution.to_std_string_simple() + ".";
-                    scls::Interval interval; interval.set_start_infinite(true); interval.set_end(solution.real());
-                    to_return = interval;
+            // Get the set to unite
+            if(last_number > 0) {
+                to_return = scls::Set_Number::before_strictly(current_root);
+                if(redaction != 0) {
+                    (*redaction) += "La valeur est positive. ";scls::Set_Number temp = scls::Set_Number::before_strictly(current_root);
+                    (*redaction) += std::string("La fonction est donc strictement positive sur ") + temp.to_std_string() + std::string(". ");
                 }
-            } else if(polymonial.degree("n") == 2) {
-                // Create the redaction
-                redaction += "Or, cette forme est une forme polymonial de degré 2.";
-                redaction += " Commençons par trouver les racines de cette forme.</br>";
-                // Create the needed function studied
-                scls::Set_Number result = function_roots(&current_function, redaction);
-                redaction += "</br>";
-                // Search the sign
-                scls::Fraction a_part = polymonial.monomonial("n", 2).factor().real();
-                if(a_part > 0) {
-                    if(result.numbers().size() <= 0) {
-                        redaction += "De plus, a &gt; 0. Donc la forme est positive.";
-                    } else if(result.numbers().size() == 1) {
-                        redaction += "De plus, a &gt; 0. Donc la forme est positive, mais s'annule pour n = " + result.numbers().at(0).to_std_string_simple(7) + ".";
-                    } else {
-                        redaction += "De plus, a &gt; 0. Donc la forme est positive pour n &lt; " + result.numbers().at(0).to_std_string_simple(7) + " et n &gt; " + result.numbers().at(1).to_std_string_simple(7) + ".";
+            }
+            else if(redaction != 0) {
+                (*redaction) += "La valeur est négative. ";scls::Set_Number temp = scls::Set_Number::before_strictly(current_root);
+                (*redaction) += std::string("La fonction est donc strictement négative sur ") + temp.to_std_string() + std::string(". ");
+            }
+
+            // Study each values
+            for(int i = 1;i<roots_number;i++) {
+                // Only two numbers
+                scls::Fraction next_root = current_function->roots()->intervals().at(i).start();
+                scls::Fraction current_number = (current_root + next_root) / 2;
+                current_number = polymonial.replace_unknown(current_function->unknown(), current_number).known_monomonial().factor().real();
+
+                // Get the set to unite
+                if(current_number > 0) {to_return.add_interval(scls::Set_Number::between_strictly(current_root, next_root));}
+
+                // Get the good conclusion
+                if(current_number < 0) {
+                    if(redaction != 0) {
+                        (*redaction) += "La prochaine valeur est négative. ";scls::Interval temp;
+                        temp.set_start(current_root);temp.set_start_included(false);temp.set_end(next_root);temp.set_end_included(false);
+                        (*redaction) += std::string("La fonction est donc strictement négative sur ") + temp.to_std_string() + std::string(". ");
                     }
-                } else {
-                    if(result.numbers().size() <= 0) {
-                        redaction += "De plus, a &lt; 0. Donc la forme est négative.";
-                    } else if(result.numbers().size() == 1) {
-                        redaction += "De plus, a &lt; 0. Donc la forme est négative, mais s'annule pour n = " + result.numbers().at(0).to_std_string_simple(7) + ".";
-                    } else {
-                        redaction += "De plus, a &lt; 0. Donc la forme est négative pour n &lt; " + result.numbers().at(0).to_std_string_simple(7) + " et n &gt; " + result.numbers().at(1).to_std_string_simple(7) + ".";
+                }
+                else {
+                    if(redaction != 0) {
+                        (*redaction) += "La prochaine valeur est positive. ";scls::Interval temp;
+                        temp.set_start(current_root);temp.set_start_included(false);temp.set_end(next_root);temp.set_end_included(false);
+                        (*redaction) += std::string("La fonction est donc strictement positive sur ") + temp.to_std_string() + std::string(". ");
                     }
+                }
+                last_root = current_root;current_root = next_root;
+                last_is_first = false;
+                last_number = current_number;
+            }
+
+            // Finish the study
+            scls::Fraction current_number = polymonial.replace_unknown(current_function->unknown(), current_root + 1).known_monomonial().factor().real();
+            if(current_number > 0) {to_return.add_interval(scls::Set_Number::after_strictly(current_root));}
+
+            // Get the good conclusion
+            if(current_number < 0) {
+                if(redaction != 0) {
+                    (*redaction) += "La prochaine valeur est négative. ";scls::Interval temp;
+                    temp.set_start(current_root);temp.set_start_included(false);temp.set_end_infinite(true);
+                    (*redaction) += std::string("La fonction est donc strictement négative sur ") + temp.to_std_string() + std::string(". ");
+                }
+            }
+            else {
+                if(redaction != 0) {
+                    (*redaction) += "La prochaine valeur est positive. ";scls::Interval temp;
+                    temp.set_start(current_root);temp.set_start_included(false);temp.set_end_infinite(true);
+                    (*redaction) += std::string("La fonction est donc strictement positive sur ") + temp.to_std_string() + std::string(". ");
                 }
             }
         }
 
+        // Finish the redaction
+        if(redaction != 0) {(*redaction) += std::string("</br>Au final, la fonction est strictement positive sur ") + to_return.to_std_string() + std::string(". ");}
+
         return to_return;
+    }
+    scls::Set_Number function_sign_fraction(scls::Formula::Formula_Fraction* fraction, Function_Studied* current_function, std::string* redaction) {
+        // Create the redaction
+        scls::Formula* function_studied = current_function->formula();
+        scls::Set_Number to_return = scls::Set_Number();
+        if(redaction != 0){(*redaction) += std::string("Or, la fonction ") + current_function->name() + " est constitué d'une fraction, nous devons donc analyser son numérateur et son dénominateur. "; }
+
+        // Numerator
+        std::shared_ptr<Function_Studied> fs = Function_Studied::new_function_studied_shared_ptr(*fraction->numerator(), current_function);
+        fs.get()->set_name(current_function->name() + std::string("_num"));fs.get()->set_function_unknown(current_function->unknown());
+        if(redaction == 0){std::string temp=std::string();to_return = function_sign(fs.get(), &temp);}
+        else{to_return = function_sign(fs.get(), redaction);}
+        // Denominator
+        fs = Function_Studied::new_function_studied_shared_ptr(*fraction->denominator(), current_function);
+        fs.get()->set_name(current_function->name() + std::string("_den"));fs.get()->set_function_unknown(current_function->unknown());
+        if(redaction == 0){std::string temp=std::string();to_return = function_sign(fs.get(), &temp).complement_relative_symetrical(&to_return);}
+        else{to_return = function_sign(fs.get(), redaction).complement_relative_symetrical(&to_return);}
+
+        return to_return;
+    }
+    scls::Set_Number function_sign(Function_Studied* current_function, std::string* redaction) {
+        // Create the redaction
+        scls::Formula* function_studied = current_function->formula();
+        scls::Set_Number to_return = scls::Set_Number();
+        if(redaction != 0){(*redaction) += "Nous cherchons le signe de " + current_function->name() + ", qui peut s'écrire " + function_studied->to_std_string() + ". "; }
+
+        // Only one polymonial
+        if(function_studied->is_simple_polymonial()) {to_return = function_sign_polymonial(function_studied->to_polymonial(), current_function, redaction);}
+        else if(function_studied->is_simple_fraction()) {to_return = function_sign_fraction(function_studied->fraction(), current_function, redaction);}
+
+        current_function->set_sign_set(to_return);
+        return to_return;
+    }
+    // Returns a text for a sign table of a function
+    std::string function_sign_table(Function_Studied* current_function, std::string* redaction) {
+        Function_Table table;scls::Formula* formula = current_function->formula();
+
+        // If the function is a fraction
+        if(formula->is_simple_fraction()) {
+            std::shared_ptr<Function_Studied> needed_function = Function_Studied::new_function_studied_shared_ptr(*formula->numerator().get());
+            function_definition_set(needed_function.get(), 0);function_sign(needed_function.get(), 0);
+            table.add_function(needed_function.get());
+            if(formula->has_denominator()) {
+                needed_function = Function_Studied::new_function_studied_shared_ptr(*formula->denominator().get());
+                function_definition_set(needed_function.get(), 0);function_sign(needed_function.get(), 0);
+                table.add_function(needed_function.get());
+            }
+        }
+
+        table.add_function(current_function);
+        return table.to_xml(redaction);
     }
 
     //******************
@@ -511,7 +748,7 @@ namespace pleos {
     //
     //******************
 
-    // Returns the interval of an sequence
+    /*// Returns the interval of an sequence
     scls::Interval sequence_variation(Function_Studied current_function_studied, std::string& redaction) {
         std::string& needed_unknown = current_function_studied.function_unknown;
         scls::Formula& current_function = current_function_studied.function_formula;
@@ -528,7 +765,7 @@ namespace pleos {
         fs.function_formula = *function_difference.formula_base();
         fs.function_name = current_function_studied.function_name;
         fs.function_number = 1;
-        scls::Set_Number result = function_sign(fs, redaction);
+        scls::Set_Number result = function_sign(&fs, &redaction);
         redaction += "</br>";
 
         // Create the variation redaction
@@ -550,7 +787,7 @@ namespace pleos {
         }
 
         return scls::Interval(0, 0);
-    }
+    }//*/
 
     //******************
     //
@@ -558,11 +795,62 @@ namespace pleos {
     //
     //******************
 
+    // Annoying functions to draw the image
+    int Graphic_Base_Object::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x.to_double()) * graphic_base()->a_pixel_by_case_x + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
+    int Graphic_Base_Object::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - graphic_base()->a_middle_x) * graphic_base()->a_pixel_by_case_x + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
+    int Graphic_Base_Object::graphic_y_to_pixel_y(double y){return std::ceil((y - graphic_base()->a_middle_y.to_double()) * graphic_base()->a_pixel_by_case_y) + (graphic_base()->a_height_in_pixel / 2.0);};
+    int Graphic_Base_Object::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - graphic_base()->a_middle_y) * graphic_base()->a_pixel_by_case_y + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double());};
+    int Graphic_Base_Object::graphic_y_to_pixel_y_inversed(double y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
+    int Graphic_Base_Object::graphic_y_to_pixel_y_inversed(scls::Fraction y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
+    scls::Fraction Graphic_Base_Object::pixel_x_to_graphic_x(int x){return graphic_base()->a_middle_x + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_x));}
+    scls::Fraction Graphic_Base_Object::pixel_y_to_graphic_y(int y){return graphic_base()->a_middle_y + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_y));}
+
+    // Returns the datas set to an image
+    std::shared_ptr<scls::Image> Graphic::Datas_Set::to_image() {if(type() == Graphic::Datas_Set::Datas_Set_Type::DST_Histogram){return to_image_histogram();}return std::shared_ptr<scls::Image>();}
+    std::shared_ptr<scls::Image> Graphic::Datas_Set::to_image_histogram() {
+        // Create the image
+        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel(), height_in_pixel(), scls::Color(255, 255, 255));
+
+        // Get the needed datas
+        std::vector<scls::Fraction> all_values;std::vector<int> all_values_number;
+        int max_number = 0;scls::sort_fractions(a_datas);
+        for(int i = 0;i<static_cast<int>(a_datas.size());i++) {
+            int j = 0;for(;j<static_cast<int>(all_values.size());j++) {if(all_values.at(j) == a_datas.at(i)){break;}}
+            if(j >= all_values.size()){all_values.push_back(a_datas.at(i));all_values_number.push_back(1);}
+            else{all_values_number[j]++;}
+            if(all_values_number.at(j) > max_number){max_number = all_values_number.at(j);}
+        }
+
+        // Draw each part
+        scls::Color bar_color = scls::Color(255, 0, 0);
+        std::vector<long long int> all_width = scls::partition_number(to_return.get()->height(), all_values.size());
+        int current_x = 0;
+        for(int i = 0;i<static_cast<int>(all_values.size());i++) {
+            double proportion = static_cast<double>(all_values_number.at(i)) / static_cast<double>(max_number);
+
+            // Draw the bar
+            int current_height = to_return.get()->height() * proportion;
+            int current_y = to_return.get()->height() - current_height;
+            to_return.get()->fill_rect(current_x, current_y, all_width.at(i), current_height, bar_color);
+            current_x += all_width.at(i);
+        }
+
+        return to_return;
+    }
+
     // Graphic constructor
     Graphic::Graphic_Function::Graphic_Function(std::shared_ptr<Function_Studied> function_studied):a_function_studied(function_studied){}
 
     // Adds a function to the graphic
     std::shared_ptr<Graphic::Graphic_Function> Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);a_functions.push_back(new_function);a_graphic_base.get()->a_function_number++;return new_function;}
+
+    // Draws a datas set on the graphic
+    void Graphic::draw_datas_set(Datas_Set* needed_datas_set, std::shared_ptr<scls::Image> to_return) {
+        std::shared_ptr<scls::Image> needed_image = needed_datas_set->to_image();
+        double needed_x = graphic_x_to_pixel_x(needed_datas_set->x().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(needed_datas_set->y().to_double(), to_return);
+        to_return.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
+    }
 
     // Draws a form on the graphic
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
@@ -649,15 +937,32 @@ namespace pleos {
 
     // Draws a point on the graphic
     void Graphic::draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return) {
-        double needed_x = graphic_x_to_pixel_x(needed_point->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double needed_y = graphic_y_to_pixel_y_inversed(needed_point->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double point_width = 8;
-        if(needed_point->type() == Vector_Type::VT_Vector) {
-            to_return.get()->draw_line(graphic_x_to_pixel_x(0, to_return), graphic_y_to_pixel_y_inversed(0, to_return), needed_x, needed_y, scls::Color(255, 0, 0), 2);
+        // Get the needed coordinates
+        scls::Fraction needed_x_end = 0;if(needed_point->x_end() != 0){needed_x_end = needed_point->x_end()->to_polymonial().known_monomonial().factor().real();}
+        needed_x_end = graphic_x_to_pixel_x(needed_x_end, to_return);
+        scls::Fraction needed_y_end = 0;if(needed_point->y_end() != 0){needed_y_end = needed_point->y_end()->to_polymonial().known_monomonial().factor().real();}
+        needed_y_end = graphic_y_to_pixel_y_inversed(needed_y_end, to_return);
+        scls::Fraction needed_x_start = graphic_x_to_pixel_x(needed_point->x()->to_polymonial().known_monomonial().factor().real(), to_return);
+        scls::Fraction needed_y_start = graphic_y_to_pixel_y_inversed(needed_point->y()->to_polymonial().known_monomonial().factor().real(), to_return);
+        // Apply the drawing proportion
+        double hat_position_in_purcentage = 1;double hat_size_in_purcentage = 0.2;
+        if(needed_point->drawing_proportion() != 1) {
+            scls::Fraction x_diff = needed_x_end - needed_x_start;
+            scls::Fraction y_diff = needed_y_end - needed_y_start;
+            needed_x_end = needed_x_start + x_diff * needed_point->drawing_proportion();
+            needed_y_end = needed_y_start + y_diff * needed_point->drawing_proportion();
+            hat_position_in_purcentage=scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0/SCLS_PI);
+            hat_size_in_purcentage = 20;
         }
-        else {
-            to_return.get()->fill_rect(needed_x - point_width / 2.0, needed_y  - point_width / 2.0, point_width, point_width, scls::Color(255, 0, 0));
-        }
+
+        // Get the graphic values
+        scls::Color needed_color = needed_point->color();
+        double needed_width = 2;
+
+        // Draw the vector
+        if(needed_point->type() == Vector_Type::VT_Arrow) {to_return.get()->draw_arrow(needed_x_start.to_double(), needed_y_start.to_double(), needed_x_end.to_double(), needed_y_end.to_double(), needed_color, hat_position_in_purcentage, hat_size_in_purcentage, needed_width);}
+        else if(needed_point->type() == Vector_Type::VT_Vector) {to_return.get()->draw_line(needed_x_start.to_double(), needed_y_start.to_double(), needed_x_end.to_double(), needed_y_end.to_double(), needed_color, needed_width);}
+        else {needed_width=8;to_return.get()->fill_rect(needed_x_start.to_double() - needed_width / 2.0, needed_y_start.to_double()  - needed_width / 2.0, needed_width, needed_width, needed_color);}
     }
 
     // Needed fragment shader for the function
@@ -834,13 +1139,18 @@ namespace pleos {
     }
     // Returns the image of the graphic
     int Graphic::graphic_x_to_pixel_x(double x, int image_width){return std::ceil((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(image_width) / 2.0));};
+    int Graphic::graphic_x_to_pixel_x(scls::Fraction x, int image_width){return std::ceil(((x - middle_x()) * pixel_by_case_x() + scls::Fraction(image_width, 2)).to_double());};
     int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return std::ceil((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0);};
+    int Graphic::graphic_y_to_pixel_y(scls::Fraction y, int needed_height){return std::ceil(((y - middle_y()) * pixel_by_case_y() + scls::Fraction(needed_height, 2)).to_double());};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
+    int Graphic::graphic_y_to_pixel_y_inversed(scls::Fraction y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
     scls::Fraction Graphic::pixel_x_to_graphic_x(int x, int image_width){return middle_x() + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
     scls::Fraction Graphic::pixel_y_to_graphic_y(int y, int needed_height){return middle_y() + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
     std::shared_ptr<scls::Image> Graphic::to_image(int width_in_pixel, int height_in_pixel) {
         // Create the image
         std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(width_in_pixel, height_in_pixel, style()->background_color());
+        a_graphic_base.get()->a_height_in_pixel = height_in_pixel;
+        a_graphic_base.get()->a_width_in_pixel = width_in_pixel;
 
         // Handle the height and width
         if(a_graphic_base.get()->a_height != -1) {a_graphic_base.get()->a_pixel_by_case_y = static_cast<double>(height_in_pixel) / a_graphic_base.get()->a_height;}
@@ -879,7 +1189,13 @@ namespace pleos {
             to_return.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
         }
         // Draw the vectors
-        for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {draw_vector(a_vectors[i].get(), to_return);}
+        for(int i = 0;i<static_cast<int>(a_vectors.size());i++) {draw_vector(a_vectors.at(i).get(), to_return);}
+
+        // Draw the datas set
+        for(int i = 0;i<static_cast<int>(a_datas_sets.size());i++) {draw_datas_set(a_datas_sets.at(i).get(), to_return);}
+
+        // Draw the border
+        to_return.get()->draw_border(style()->border_top_width(), style()->border_left_width(), style()->border_bottom_width(), style()->border_right_width(), style()->border_color);
 
         return to_return;
     }
@@ -1032,8 +1348,14 @@ namespace pleos {
         if(collision == 0 || collision->attached_object() == attached_object()){return;}
 
         // Check each collision
-        for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {Collision_Rect_Rect current_result = __check_collision(a_collisions[i].get(), collision, this);}
+        for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {
+            Collision_Rect_Rect current_result = __check_collision(a_collisions[i].get(), collision, this);
+            if(current_result.happens){a_current_collisions_results.push_back(current_result);}
+        }
     }
+
+    // Soft resets the object
+    void Graphic::Graphic_Physic::soft_reset(){a_current_collisions_results.clear();};
 
     // Loads 100 X 100 physic map
     void Graphic::load_physic_map(int middle_loading_x, int middle_loading_y) {
@@ -1075,6 +1397,7 @@ namespace pleos {
         }
 
         // Update the physic
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++){a_gui_objects.at(i).get()->reset_physic();}
         int needed_update_physic = update_physic();
 
         // Move the plane
@@ -1137,7 +1460,7 @@ namespace pleos {
     }
 
     // Updates the physic
-    scls::Point_3D gravity = scls::Point_3D(0, -3.71, 0);
+    scls::Point_3D gravity = scls::Point_3D(0, -9.8, 0);
     int Graphic_Object::update_physic() {
         // Realised updates
         int needed_update = 0;
@@ -1149,6 +1472,9 @@ namespace pleos {
                 needed_update++;
             }
         }
+
+        // Update raw velocity
+        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {if(a_gui_objects[i].get()->physic_object() != 0){a_gui_objects[i].get()->physic_object()->update_raw_velocity();} }
 
         // Update each objects in the case
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {

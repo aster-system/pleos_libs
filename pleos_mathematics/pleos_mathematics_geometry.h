@@ -69,7 +69,7 @@ namespace pleos {
     //
     //******************
 
-    enum Vector_Type{VT_Vector, VT_Point};
+    enum Vector_Type{VT_Arrow, VT_Point, VT_Vector};
     class Vector {
         // Class representating a mathematical vector (more mathematically advanced and geenralised than scls::Vector_3D)
     public:
@@ -102,11 +102,17 @@ namespace pleos {
 
         // Returns the possible known coordinates
         inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
+        inline void set_x_end(scls::Formula formula) {if(a_coordinates_end.size() <= 0){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[0].get())=formula;};
         inline void set_y(scls::Formula formula) {while(a_coordinates.size() <= 1){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[1].get())=formula;};
+        inline void set_y_end(scls::Formula formula) {if(a_coordinates_end.size() <= 1){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[1].get())=formula;};
         inline scls::Formula* x() const {if(a_coordinates.size() <= 0){return 0;} return a_coordinates[0].get();};
-        inline double x_to_double() const{return x()->value(0).real().to_double();};
+        inline scls::Formula* x_end() const {if(a_coordinates_end.size() <= 0){return 0;} return a_coordinates_end[0].get();};
+        inline double x_end_to_double() const{if(x_end() == 0){return 0;}return x_end()->value(0).real().to_double();};
+        inline double x_to_double() const{if(x() == 0){return 0;}return x()->value(0).real().to_double();};
         inline scls::Formula* y() const {if(a_coordinates.size() <= 1){return 0;} return a_coordinates[1].get();};
-        inline double y_to_double() const{return y()->value(0).real().to_double();};
+        inline scls::Formula* y_end() const {if(a_coordinates_end.size() <= 1){return 0;} return a_coordinates_end[1].get();};
+        inline double y_end_to_double() const{if(y_end() == 0){return 0;}return y_end()->value(0).real().to_double();};
+        inline double y_to_double() const{if(y() == 0){return 0;}return y()->value(0).real().to_double();};
         inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
         inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
 
@@ -128,10 +134,14 @@ namespace pleos {
         Vector operator-(Vector value) const {Vector new_value(vector_copy());new_value.__substract(value);return new_value;};
 
         // Getters and setters
+        inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::vector<std::shared_ptr<scls::Formula>>& coordinates(){return a_coordinates;};
+        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates_end(){return a_coordinates_end;};
+        inline scls::Fraction drawing_proportion() const {return a_drawing_proportion;};
         inline std::string name() const {return a_name;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
+        inline void set_drawing_proportion(scls::Fraction new_drawing_proportion){a_drawing_proportion=new_drawing_proportion;};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(type_name() + std::string(" ") + a_name);}};
         inline void set_type(Vector_Type new_type){a_type=new_type;};
         inline Vector_Type type() const {return a_type;};
@@ -141,8 +151,14 @@ namespace pleos {
     private:
         // Connected object to this vector
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+
+        // Color of the vector
+        scls::Color a_color = scls::Color(0, 0, 0);
         // Coordinates of the vector
         std::vector<std::shared_ptr<scls::Formula>> a_coordinates;
+        std::vector<std::shared_ptr<scls::Formula>> a_coordinates_end;
+        // Drawing proportion
+        scls::Fraction a_drawing_proportion = 1;
         // Name of the vector
         std::string a_name;
         // Type of the vector
@@ -200,7 +216,7 @@ namespace pleos {
         inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
         inline void set_color(scls::Color new_color){a_color=new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
-        inline void set_link_drawing_proportion(int link, double new_proportion){if(link >= a_points_link.size()){return;}a_points_link[link].drawing_proportion = new_proportion;};
+        inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
         inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
 

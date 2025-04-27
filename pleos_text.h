@@ -37,7 +37,7 @@
 // Create the object
 #define GUI_PAGE(type, gui, gui_page, function, display_function, display_function_parent) private: std::shared_ptr<type> gui; \
 public: inline type* function() const {return gui.get();} \
-public: void display_function(){display_function_parent();set_current_page(gui_page);function()->set_visible(true);}
+public: void display_function(){if(function()==0){scls::print("Warning", std::string("SCLS GUI Page \"") + name() + std::string("\""), std::string("The object \"") + std::to_string(gui_page) + std::string("\" does not exists."));}else{display_function_parent();set_current_page(gui_page);function()->set_visible(true);}}
 #define GUI_OBJECT(type, gui, function) private: std::shared_ptr<type> gui; \
 public: inline type* function() const {return gui.get();}
 // Get the object
@@ -53,6 +53,12 @@ namespace pleos {
 	// PLEOS Text handler
 	//
 	//*********
+
+	// Creates and returns a graphic from an std::string
+	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	void graphic_from_xml(std::shared_ptr<Graphic> graphic_shared_ptr, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
 
 	// Creates and returns a linked-list from an std::string
 	std::shared_ptr<Linked_List<std::string>> linked_list_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
@@ -98,43 +104,51 @@ namespace pleos {
     public:
 
         // Text constructor
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){
-            std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("function", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("graph", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("graphic", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = false;
-            defined_balises.get()->set_defined_balise("link", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("linked_list", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("node", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("nodes", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("table", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("tree", current_balise);
-            current_balise = std::make_shared<scls::Balise_Style_Datas>();
-            current_balise.get()->has_content = true;
-            defined_balises.get()->set_defined_balise("trees", current_balise);
-        };
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){load_balises(defined_balises);set_text(text);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, std::shared_ptr<scls::Text_Style> style):scls::Text_Image_Multi_Block(defined_balises, text, style){load_balises(defined_balises);set_text(text);};
 
         // Creates and returns a __Text_Block
         virtual std::shared_ptr<scls::Text_Image_Block>__create_block(std::shared_ptr<scls::Block_Datas>needed_datas){return std::make_shared<__Text_Block>(defined_balises_shared_ptr(), needed_datas);};
 
+        // Loads the needed balises
+        void load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
+
     private:
+    };
+
+    //*********
+    // GUI Handling
+    //*********
+
+    class GUI_Text : public scls::GUI_Text_Base<Text> {
+        // Class representing an GUI object displaying a text into the window
+    public:
+
+        class __GUI_Text_Block_Graphic : public scls::__GUI_Text_Metadatas::__GUI_Text_Block {
+            // Children of a GUI text containing a graphic
+        public:
+            // Most basic __GUI_Text_Block constructor
+            __GUI_Text_Block_Graphic(std::shared_ptr<GUI_Object> needed_object):scls::__GUI_Text_Metadatas::__GUI_Text_Block(needed_object){};
+
+            // Updates the texture of the block
+            virtual void update_texture(scls::Text_Image_Block* block_to_apply, scls::Image_Generation_Type generation_type);
+
+            // Graphic in the block
+            inline Graphic* graphic() const {return graphic_object()->graphic();};
+            inline Graphic_Object* graphic_object() const {return reinterpret_cast<Graphic_Object*>(object());};
+        };
+
+        //*********
+        //
+        // GUI Text main functions
+        //
+        //*********
+
+        // Most basic GUI_Object constructor
+        GUI_Text(scls::_Window_Advanced_Struct& window, std::string name, std::weak_ptr<GUI_Object> parent):scls::GUI_Text_Base<Text>(window, name, parent){};
+
+        // Creates a text block from a block of text
+        virtual std::shared_ptr<scls::__GUI_Text_Metadatas::__GUI_Text_Block> __create_text_block_object(scls::Text_Image_Block* block_to_apply);
     };
 }
 

@@ -290,14 +290,14 @@ namespace pleos {
                 int root_to_node_separation = 30;
                 int x_offset = 0;int y_offset = 0;int height_to_add = 0;int width_to_add = 0;
                 if(needed_style.get() != 0){
-                    x_offset = needed_style.get()->border_left_width + needed_style.get()->padding_left();y_offset = needed_style.get()->border_top_width + needed_style.get()->padding_top();
-                    height_to_add = y_offset + needed_style.get()->border_right_width + needed_style.get()->padding_right();width_to_add = x_offset + needed_style.get()->border_bottom_width + needed_style.get()->padding_bottom();
+                    x_offset = needed_style.get()->border_left_width() + needed_style.get()->padding_left();y_offset = needed_style.get()->border_top_width() + needed_style.get()->padding_top();
+                    height_to_add = y_offset + needed_style.get()->border_right_width() + needed_style.get()->padding_right();width_to_add = x_offset + needed_style.get()->border_bottom_width() + needed_style.get()->padding_bottom();
                 }
                 // Draw the final image
                 to_return = std::make_shared<scls::Image>(total_width.to_double() + width_to_add, total_height.to_double() + height_to_add, scls::Color(255, 255, 255));
                 if(needed_style.get() != 0) {
                     // Draw the border
-                    to_return.get()->draw_border(needed_style.get()->border_left_width, needed_style.get()->border_top_width, needed_style.get()->border_bottom_width, needed_style.get()->border_right_width, needed_style.get()->border_color);
+                    to_return.get()->draw_border(needed_style.get()->border_left_width(), needed_style.get()->border_top_width(), needed_style.get()->border_bottom_width(), needed_style.get()->border_right_width(), needed_style.get()->border_color);
                 }
 
                 // Draw the links
@@ -465,7 +465,7 @@ namespace pleos {
         inline std::shared_ptr<scls::Image> to_image(){place_nodes();return a_graph.get()->image();};
 
         // Adds a node in the tree
-        inline Tree* add_node(E value){int current_id = a_graph.get()->add_node(value);a_children.push_back(Tree(a_graph, current_id));Tree& current = a_children[a_children.size() - 1];a_graph.get()->link_nodes(a_root_id,current_id);return &current;}
+        inline Tree* add_node(E value){int current_id = a_graph.get()->add_node(value);a_children.push_back(std::make_shared<Tree>(a_graph, current_id));Tree* current = a_children[a_children.size() - 1].get();a_graph.get()->link_nodes(a_root_id,current_id);return current;}
         inline Tree* add_node(int sub_id, E value){Tree* needed_child = child(sub_id);if(needed_child==0){return 0;}return needed_child->add_node(value);};
         inline Tree* add_node(int sub_id_1, int sub_id_2, E value){Tree* needed_child = child(sub_id_1);if(needed_child==0){return 0;}return needed_child->add_node(sub_id_2, value);};
         // Place the nodes in the tree
@@ -479,17 +479,17 @@ namespace pleos {
             scls::Fraction start_x = a_root_x - needed_width / 2;
             scls::Fraction current_x = start_x;
             for(int i = 0;i<static_cast<int>(a_children.size());i++) {
-                current_x += a_children[i].width() / 2;
-                a_children[i].a_root_x = current_x;
-                a_children[i].a_root_y = a_root_y - 1;
-                a_children[i].place_nodes();
-                current_x += a_children[i].width() / 2;
+                current_x += a_children[i].get()->width() / 2;
+                a_children[i].get()->a_root_x = current_x;
+                a_children[i].get()->a_root_y = a_root_y - 1;
+                a_children[i].get()->place_nodes();
+                current_x += a_children[i].get()->width() / 2;
             }
         };
         // Returns a sub-tree in the tree
         //inline Tree<E>* sub_tree(int n){while(static_cast<int>(a_nodes.size()) <= n){a_nodes.push_back(std::make_shared<Tree>());}return a_nodes[n].get();};
         // Returns the total width of the object
-        inline scls::Fraction width(){scls::Fraction to_return = 0;for(int i = 0;i<static_cast<int>(a_children.size());i++){to_return+=a_children[i].width();}if(to_return<=1){return 1;}return to_return;};
+        inline scls::Fraction width(){scls::Fraction to_return = 0;for(int i = 0;i<static_cast<int>(a_children.size());i++){to_return+=a_children[i].get()->width();}if(to_return<=1){return 1;}return to_return;};
 
         // Getters and setters
         inline Tree* child(int id){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children[i].root_id()==id){return &a_children[i];}}return 0;};
@@ -502,7 +502,7 @@ namespace pleos {
 
     private:
         // Children of this tree
-        std::vector<Tree> a_children = std::vector<Tree>();
+        std::vector<std::shared_ptr<Tree>> a_children = std::vector<std::shared_ptr<Tree>>();
         // Attached graph for this tree
         std::shared_ptr<Graph<E>> a_graph = std::make_shared<Graph<E>>();
 
