@@ -87,6 +87,7 @@ namespace pleos {
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
+            inline void set_image(std::shared_ptr<scls::Image> new_image){(*image.get()) = new_image;};
         };
 
         // Table constructor

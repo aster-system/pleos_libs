@@ -43,10 +43,10 @@ namespace pleos {
 
         // Set the prime number
         prime_numbers = std::make_shared<std::vector<std::shared_ptr<Number>>>(4);
-        (*numbers.get())[2].get()->a_is_prime = true;(*prime_numbers.get())[0] = ((*numbers.get())[2]);
-        (*numbers.get())[3].get()->a_is_prime = true;(*prime_numbers.get())[1] = ((*numbers.get())[3]);
-        (*numbers.get())[5].get()->a_is_prime = true;(*prime_numbers.get())[2] = ((*numbers.get())[5]);
-        (*numbers.get())[7].get()->a_is_prime = true;(*prime_numbers.get())[3] = ((*numbers.get())[7]);
+        (*numbers.get())[2].get()->a_is_prime = 1;(*prime_numbers.get())[0] = ((*numbers.get())[2]);
+        (*numbers.get())[3].get()->a_is_prime = 1;(*prime_numbers.get())[1] = ((*numbers.get())[3]);
+        (*numbers.get())[5].get()->a_is_prime = 1;(*prime_numbers.get())[2] = ((*numbers.get())[5]);
+        (*numbers.get())[7].get()->a_is_prime = 1;(*prime_numbers.get())[3] = ((*numbers.get())[7]);
     };
     // Update the list to a precise position
     void __update_numbers(long long position) {
@@ -87,8 +87,10 @@ namespace pleos {
         // Check
         long long limit = tested_number.get()->number / 2;long long i = 0;
         tested_number.get()->a_is_prime = 1;
+        std::cout << "E " << tested_number.get()->number << " " << (*prime_numbers.get())[i].get()->number << " " << limit << std::endl;
         while((*prime_numbers.get())[i].get()->number < limit) {
             if(tested_number.get()->number % (*prime_numbers.get())[i].get()->number == 0){tested_number.get()->a_is_prime = 0;break;}
+            std::cout << "P " << tested_number.get()->number << " " << (*prime_numbers.get())[i].get()->number << std::endl;
             i++;
 
             // Get the next prime number
@@ -105,7 +107,7 @@ namespace pleos {
         __update_numbers(position);
 
         // Create the number if needed
-        if((*numbers.get())[position].get() == 0){
+        if((*numbers.get())[position].get() == 0 || (*numbers.get())[position].get()->number != position){
             (*numbers.get())[position] = std::make_shared<Number>();
             (*numbers.get())[position].get()->number=position;
             __number_is_prime((*numbers.get())[position]);
@@ -290,4 +292,32 @@ namespace pleos {
             (*redaction) += std::string(".");
         }
     }
+
+    // Returns an erathostene sieve
+    std::shared_ptr<scls::Image> erathostene_sieve(int image_width, int start_number, int end_number) {
+        // Create a table
+        int line_width = 10;int line_number = 1 + (end_number - start_number) / line_width;
+        std::shared_ptr<Table> sieve = std::make_shared<Table>();
+        scls::Text_Image_Generator tig;scls::Text_Style needed_style;
+
+        int current_number = start_number;
+        int current_x = 0;int current_y = 0;
+        for(int i = 0;i<line_number;i++) {
+            for(current_x;current_x<line_width;current_x++) {
+                Table::Table_Case* current_case = sieve.get()->case_at(current_x, current_y);
+                if(number(current_number)->is_prime()) {
+                    current_case->set_background_color(scls::Color(255, 200, 200));
+                    needed_style.set_background_color(scls::Color(255, 200, 200));
+                }
+                else{needed_style.set_background_color(scls::Color(255, 255, 255));}
+                current_case->set_image(tig.image_shared_ptr(std::to_string(current_number), needed_style));
+                current_number++;
+            }
+            current_x=0;current_y++;
+        }
+
+        // Returns the result
+        return sieve.get()->to_image();
+    }
 }
+

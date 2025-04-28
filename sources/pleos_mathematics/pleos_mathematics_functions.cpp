@@ -195,6 +195,7 @@ namespace pleos {
         }
 
         // Return the result
+        fs.reset();
         return to_return;
     }
     scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction) {
@@ -567,17 +568,17 @@ namespace pleos {
     }
     scls::Set_Number function_roots(Function_Studied* current_function, std::string* redaction) {
         // Create the redaction
-        scls::Formula* function_studied = current_function->formula();
+        scls::Formula function_studied = *current_function->formula();
         scls::Set_Number to_return = scls::Set_Number();
-        if(redaction != 0){(*redaction) += "Nous cherchons les racines de " + function_studied->to_std_string() + ". ";}
+        if(redaction != 0){(*redaction) += "Nous cherchons les racines de " + function_studied.to_std_string() + ". ";}
 
         // Handle function
-        std::shared_ptr<scls::Formula::__Formula_Base_Function> applied_function = function_studied->applied_function_shared_ptr();
-        function_studied->clear_applied_function();function_studied->check_formula();
+        std::shared_ptr<scls::Formula::__Formula_Base_Function> applied_function = function_studied.applied_function_shared_ptr();
+        function_studied.clear_applied_function();function_studied.check_formula();
 
         // Select the good study to do
-        if(function_studied->is_simple_polymonial()) {to_return = function_roots_polymonial(function_studied->to_polymonial(), current_function, redaction);}
-        else if(function_studied->is_simple_fraction()){to_return = function_roots_fraction(function_studied->fraction(), current_function, redaction);}
+        if(function_studied.is_simple_polymonial()) {to_return = function_roots_polymonial(function_studied.to_polymonial(), current_function, redaction);}
+        else if(function_studied.is_simple_fraction()){to_return = function_roots_fraction(function_studied.fraction(), current_function, redaction);}
 
         current_function->set_roots(to_return);
         return to_return;

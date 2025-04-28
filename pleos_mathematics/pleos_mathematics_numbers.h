@@ -29,6 +29,7 @@
 
 // Include SCLS Graphic Benoit
 #include "../../../scls-graphic-benoit/scls_graphic.h"
+#include "../pleos_table.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -71,6 +72,9 @@ namespace pleos {
     void arithmetic_bezout_identity(Arithmetic_Object* object, std::string* redaction);
     // Calculate the decomposition of a number
     void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction);
+
+    // Returns an erathostene sieve
+    std::shared_ptr<scls::Image> erathostene_sieve(int image_width, int start_number, int end_number);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS
