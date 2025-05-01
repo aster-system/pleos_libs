@@ -85,18 +85,18 @@ namespace pleos {
         // Returns this vector in a point 3D
         inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
         // Returns a copy of this vector
-        Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(std::make_shared<scls::Formula>(a_coordinates[i].get()->formula_copy()));}return to_return;};
+        Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(a_coordinates[i].get()->formula_copy());}return to_return;};
 
         // Returns the mesured angle between to vector
-        scls::Formula angle(Vector* needed_vector, std::string* redaction);
-        inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0);};
+        scls::Formula angle(Vector* needed_vector, std::string* redaction, scls::Textual_Math_Settings* settings);
+        inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0, 0);};
         // Returns the complex number form of the vector (and the redaction if needed)
-        scls::Formula complex_number(std::string* redaction);
+        scls::Formula complex_number(std::string* redaction, scls::Textual_Math_Settings* settings);
         // Returns the introduction of the vector
-        inline std::string introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string() + std::string(";") + y()->to_std_string() + std::string(").");};
+        inline std::string introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string(settings) + std::string(";") + y()->to_std_string(settings) + std::string(").");};
         // Returns the norm of the vector (and the redaction if needed)
-        scls::Formula norm(std::string* redaction);
-        inline scls::Formula norm() {return norm(0);};
+        scls::Formula norm(std::string* redaction, scls::Textual_Math_Settings* settings);
+        inline scls::Formula norm() {return norm(0, 0);};
         // Rotates the vector
         inline void rotate(scls::Fraction angle){scls::Point_3D point = scls::Point_3D(x_to_double(), 0, y_to_double());point.rotate_y(angle.to_double());set_x(scls::Fraction(point.x() * 100000.0, 100000.0));set_y(scls::Fraction(point.z() * 100000.0, 100000.0));};
 

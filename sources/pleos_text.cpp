@@ -51,6 +51,7 @@ namespace pleos {
 
         // Get the datas about the graphic
         scls::Fraction graphic_height = 10;scls::Fraction graphic_width = 10;
+        scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
         std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
         // Handle a lot of balises
         for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
@@ -86,8 +87,10 @@ namespace pleos {
             else if(current_balise_name == "base") {
                 // Get the datas about the base of the graphic
                 for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value).to_double();}
-                    else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                    if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "x") {graphic_x = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "y") {graphic_y = scls::Fraction::from_std_string(attributes[j].value);}
                     else if(attributes[j].name == "draw") {if(attributes[j].value == "false" || attributes[j].value == "0"){graphic.set_draw_base(false);graphic.set_draw_sub_bases(false);}}
                 }
             }
@@ -127,17 +130,20 @@ namespace pleos {
             }
             else if(current_balise_name == "fun" || current_balise_name == "function") {
                 // Get the datas about a function of the graphic
+                scls::Color needed_color = scls::Color(255, 0, 0);
                 std::string needed_expression = std::string();
                 std::string needed_name = std::string("f");
                 std::string needed_unknown = std::string("x");
                 for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
+                    if(attributes[j].name == "border_color" || attributes[j].name == "color") {needed_color = scls::Color::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
                     else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
                 }
 
                 // Create the function
                 std::shared_ptr<Function_Studied> needed_function = std::make_shared<Function_Studied>();
                 std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
+                needed_function.get()->set_color(needed_color);
 
                 // Check the inner balises
                 std::vector<std::shared_ptr<scls::XML_Text>>& sub_texts = xml->sub_texts()[i].get()->sub_texts();
@@ -162,17 +168,35 @@ namespace pleos {
                 // Add the function
                 needed_function.get()->set_formula(scls::string_to_formula(needed_expression));
                 needed_function.get()->set_name(needed_name);
-                function_definition_set(needed_function.get(), 0);
+                function_definition_set(needed_function.get(), 0, 0);
             }
-            else if(current_balise_name == "histogram" || current_balise_name == "point_cloud") {
+            else if(current_balise_name == "histogram" || current_balise_name == "point_cloud" || current_balise_name == "point_cloud_linked") {
                 // Get the datas about a histogram in the graphic
+                Graphic::Datas_Set::Datas_Set_Display_Type needed_display_type = Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Value;
+                scls::Fraction needed_max = 0;bool max_used = false;
+                scls::Fraction needed_min = 0;bool min_used = false;
                 std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
                 scls::Fraction needed_height = 10;scls::Fraction needed_width = 10;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(attributes[j].name == "name") {needed_name = attributes[j].value;}}
-                // Add the datas set
+                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                    if(attributes[j].name == "display") {if(attributes[j].value == std::string("average")){needed_display_type=Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Average;}}
+                    else if(attributes[j].name == "height") {needed_height = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "max") {needed_max = scls::Fraction::from_std_string(attributes[j].value);max_used=true;}
+                    else if(attributes[j].name == "min") {needed_min = scls::Fraction::from_std_string(attributes[j].value);min_used=true;}
+                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                    else if(attributes[j].name == "width") {needed_width = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value);}
+                }
+
+                // Add and configure the datas set
                 std::shared_ptr<Graphic::Datas_Set> created_datas_set = graphic.new_datas_set(needed_name);
-                created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Histogram);
+                created_datas_set.get()->set_display_type(needed_display_type);
+                if(max_used){created_datas_set.get()->set_fixed_max(needed_max);}
+                if(min_used){created_datas_set.get()->set_fixed_min(needed_min);}
+                if(current_balise_name == "histogram"){created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Histogram);}
+                else{created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Point_Cloud);}
                 created_datas_set.get()->set_height(needed_height);created_datas_set.get()->set_width(needed_width);
+                created_datas_set.get()->set_x(needed_x);created_datas_set.get()->set_y(needed_y);
 
                 // Handle the balises
                 std::vector<std::shared_ptr<scls::XML_Text>> sub_texts = xml->sub_texts()[i].get()->sub_texts();
@@ -187,6 +211,15 @@ namespace pleos {
                             else if(attributes[k].name == "value") {value = scls::Fraction::from_std_string(attributes[k].value);}
                         }
                         for(int k = 0;k<number;k++){created_datas_set.get()->add_data(value);}
+                    }
+                    else if(current_balise_name == "data_random"){
+                        int number = 1;scls::Fraction value_min = 0;scls::Fraction value_max = 5;
+                        for(int k = 0;k<static_cast<int>(attributes.size());k++) {
+                            if(attributes[k].name == "number") {number = std::stoi(attributes[k].value);}
+                            else if(attributes[k].name == "min") {value_min = scls::Fraction::from_std_string(attributes[k].value);}
+                            else if(attributes[k].name == "max") {value_max = scls::Fraction::from_std_string(attributes[k].value);}
+                        }
+                        for(int k = 0;k<number;k++){scls::Fraction value = value_min + (rand()%static_cast<int>((value_max - value_min).to_double()));created_datas_set.get()->add_data(value);}
                     }
                 }
             }
@@ -226,6 +259,36 @@ namespace pleos {
                 if(current_balise_name == "point"){graphic.add_point(Vector(needed_name, needed_x, needed_y));}
                 else if(current_balise_name == "vec" || current_balise_name == "vector"){graphic.add_vector(Vector(needed_name, needed_x, needed_y));}
             }
+            else if(current_balise_name == "random_object") {
+                // Create random objects
+                enum Needed_Object {NO_Circle};
+                scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=2;scls::Color color = scls::Color(255, 255, 255);
+                std::string needed_name = std::string("random_object");
+                scls::Fraction needed_max_x = 0;scls::Fraction needed_max_y = 0;
+                scls::Fraction needed_min_x = 0;scls::Fraction needed_min_y = 0;
+                Needed_Object needed_object = NO_Circle;
+                scls::Fraction needed_radius = 1;
+                int number = 1;
+                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                    if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                    else if(attributes[j].name == "max_x") {needed_max_x = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "max_y") {needed_max_y = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "min_x") {needed_min_x = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "min_y") {needed_min_y = scls::Fraction::from_std_string(attributes[j].value);}
+                    else if(attributes[j].name == "number") {number = std::stoi(attributes[j].value);}
+                    else if(attributes[j].name == "radius") {needed_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                }
+
+                // Add the objects
+                if(needed_object == Needed_Object::NO_Circle) {
+                    for(int j = 0;j<number;j++) {
+                        scls::Fraction random_x = scls::random_fraction(needed_min_x, needed_max_x);
+                        scls::Fraction random_y = scls::random_fraction(needed_min_y, needed_max_y);
+                        std::shared_ptr<Circle> new_circle = graphic.new_circle(needed_name + std::to_string(j), random_x, random_y, needed_radius);
+                        new_circle.get()->set_border_color(border_color);new_circle.get()->set_border_radius(border_radius.to_double());new_circle.get()->set_color(color);
+                    }
+                }
+            }
             else if(current_balise_name == "text") {
                 // Get the datas about a text of the graphic
                 std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
@@ -247,6 +310,7 @@ namespace pleos {
             }
         }
         // Set the datas
+        graphic.set_middle(graphic_x.to_double(), graphic_y.to_double());
         graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
 
         // Get the image
@@ -565,6 +629,9 @@ namespace pleos {
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("point_cloud", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("point_cloud_linked", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         current_balise.get()->style.get()->set_margin_bottom(16);

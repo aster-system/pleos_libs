@@ -35,34 +35,28 @@ namespace pleos {
     //******************
 
     // Checks the opposed event probability for an event and returns if the probability was found
-    bool __check_opposed_probability(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition, std::string& redaction) {
+    bool __check_opposed_probability(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition, std::string& redaction, scls::Textual_Math_Settings* settings) {
         std::string needed_name = needed_event.get()->complete_name();
         if(condition.get() == 0) {
             // No condition is needed
             std::shared_ptr<Probability_Universe_Event> opposed_event;
-            if(needed_event.get()->is_opposed()) {
-                opposed_event = needed_event.get()->opposed_event_as_opposed();
-            } else {
-                opposed_event = needed_event.get()->opposed_event();
-            } if(opposed_event.get() != 0 && opposed_event.get()->probability() != -1) {
+            if(needed_event.get()->is_opposed()) {opposed_event = needed_event.get()->opposed_event_as_opposed();} else {opposed_event = needed_event.get()->opposed_event();}
+            if(opposed_event.get() != 0 && opposed_event.get()->probability() != -1) {
                 needed_event.get()->set_probability(scls::Fraction(1) - opposed_event.get()->probability());
                 redaction += "Pour réaliser l'arbre, nous avons besoin de la probabilité de " + needed_name + ". ";
                 redaction += "Or, l'évènement opposé à " + needed_name + ", qui est ";
                 if(needed_name.size() > 0 && needed_name[0] == '!') redaction += needed_name.substr(1, needed_name.size() - 1);
                 else {redaction += std::string("!") + needed_name;}
-                redaction += ", a une probabilité de " + opposed_event.get()->probability().to_std_string() + ". ";
-                redaction += "Donc, la probabilité de " + needed_name + " est de 1 - " + opposed_event.get()->probability().to_std_string() + ", soit " + needed_event.get()->probability().to_std_string() + ". ";
+                redaction += ", a une probabilité de " + opposed_event.get()->probability().to_std_string(settings) + ". ";
+                redaction += "Donc, la probabilité de " + needed_name + " est de 1 - " + opposed_event.get()->probability().to_std_string(settings) + ", soit " + needed_event.get()->probability().to_std_string(settings) + ". ";
                 return true;
             }
-        } else {
+        }
+        else {
             // Condition is needed
             std::string condition_name = condition.get()->name();
             std::shared_ptr<Probability_Universe_Event> opposed_event;
-            if(needed_event.get()->is_opposed()) {
-                opposed_event = needed_event.get()->opposed_event_as_opposed();
-            } else {
-                opposed_event = needed_event.get()->opposed_event();
-            }
+            if(needed_event.get()->is_opposed()) {opposed_event = needed_event.get()->opposed_event_as_opposed();} else {opposed_event = needed_event.get()->opposed_event();}
             std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> current_condition = needed_event.get()->condition_used(condition);
             std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> opposed_condition = opposed_event.get()->condition_used(condition);
             if(opposed_condition.get()->probability != -1) {
@@ -71,8 +65,8 @@ namespace pleos {
                 redaction += "Or, l'évènement opposé à " + needed_name + " sachant " + condition_name + ", qui est ";
                 if(needed_name.size() > 0 && needed_name[0] == '!') redaction += needed_name.substr(1, needed_name.size() - 1);
                 else {redaction += std::string("!") + needed_name;}
-                redaction += " sachant " + condition_name + ", a une probabilité de " + opposed_condition.get()->probability.to_std_string() + ". ";
-                redaction += "Donc, la probabilité de " + needed_name + " sachant " + condition_name + " est de 1 - " + opposed_condition.get()->probability.to_std_string() + ", soit " + current_condition.get()->probability.to_std_string() + ". ";
+                redaction += " sachant " + condition_name + ", a une probabilité de " + opposed_condition.get()->probability.to_std_string(settings) + ". ";
+                redaction += "Donc, la probabilité de " + needed_name + " sachant " + condition_name + " est de 1 - " + opposed_condition.get()->probability.to_std_string(settings) + ", soit " + current_condition.get()->probability.to_std_string(settings) + ". ";
                 return true;
             }
         } return false;
@@ -96,20 +90,15 @@ namespace pleos {
     std::shared_ptr<scls::Image> Probability_Universe::Probability_Universe_Tree::create_case(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition) {
         // Create the neeeded datas
         scls::Fraction needed_probability = needed_event.get()->probability();
+        scls::Textual_Math_Settings* settings = 0;
         if(condition.get() == 0) {
             // Calculate the probability if needed without condition
-            if(needed_probability == -1) {
-                // Check the opposed event
-                bool opposed = __check_opposed_probability(needed_event, condition, a_redaction);
-            } needed_probability = needed_event.get()->probability();
+            needed_probability = needed_event.get()->probability();
         } else {
             // Calculate the probability if needed with condition
             std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> needed_condition = needed_event.get()->condition_used(condition);
             needed_probability = needed_condition.get()->probability;
-            if(needed_probability == -1) {
-                // Check the opposed event
-                bool opposed = __check_opposed_probability(needed_event, condition, a_redaction);
-            } needed_probability = needed_condition.get()->probability;
+            needed_probability = needed_condition.get()->probability;
         }
 
         // Create the event
@@ -181,7 +170,6 @@ namespace pleos {
         }
 
         // Filter the needed Y
-        int to_add = 0;
         if(a_cases.size() > 0 && needed_y.size() > 0 && needed_y[0] <= 0) {needed_y[0] = a_cases[0].get()->height() / 2;}
         for(int i = 1;i<static_cast<int>(needed_y.size());i++) {
             if(needed_y[i] < a_differences_y[i]) {

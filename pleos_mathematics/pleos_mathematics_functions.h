@@ -49,19 +49,22 @@ namespace pleos {
         Function_Studied(){};
 
         // Returns the introduction for this function
-        inline std::string introduction() const {return std::string("Nous avons la fonction ") + name() + std::string(" tel que ") + name() + std::string("(") + a_function_unknown + std::string(") = ") + formula()->to_std_string() + std::string(" .");};
+        std::string introduction(scls::Textual_Math_Settings* settings) const;
 
         // Creates and returns a new function studied
         static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula needed_formula, Function_Studied* parent){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->a_parent_object=parent->a_this_object;to_return.get()->set_formula(needed_formula);return to_return;};
         static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula(needed_formula);return to_return;};
 
         // Getters and setters
+        inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline scls::Set_Number* definition_set(){return a_definition_set.get();};
         inline scls::Formula* formula()const{return a_function_formula.get();};
+        inline std::shared_ptr<scls::Formula> formula_copy()const{return formula()->formula_copy();};
         inline int level() const {if(a_parent_object.lock().get() == 0){return 0;}return a_parent_object.lock().get()->level() + 1;}
         inline std::string name() const {return a_function_name;};
         inline scls::Set_Number* roots(){return a_roots.get();};
+        inline void set_color(scls::Color new_color){a_color = new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_definition_set(scls::Set_Number new_definition_set){a_definition_set=std::make_shared<scls::Set_Number>(new_definition_set);};
         inline void set_formula(scls::Formula formula){a_function_formula = std::make_shared<scls::Formula>(formula);};
@@ -88,6 +91,9 @@ namespace pleos {
         // Type of the studied function
         Studied_Type a_type = Studied_Type::ST_Sequence;
 
+        // Color of the curve
+        scls::Color a_color = scls::Color(255, 0, 0);
+
         // Weak pointer to the parent of this function
         std::weak_ptr<Function_Studied> a_parent_object;
         // Weak pointer to this function
@@ -113,7 +119,7 @@ namespace pleos {
         inline void add_function(Function_Studied* needed_function){a_studied_function.push_back(needed_function->this_object());};
 
         // Returns the text for the table to xml
-        std::string to_xml(std::string* redaction);
+        std::string to_xml(std::string* redaction, scls::Textual_Math_Settings* settings);
 
     private:
         // Studied functions
@@ -121,20 +127,20 @@ namespace pleos {
     };
 
     // Returns the definition set of a function
-    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction);
+    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
     // Returns the derivation of a function
-    scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction);
+    scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
     // Returns the image of a function
-    scls::__Formula_Base::Formula function_image(Function_Studied* current_function, scls::Formula needed_value, std::string& redaction);
+    scls::__Formula_Base::Formula function_image(Function_Studied* current_function, scls::Formula needed_value, std::string& redaction, scls::Textual_Math_Settings* settings);
     // Returns the limit of a function / polymonial in + infinity
-    scls::Limit function_limit(Function_Studied* current_function, scls::Limit needed_limit, std::string& redaction);
+    scls::Limit function_limit(Function_Studied* current_function, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings);
     // Returns the primitive of a function
-    scls::Formula function_primitive(Function_Studied* current_function, std::string* redaction);
+    scls::Formula function_primitive(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
     // Returns the set of roots of a function
-    scls::Set_Number function_roots(Function_Studied* current_function, std::string* redaction);
+    scls::Set_Number function_roots(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
     // Returns the set of a positive function
-    scls::Set_Number function_sign(Function_Studied* current_function, std::string* redaction);
-    std::string function_sign_table(Function_Studied* current_function, std::string* redaction);
+    scls::Set_Number function_sign(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
+    std::string function_sign_table(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
 
     //******************
     //
@@ -227,7 +233,8 @@ namespace pleos {
             // Class representating a set of numeric datas
         public:
             // Types of datas sets
-            enum Datas_Set_Type {DST_Histogram};
+            enum Datas_Set_Type {DST_Histogram, DST_Point_Cloud, DST_Point_Cloud_Linked};
+            enum Datas_Set_Display_Type {DSDT_Average, DSDT_Value};
 
             // Datas_Set constructor
             Datas_Set(std::shared_ptr<__Graphic_Base> graphic_base, std::string name):Graphic_Base_Object(graphic_base){};
@@ -238,14 +245,26 @@ namespace pleos {
             // Returns the datas set to an image
             std::shared_ptr<scls::Image> to_image();
             std::shared_ptr<scls::Image> to_image_histogram();
+            std::shared_ptr<scls::Image> to_image_point_cloud();
 
             // Getters and setters
             inline std::vector<scls::Fraction>& datas(){return a_datas;};
+            inline Datas_Set_Display_Type display_type() const {return a_display_type;};
+            inline scls::Fraction fixed_max() const {return a_fixed_max;};
+            inline scls::Fraction fixed_min() const {return a_fixed_min;};
+            inline void set_display_type(Datas_Set_Display_Type new_display_type){a_display_type = new_display_type;};
+            inline void set_fixed_max(scls::Fraction new_fixed_max) {a_fixed_max = new_fixed_max;a_fixed_max_used = true;};
+            inline void set_fixed_min(scls::Fraction new_fixed_min) {a_fixed_min = new_fixed_min;a_fixed_min_used = true;};
             inline void set_type(Datas_Set_Type new_type){a_type = new_type;};
             inline Datas_Set_Type type() const {return a_type;};
         private:
             // Datas in the datas set
             std::vector<scls::Fraction> a_datas;
+            // Display type of data set
+            Datas_Set_Display_Type a_display_type = Datas_Set_Display_Type::DSDT_Value;
+            // Fixed values in the set
+            scls::Fraction a_fixed_max = -1;bool a_fixed_max_used = false;
+            scls::Fraction a_fixed_min = -1;bool a_fixed_min_used = true;
             // Type of data set
             Datas_Set_Type a_type = Datas_Set_Type::DST_Histogram;
         };
@@ -268,6 +287,7 @@ namespace pleos {
             inline void add_curve_area(scls::Fraction start, scls::Fraction end, int rectangle_number){Curve_Area to_add;to_add.area_start = start;to_add.area_end=end;to_add.rectangle_number=rectangle_number;a_curve_areas.push_back(to_add);};
 
             // Getters and setters
+            inline scls::Color color() const {return a_function_studied.get()->color();};
             inline scls::Fraction curve_area_end(int n){return a_curve_areas.at(n).area_end;};
             inline int curve_areas_number(){return a_curve_areas.size();};
             inline scls::Fraction curve_area_start(int n){return a_curve_areas.at(n).area_start;};
@@ -341,6 +361,8 @@ namespace pleos {
         // Handle circles
         // Adds a circle to the graphic
         inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::Formula radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));return &a_circles[a_circles.size() - 1];};
+        // Creates a new circle in the graphic
+        inline std::shared_ptr<Circle> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::Fraction radius){return *add_circle(circle_name, Vector(x, y), radius);};
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
 
@@ -425,6 +447,7 @@ namespace pleos {
         // Getters and setters
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
+        inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline void middle_x_add(scls::Fraction value) {a_graphic_base.get()->a_middle_x += value;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
@@ -481,16 +504,20 @@ namespace pleos {
             inline scls::Fraction direct_x_2() const {return a_x_2;};
             inline scls::Fraction direct_y_1() const {return a_y_1;};
             inline scls::Fraction direct_y_2() const {return a_y_2;};
-            inline scls::Fraction max_x() const {return attached_object()->max_x();};
-            inline scls::Fraction max_y() const {return attached_object()->max_y();};
-            inline scls::Fraction min_x() const {return attached_object()->min_x();};
-            inline scls::Fraction min_y() const {return attached_object()->min_y();};
+            inline scls::Fraction height() const {return a_height;};
+            inline scls::Fraction max_x() const {return attached_object()->x() + a_width / 2;};
+            inline scls::Fraction max_y() const {return attached_object()->y() + a_height / 2;};
+            inline scls::Fraction min_x() const {return attached_object()->x() - a_width / 2;};
+            inline scls::Fraction min_y() const {return attached_object()->y() - a_height / 2;};
+            inline void set_height(scls::Fraction new_height) {a_height = new_height;};
             inline void set_type(Graphic_Collision_Type new_type){a_type = new_type;};
+            inline void set_width(scls::Fraction new_width) {a_width = new_width;};
             inline void set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
             inline void set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
             inline void set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
             inline void set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
             inline Graphic_Collision_Type type()const{return a_type;};
+            inline scls::Fraction width() const {return a_width;};
             inline scls::Fraction x_1() const {return attached_object()->x() + a_x_1;};
             inline scls::Fraction x_2() const {return attached_object()->x() + a_x_2;};
             inline scls::Fraction y_1() const {return attached_object()->y() + a_y_1;};
@@ -500,6 +527,9 @@ namespace pleos {
             std::weak_ptr<Graphic_Base_Object> a_attached_object;
             // Type of the collision
             Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
+
+            // Scale of the collision
+            scls::Fraction a_height = 1;scls::Fraction a_width = 1;
 
             // Two points (needed for lines)
             scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
@@ -529,7 +559,7 @@ namespace pleos {
             virtual void soft_reset();
 
             // Add a collision to the graphic object
-            void add_collision(){a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_object));};
+            void add_collision(std::shared_ptr<Graphic_Collision> collision){a_collisions.push_back(collision);};
             // Adds a line collision to the graphic object
             void add_collision(scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2){
                 a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_object));
@@ -540,6 +570,8 @@ namespace pleos {
             };
             // Checks if a collision occurs with an another collision
             void check_collision(Graphic_Collision* collision);
+            // Returns a new a collision to the graphic object
+            std::shared_ptr<Graphic_Collision> new_collision();
 
             // Accelerates the object
             inline void accelerate(scls::Point_3D acceleration){a_velocity += acceleration;};
@@ -742,7 +774,7 @@ namespace pleos {
         // Adds a new GUI Object
         inline void add_other_object(std::shared_ptr<Graphic_GUI_Object> object){object.get()->set_this_object(object);a_gui_objects.push_back(object);};
         // Creates a new GUI object
-        template <typename T = Graphic_GUI_Object, typename G = scls::GUI_Object> std::shared_ptr<T> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<G>(other_name);std::shared_ptr<T>object=std::make_shared<T>(to_return,this);add_other_object(object);return object;};
+        template <typename T = Graphic_GUI_Object, typename G = scls::GUI_Object> std::shared_ptr<T> new_other_object(std::string other_name){std::shared_ptr<scls::GUI_Object>to_return=*new_object<G>(other_name);std::shared_ptr<T>object=std::make_shared<T>(a_datas.graphic_base_shared_ptr(),to_return,this);add_other_object(object);return object;};
 
         // Annoying functions to draw the image
         inline int graphic_x_to_pixel_x(double x, int needed_width){return a_datas.graphic_x_to_pixel_x(x, needed_width);};

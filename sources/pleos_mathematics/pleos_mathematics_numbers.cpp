@@ -87,10 +87,8 @@ namespace pleos {
         // Check
         long long limit = tested_number.get()->number / 2;long long i = 0;
         tested_number.get()->a_is_prime = 1;
-        std::cout << "E " << tested_number.get()->number << " " << (*prime_numbers.get())[i].get()->number << " " << limit << std::endl;
         while((*prime_numbers.get())[i].get()->number < limit) {
             if(tested_number.get()->number % (*prime_numbers.get())[i].get()->number == 0){tested_number.get()->a_is_prime = 0;break;}
-            std::cout << "P " << tested_number.get()->number << " " << (*prime_numbers.get())[i].get()->number << std::endl;
             i++;
 
             // Get the next prime number
@@ -260,9 +258,7 @@ namespace pleos {
     void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction) {
         long long number_value = object->value_1.value_to_double(0);
         const long long number_value_start = number_value;
-        if(redaction != 0){
-            //(*redaction) += std::string("Nous cherchons la décomposition en produit de facteurs premiers de ") + std::to_string(number_value) + std::string(". ");
-        }
+        if(redaction != 0 && false){(*redaction) += std::string("Nous cherchons la décomposition en produit de facteurs premiers de ") + std::to_string(number_value) + std::string(". ");}
 
         std::vector<std::shared_ptr<Number>> decomposition;
         std::vector<std::shared_ptr<Number>> needed_numbers;
@@ -296,7 +292,7 @@ namespace pleos {
     // Returns an erathostene sieve
     std::shared_ptr<scls::Image> erathostene_sieve(int image_width, int start_number, int end_number) {
         // Create a table
-        int line_width = 10;int line_number = 1 + (end_number - start_number) / line_width;
+        int line_width = 5;int line_number = 1 + (end_number - start_number) / line_width;
         std::shared_ptr<Table> sieve = std::make_shared<Table>();
         scls::Text_Image_Generator tig;scls::Text_Style needed_style;
 

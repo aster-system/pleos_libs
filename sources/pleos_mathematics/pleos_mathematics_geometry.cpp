@@ -36,39 +36,39 @@ namespace pleos {
     //******************
 
     // Returns the mesured angle between to vector
-    scls::Formula Vector::angle(Vector* needed_vector, std::string* redaction) {
+    scls::Formula Vector::angle(Vector* needed_vector, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Start the redaction
         if(redaction != 0) {
             (*redaction) += std::string("Nous cherchons l'angle entre le vecteur ") + name() + std::string(" et le vecteur ") + needed_vector->name() + std::string(". ");
         }
 
         // Get the needed norm
-        if(!a_last_norm_calculated){norm(redaction);}
+        if(!a_last_norm_calculated){norm(redaction, settings);}
         scls::Formula needed_norm = a_last_norm;
 
         // Start the redaction
         if(redaction != 0) {
-            (*redaction) += std::string("Nous savons que la norme de ") + name() + std::string(" est ") + needed_norm.to_std_string() + std::string(". ");
+            (*redaction) += std::string("Nous savons que la norme de ") + name() + std::string(" est ") + needed_norm.to_std_string(settings) + std::string(". ");
         }
 
         return 0;
     }
 
     // Returns the complex number form of the vector (and the redaction if needed)
-    scls::Formula Vector::complex_number(std::string* redaction) {
+    scls::Formula Vector::complex_number(std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Start the redaction
         if(redaction != 0 && x() != 0 && y() != 0) {
             (*redaction) += std::string("Nous cherchons le nombre complexe affixe du vecteur ") + name() + std::string(". ");
             (*redaction) += std::string("Pour cela, nous avons besoin des coordonnées du vecteur. ");
             (*redaction) += std::string("</br>");
-            (*redaction) += std::string("<math><mi>Z</mi><mo>=</mo>") + x()->to_mathml() + std::string("<mo>+</mo>") + (*y() * scls::Complex(0, 1)).to_mathml() + std::string("</math>");
+            (*redaction) += std::string("<math><mi>Z</mi><mo>=</mo>") + x()->to_mathml(settings) + std::string("<mo>+</mo>") + (*y() * scls::Complex(0, 1)).to_mathml(settings) + std::string("</math>");
         }
 
         return (*x()) + (*y() * scls::Complex(0, 1));
     }
 
     // Returns the norm of the vector (and the redaction if needed)
-    scls::Formula Vector::norm(std::string* redaction) {
+    scls::Formula Vector::norm(std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Start the redaction
         if(redaction != 0) {
             (*redaction) += std::string("Nous cherchons la norme du vecteur ") + name() + std::string(". ");
