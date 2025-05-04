@@ -1390,11 +1390,23 @@ namespace pleos {
 
     // Scale the GUI Object
     void Graphic_Object::Graphic_GUI_Object::scale(Graphic* graphic, int image_width, int image_height){
-        a_object.get()->set_height_in_pixel(std::ceil(graphic->pixel_by_case_y()) * a_height.to_double());
-        a_object.get()->set_width_in_pixel(std::ceil(graphic->pixel_by_case_x()) * a_width.to_double());
-        a_object.get()->set_x_in_pixel(graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width));
-        a_object.get()->set_y_in_pixel(graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height));
-        a_object.get()->set_texture_scale_x(width().to_double());a_object.get()->set_texture_scale_y(height().to_double());
+        // Get the needed values
+        int new_height = std::ceil(graphic->pixel_by_case_y()) * a_height.to_double();
+        int new_x = graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width);
+        int new_y = graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height);
+        int new_width = std::ceil(graphic->pixel_by_case_x()) * a_width.to_double();
+
+        // Check if the object have to be rendered or not
+        if(new_x > image_width || new_y > image_height || new_x < -new_width || new_y < -new_height){a_object.get()->set_visible(false);return;}
+        else{a_object.get()->set_visible(true);}
+
+        // Set the values
+        a_object.get()->set_height_in_pixel(new_height);
+        a_object.get()->set_width_in_pixel(new_width);
+        a_object.get()->set_x_in_pixel(new_x);
+        a_object.get()->set_y_in_pixel(new_y);
+        a_object.get()->set_texture_scale_x(width().to_double());
+        a_object.get()->set_texture_scale_y(height().to_double());
     };
 
     // Updates the object

@@ -184,6 +184,8 @@ namespace pleos {
         int graphic_y_to_pixel_y(scls::Fraction y);
         int graphic_y_to_pixel_y_inversed(double y);
         int graphic_y_to_pixel_y_inversed(scls::Fraction y);
+        inline double pixel_by_case_x() const {return graphic_base()->a_pixel_by_case_x;};
+        inline double pixel_by_case_y() const {return graphic_base()->a_pixel_by_case_y;};
         scls::Fraction pixel_x_to_graphic_x(int x);
         scls::Fraction pixel_y_to_graphic_y(int y);
 
