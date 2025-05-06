@@ -104,6 +104,7 @@ namespace pleos {
     public:
 
         // Text constructor
+        Text():Text(std::make_shared<scls::_Balise_Style_Container>(),std::string()){};
         Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){load_balises(defined_balises);set_text(text);};
         Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, std::shared_ptr<scls::Text_Style> style):scls::Text_Image_Multi_Block(defined_balises, text, style){load_balises(defined_balises);set_text(text);};
 
