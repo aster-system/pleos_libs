@@ -368,7 +368,8 @@ namespace pleos {
 	    // Handle the attributes
 	    std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
 	    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-            if(attributes[i].name == std::string("minimum_case_width")){to_return.get()->set_minimum_case_width(std::stoi(attributes[i].value));}
+            if(attributes[i].name == std::string("font_size")){needed_style.set_font_size(std::stoi(attributes[i].value));}
+            else if(attributes[i].name == std::string("minimum_case_width")){to_return.get()->set_minimum_case_width(std::stoi(attributes[i].value));}
             else if(attributes[i].name == std::string("title")){to_return.get()->set_title(attributes[i].value);}
 	    }
 
