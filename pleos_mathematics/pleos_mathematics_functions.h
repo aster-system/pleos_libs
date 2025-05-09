@@ -59,7 +59,7 @@ namespace pleos {
         inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline scls::Set_Number* definition_set(){return a_definition_set.get();};
-        inline scls::Formula* formula()const{return a_function_formula.get();};
+        inline scls::Formula* formula()const{return a_function_segments.at(0).formula.get();};
         inline std::shared_ptr<scls::Formula> formula_copy()const{return formula()->formula_copy();};
         inline int level() const {if(a_parent_object.lock().get() == 0){return 0;}return a_parent_object.lock().get()->level() + 1;}
         inline std::string name() const {return a_function_name;};
@@ -67,7 +67,7 @@ namespace pleos {
         inline void set_color(scls::Color new_color){a_color = new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_definition_set(scls::Set_Number new_definition_set){a_definition_set=std::make_shared<scls::Set_Number>(new_definition_set);};
-        inline void set_formula(scls::Formula formula){a_function_formula = std::make_shared<scls::Formula>(formula);};
+        inline void set_formula(scls::Formula formula){a_function_segments.at(0).formula = std::make_shared<scls::Formula>(formula);};
         inline void set_function_unknown(std::string unknown){a_function_unknown = unknown;};
         inline void set_name(std::string new_name){a_function_name = new_name;if(connected_object()!=0){connected_object()->set_text(std::string("Fonction ") + new_name);}};
         inline void set_roots(scls::Set_Number new_roots){a_roots = std::make_shared<scls::Set_Number>(new_roots);};
@@ -78,10 +78,13 @@ namespace pleos {
 
     private:
 
+        // Segmented parts
+        struct Segmented_Part {std::shared_ptr<scls::Formula> formula = std::make_shared<scls::Formula>();};
+        // Formulas of the function
+        std::vector<Segmented_Part> a_function_segments = std::vector<Segmented_Part>(1, Segmented_Part());
+
         // Connected object to this vector
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
-        // Formula of the function
-        std::shared_ptr<scls::Formula> a_function_formula = std::make_shared<scls::Formula>();
         // Name of the function
         std::string a_function_name = "";
         // Number of the function
