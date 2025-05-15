@@ -50,6 +50,47 @@ namespace pleos {
 
     //*********
 	//
+	// The Text_Environment class
+	//
+	//*********
+
+	class Text_Environment {
+	    // Class representating an environment for text in PLEOS
+    public:
+
+        // Variables
+        struct Variable {
+            // Name of the variable
+            std::string name = std::string("x");
+            // Value of the variable
+            scls::Fraction value = 0;
+        };
+
+        // Text_Environment constructor
+        Text_Environment(){};
+
+        // Handle variables
+        // Creates a variable
+        Variable* create_variable(std::string name){return create_variable_shared_ptr(name).get();};
+        std::shared_ptr<Variable> create_variable_shared_ptr(std::string name){std::shared_ptr<Variable> variable=variable_shared_ptr_by_name(name);if(variable.get()!=0){return variable;}variable=std::make_shared<Variable>();a_variables.push_back(variable);variable.get()->name=name;return variable;};
+        // Returns a variable by its name
+        Variable* variable_by_name(std::string name)const{return variable_shared_ptr_by_name(name).get();};
+        std::shared_ptr<Variable> variable_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_variables.size());i++){if(a_variables.at(i).get()->name == name){return a_variables.at(i);}} return std::shared_ptr<Variable>();};
+
+        // Returns a number value
+        scls::Fraction value_number(std::string base)const{Variable*variable=variable_by_name(base);if(variable!=0){return variable->value;}return scls::Fraction::from_std_string(base);};
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<Variable>>& variables(){return a_variables;};
+
+    private:
+
+        // Variables
+        std::vector<std::shared_ptr<Variable>> a_variables;
+	};
+
+    //*********
+	//
 	// PLEOS Text handler
 	//
 	//*********
@@ -120,6 +161,9 @@ namespace pleos {
     //*********
     // GUI Handling
     //*********
+
+    // Loads the PLEOS balises
+    void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
 
     class GUI_Text : public scls::GUI_Text_Base<Text> {
         // Class representing an GUI object displaying a text into the window

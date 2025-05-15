@@ -36,7 +36,301 @@ namespace pleos {
 	//
 	//*********
 
+	// Handle utilities balises
+	#define BALISE_REPEAT 0
+	struct Utility_Balise {int times = 1;int type = -1;scls::Fraction value_start = 0;scls::Fraction value_end=1;};
+    Utility_Balise utilities_balise(std::shared_ptr<scls::XML_Text> xml) {
+        Utility_Balise to_return;
+
+        // Handle the balise
+        std::string balise_content = xml.get()->xml_balise();
+        std::string current_balise_name = xml.get()->xml_balise_name();
+        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
+        if(current_balise_name == std::string("repeat")) {
+            // Repeat instructions
+            to_return.type = BALISE_REPEAT;
+            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                if(attributes[i].name == "times") {to_return.times = std::stoi(attributes.at(i).value);}
+            }
+        }
+
+        // Return the result
+        return to_return;
+    }
+
 	// Creates and returns a graphic from an std::string
+	void __graphic_from_xml_balise(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y){
+        std::string balise_content = xml.get()->xml_balise();
+        std::string current_balise_name = xml.get()->xml_balise_name();
+        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
+        if(current_balise_name == "arrow" || current_balise_name == "arrow_hat") {
+            // Get the datas about an arrow of the graphic
+            double needed_angle = 0;
+            std::string needed_name = std::string();scls::Fraction needed_x_end = 0;scls::Fraction needed_y_end = 0;
+            scls::Fraction needed_x_start = 0;scls::Fraction needed_y_start = 0;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "angle") {needed_angle = scls::string_to_double(attributes[j].value);}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "x_end") {needed_x_end = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y_end") {needed_y_end = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x" || attributes[j].name == "x_start") {needed_x_start = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y" || attributes[j].name == "y_start") {needed_y_start = scls::Fraction::from_std_string(attributes[j].value);}
+            }
+            // Add the arrow
+            if(needed_angle != 0){
+                // Apply an angle if needed
+                scls::Vector_3D base_vector = scls::Vector_3D(1, 0, 0);base_vector.rotate(scls::Vector_3D(0, needed_angle, 0));
+                needed_x_end = needed_x_start + scls::Fraction::from_double(base_vector.x());needed_y_end = needed_y_start + scls::Fraction::from_double(base_vector.z());
+            }
+            Vector needed_vector = Vector(needed_name, needed_x_start, needed_y_start);
+            needed_vector.set_x_end(needed_x_end);needed_vector.set_y_end(needed_y_end);
+            needed_vector.set_type(Vector_Type::VT_Arrow);
+            if(current_balise_name == "arrow_hat"){needed_vector.set_drawing_proportion(0);}
+            graphic.add_vector(needed_vector);
+        }
+        else if(current_balise_name == "background_color") {graphic.set_background_color(scls::Color::from_xml(xml));}
+        else if(current_balise_name == "base") {
+            // Get the datas about the base of the graphic
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x") {graphic_x = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y") {graphic_y = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "draw") {if(attributes[j].value == "false" || attributes[j].value == "0"){graphic.set_draw_base(false);graphic.set_draw_sub_bases(false);}}
+            }
+        }
+        else if(current_balise_name == "border") {scls::border_from_xml(xml, graphic.style());}
+        else if(current_balise_name == "circle") {
+            // Get the datas about a circle of the graphic
+            scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;scls::Color color = scls::Color(255, 255, 255);
+            std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "radius") {radius = environment.value_number(attributes[j].value);}
+                else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+            }
+            // Add the circle
+            std::shared_ptr<Circle> circle = *graphic.add_circle(needed_name, Vector(needed_name + std::string("-center") , needed_x, needed_y), radius);
+            circle.get()->set_border_color(border_color);circle.get()->set_border_radius(border_radius.to_double());circle.get()->set_color(color);
+        }
+        else if(current_balise_name == "form") {
+            // Get the datas about a vector of the graphic
+            scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
+            scls::Color color = scls::Color(0, 255, 0);
+            std::string needed_name = std::string();std::string needed_points = std::string();
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "border_radius") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "points") {needed_points = attributes[j].value;}
+            }
+            // Add the form
+            std::shared_ptr<Form_2D> created_form = graphic.new_form(needed_name, needed_points);
+            created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
+            created_form.get()->set_color(color);
+        }
+        else if(current_balise_name == "fun" || current_balise_name == "function") {
+            // Get the datas about a function of the graphic
+            scls::Color needed_color = scls::Color(255, 0, 0);
+            std::string needed_expression = std::string();
+            std::string needed_name = std::string("f");
+            std::string needed_unknown = std::string("x");
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "border_color" || attributes[j].name == "color") {needed_color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+            }
+
+            // Create the function
+            std::shared_ptr<Function_Studied> needed_function = std::make_shared<Function_Studied>();
+            std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
+            needed_function.get()->set_color(needed_color);
+
+            // Check the inner balises
+            std::vector<std::shared_ptr<scls::XML_Text>>& sub_texts = xml.get()->sub_texts();
+            for(int j = 0;j<static_cast<int>(sub_texts.size());j++) {
+                std::vector<scls::XML_Attribute>& sub_texts_attributes = sub_texts[j].get()->xml_balise_attributes();
+                std::string sub_balise_content = sub_texts[j].get()->xml_balise();
+                std::string sub_balise_name = sub_texts[j].get()->xml_balise_name();
+
+                // Check a lot of attributes
+                if(sub_balise_name == std::string("curve_area")){
+                    // Get a curve area
+                    scls::Fraction area_end = 1;scls::Fraction area_start = 0;int rectangle_number = 10;
+                    for(int k = 0;k<static_cast<int>(sub_texts_attributes.size());k++) {
+                        if(sub_texts_attributes[k].name == "area_end") {area_end = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
+                        else if(sub_texts_attributes[k].name == "area_start") {area_start = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
+                        else if(sub_texts_attributes[k].name == "number" || sub_texts_attributes[k].name == "rectangle_number") {rectangle_number = std::stoi(sub_texts_attributes[k].value);}
+                    }
+                    fun.get()->add_curve_area(area_start, area_end, rectangle_number);
+                }
+            }
+
+            // Add the function
+            needed_function.get()->set_formula(scls::string_to_formula(needed_expression));
+            needed_function.get()->set_name(needed_name);
+            function_definition_set(needed_function.get(), 0, 0);
+        }
+        else if(current_balise_name == "histogram" || current_balise_name == "point_cloud" || current_balise_name == "point_cloud_linked") {
+            // Get the datas about a histogram in the graphic
+            Graphic::Datas_Set::Datas_Set_Display_Type needed_display_type = Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Value;
+            scls::Fraction needed_max = 0;bool max_used = false;
+            scls::Fraction needed_min = 0;bool min_used = false;
+            std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
+            scls::Fraction needed_height = 10;scls::Fraction needed_width = 10;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "display") {if(attributes[j].value == std::string("average")){needed_display_type=Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Average;}}
+                else if(attributes[j].name == "height") {needed_height = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "max") {needed_max = scls::Fraction::from_std_string(attributes[j].value);max_used=true;}
+                else if(attributes[j].name == "min") {needed_min = scls::Fraction::from_std_string(attributes[j].value);min_used=true;}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "width") {needed_width = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value);}
+            }
+
+            // Add and configure the datas set
+            std::shared_ptr<Graphic::Datas_Set> created_datas_set = graphic.new_datas_set(needed_name);
+            created_datas_set.get()->set_display_type(needed_display_type);
+            if(max_used){created_datas_set.get()->set_fixed_max(needed_max);}
+            if(min_used){created_datas_set.get()->set_fixed_min(needed_min);}
+            if(current_balise_name == "histogram"){created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Histogram);}
+            else{created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Point_Cloud);}
+            created_datas_set.get()->set_height(needed_height);created_datas_set.get()->set_width(needed_width);
+            created_datas_set.get()->set_x(needed_x);created_datas_set.get()->set_y(needed_y);
+
+            // Handle the balises
+            std::vector<std::shared_ptr<scls::XML_Text>> sub_texts = xml.get()->sub_texts();
+            for(int j = 0;j<static_cast<int>(sub_texts.size());j++) {
+                std::string balise_content = sub_texts[j].get()->xml_balise();
+                std::string current_balise_name = sub_texts[j].get()->xml_balise_name();
+                std::vector<scls::XML_Attribute>& attributes = sub_texts[j].get()->xml_balise_attributes();
+                if(current_balise_name == "data"){
+                    int number = 1;scls::Fraction value = 0;
+                    for(int k = 0;k<static_cast<int>(attributes.size());k++) {
+                        if(attributes[k].name == "number") {number = std::stoi(attributes[k].value);}
+                        else if(attributes[k].name == "value") {value = scls::Fraction::from_std_string(attributes[k].value);}
+                    }
+                    for(int k = 0;k<number;k++){created_datas_set.get()->add_data(value);}
+                }
+                else if(current_balise_name == "data_random"){
+                    int number = 1;scls::Fraction value_min = 0;scls::Fraction value_max = 5;
+                    for(int k = 0;k<static_cast<int>(attributes.size());k++) {
+                        if(attributes[k].name == "number") {number = std::stoi(attributes[k].value);}
+                        else if(attributes[k].name == "min") {value_min = scls::Fraction::from_std_string(attributes[k].value);}
+                        else if(attributes[k].name == "max") {value_max = scls::Fraction::from_std_string(attributes[k].value);}
+                    }
+                    for(int k = 0;k<number;k++){scls::Fraction value = value_min + (rand()%static_cast<int>((value_max - value_min).to_double()));created_datas_set.get()->add_data(value);}
+                }
+            }
+        }
+        else if(current_balise_name == "line") {
+            // Get the datas about a vector of the graphic
+            scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
+            std::string needed_name = std::string();
+            scls::Fraction x_1 = 0;scls::Fraction x_2 = 0;scls::Fraction y_1 = 0;scls::Fraction y_2 = 0;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "x_1") {x_1 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x_2") {x_2 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y_1") {y_1 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y_2") {y_2 = scls::Fraction::from_std_string(attributes[j].value);}
+            }
+            // Add the form
+            std::shared_ptr<Form_2D> created_form = graphic.new_line(needed_name, x_1, y_1, x_2, y_2);
+            created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
+        }
+        else if(current_balise_name == "point" || current_balise_name == "vec" || current_balise_name == "vector") {
+            // Get the datas about a vector of the graphic
+            std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "x") {
+                    // X of the vector
+                    needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();
+                }
+                else if(attributes[j].name == "y") {
+                    // Y of the vector
+                    needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();
+                }
+            }
+            // Add the vector
+            if(current_balise_name == "point"){graphic.add_point(Vector(needed_name, needed_x, needed_y));}
+            else if(current_balise_name == "vec" || current_balise_name == "vector"){graphic.add_vector(Vector(needed_name, needed_x, needed_y));}
+        }
+        else if(current_balise_name == "random_object") {
+            // Create random objects
+            enum Needed_Object {NO_Circle};
+            scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=2;scls::Color color = scls::Color(255, 255, 255);
+            std::string needed_name = std::string("random_object");
+            scls::Fraction needed_max_x = 0;scls::Fraction needed_max_y = 0;
+            scls::Fraction needed_min_x = 0;scls::Fraction needed_min_y = 0;
+            Needed_Object needed_object = NO_Circle;
+            scls::Fraction needed_radius = 1;
+            int number = 1;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "max_x") {needed_max_x = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "max_y") {needed_max_y = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "min_x") {needed_min_x = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "min_y") {needed_min_y = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "number") {number = std::stoi(attributes[j].value);}
+                else if(attributes[j].name == "radius") {needed_radius = scls::Fraction::from_std_string(attributes[j].value);}
+            }
+
+            // Add the objects
+            if(needed_object == Needed_Object::NO_Circle) {
+                for(int j = 0;j<number;j++) {
+                    scls::Fraction random_x = scls::random_fraction(needed_min_x, needed_max_x);
+                    scls::Fraction random_y = scls::random_fraction(needed_min_y, needed_max_y);
+                    std::shared_ptr<Circle> new_circle = graphic.new_circle(needed_name + std::to_string(j), random_x, random_y, needed_radius);
+                    new_circle.get()->set_border_color(border_color);new_circle.get()->set_border_radius(border_radius.to_double());new_circle.get()->set_color(color);
+                }
+            }
+        }
+        else if(current_balise_name == "text") {
+            // Get the datas about a text of the graphic
+            std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "content") {needed_content = attributes[j].value;}
+                else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+            }
+            // Add the text
+            graphic.new_text(needed_content, Vector(std::string("text-center") , needed_x, needed_y), text_style);
+        }
+        else if(current_balise_name == "text_style") {
+            // Get the datas about the style text of the graphic
+            std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "background_color") {text_style.get()->set_background_color(scls::Color::from_std_string(attributes[j].value));}
+                else if(attributes[j].name == "font_size") {text_style.get()->set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
+            }
+        }
+	}
+	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y){
+	    // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
+            // Handle utilities
+            Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
+
+            if(utility.type == BALISE_REPEAT) {
+                Text_Environment::Variable* needed_variable = environment.create_variable("x");
+                needed_variable->value = utility.value_start;scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
+                for(int j = 0;j<utility.times;j++){
+                    __graphic_from_xml_balises(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);
+                    needed_variable->value += step;
+                }
+            }
+            else{__graphic_from_xml_balise(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
+        }
+	}
 	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {
 	    graphic.style()->set_border_width(1);
 	    graphic_height_in_pixel = 200;bool graphic_height_in_pixel_used = false;
@@ -53,262 +347,11 @@ namespace pleos {
         scls::Fraction graphic_height = 10;scls::Fraction graphic_width = 10;
         scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
         std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
+
         // Handle a lot of balises
-        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
-            std::string balise_content = xml->sub_texts()[i].get()->xml_balise();
-            std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
-            std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
-            if(current_balise_name == "arrow" || current_balise_name == "arrow_hat") {
-                // Get the datas about an arrow of the graphic
-                double needed_angle = 0;
-                std::string needed_name = std::string();scls::Fraction needed_x_end = 0;scls::Fraction needed_y_end = 0;
-                scls::Fraction needed_x_start = 0;scls::Fraction needed_y_start = 0;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "angle") {needed_angle = scls::string_to_double(attributes[j].value);}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "x_end") {needed_x_end = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y_end") {needed_y_end = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "x" || attributes[j].name == "x_start") {needed_x_start = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y" || attributes[j].name == "y_start") {needed_y_start = scls::Fraction::from_std_string(attributes[j].value);}
-                }
-                // Add the arrow
-                if(needed_angle != 0){
-                    // Apply an angle if needed
-                    scls::Vector_3D base_vector = scls::Vector_3D(1, 0, 0);base_vector.rotate(scls::Vector_3D(0, needed_angle, 0));
-                    needed_x_end = needed_x_start + scls::Fraction::from_double(base_vector.x());needed_y_end = needed_y_start + scls::Fraction::from_double(base_vector.z());
-                }
-                Vector needed_vector = Vector(needed_name, needed_x_start, needed_y_start);
-                needed_vector.set_x_end(needed_x_end);needed_vector.set_y_end(needed_y_end);
-                needed_vector.set_type(Vector_Type::VT_Arrow);
-                if(current_balise_name == "arrow_hat"){needed_vector.set_drawing_proportion(0);}
-                graphic.add_vector(needed_vector);
-            }
-            else if(current_balise_name == "background_color") {graphic.set_background_color(scls::Color::from_xml(xml->sub_texts()[i]));}
-            else if(current_balise_name == "base") {
-                // Get the datas about the base of the graphic
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "height") {graphic_height = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "width") {graphic_width = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "x") {graphic_x = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y") {graphic_y = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "draw") {if(attributes[j].value == "false" || attributes[j].value == "0"){graphic.set_draw_base(false);graphic.set_draw_sub_bases(false);}}
-                }
-            }
-            else if(current_balise_name == "border") {scls::border_from_xml(xml->sub_texts()[i], graphic.style());}
-            else if(current_balise_name == "circle") {
-                // Get the datas about a circle of the graphic
-                scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;scls::Color color = scls::Color(255, 255, 255);
-                std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "radius") {radius = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
-                    else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
-                }
-                // Add the circle
-                std::shared_ptr<Circle> circle = *graphic.add_circle(needed_name, Vector(needed_name + std::string("-center") , needed_x, needed_y), radius);
-                circle.get()->set_border_color(border_color);circle.get()->set_border_radius(border_radius.to_double());circle.get()->set_color(color);
-            }
-            else if(current_balise_name == "form") {
-                // Get the datas about a vector of the graphic
-                scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
-                scls::Color color = scls::Color(0, 255, 0);
-                std::string needed_name = std::string();std::string needed_points = std::string();
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "border_radius") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "points") {needed_points = attributes[j].value;}
-                }
-                // Add the form
-                std::shared_ptr<Form_2D> created_form = graphic.new_form(needed_name, needed_points);
-                created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
-                created_form.get()->set_color(color);
-            }
-            else if(current_balise_name == "fun" || current_balise_name == "function") {
-                // Get the datas about a function of the graphic
-                scls::Color needed_color = scls::Color(255, 0, 0);
-                std::string needed_expression = std::string();
-                std::string needed_name = std::string("f");
-                std::string needed_unknown = std::string("x");
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "border_color" || attributes[j].name == "color") {needed_color = scls::Color::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "expression") {needed_expression = attributes[j].value;}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                }
+        Text_Environment environment;
+        __graphic_from_xml_balises(xml, environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);
 
-                // Create the function
-                std::shared_ptr<Function_Studied> needed_function = std::make_shared<Function_Studied>();
-                std::shared_ptr<Graphic::Graphic_Function> fun = graphic.add_function(needed_function);
-                needed_function.get()->set_color(needed_color);
-
-                // Check the inner balises
-                std::vector<std::shared_ptr<scls::XML_Text>>& sub_texts = xml->sub_texts()[i].get()->sub_texts();
-                for(int j = 0;j<static_cast<int>(sub_texts.size());j++) {
-                    std::vector<scls::XML_Attribute>& sub_texts_attributes = sub_texts[j].get()->xml_balise_attributes();
-                    std::string sub_balise_content = sub_texts[j].get()->xml_balise();
-                    std::string sub_balise_name = sub_texts[j].get()->xml_balise_name();
-
-                    // Check a lot of attributes
-                    if(sub_balise_name == std::string("curve_area")){
-                        // Get a curve area
-                        scls::Fraction area_end = 1;scls::Fraction area_start = 0;int rectangle_number = 10;
-                        for(int k = 0;k<static_cast<int>(sub_texts_attributes.size());k++) {
-                            if(sub_texts_attributes[k].name == "area_end") {area_end = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
-                            else if(sub_texts_attributes[k].name == "area_start") {area_start = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
-                            else if(sub_texts_attributes[k].name == "number" || sub_texts_attributes[k].name == "rectangle_number") {rectangle_number = std::stoi(sub_texts_attributes[k].value);}
-                        }
-                        fun.get()->add_curve_area(area_start, area_end, rectangle_number);
-                    }
-                }
-
-                // Add the function
-                needed_function.get()->set_formula(scls::string_to_formula(needed_expression));
-                needed_function.get()->set_name(needed_name);
-                function_definition_set(needed_function.get(), 0, 0);
-            }
-            else if(current_balise_name == "histogram" || current_balise_name == "point_cloud" || current_balise_name == "point_cloud_linked") {
-                // Get the datas about a histogram in the graphic
-                Graphic::Datas_Set::Datas_Set_Display_Type needed_display_type = Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Value;
-                scls::Fraction needed_max = 0;bool max_used = false;
-                scls::Fraction needed_min = 0;bool min_used = false;
-                std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
-                scls::Fraction needed_height = 10;scls::Fraction needed_width = 10;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "display") {if(attributes[j].value == std::string("average")){needed_display_type=Graphic::Datas_Set::Datas_Set_Display_Type::DSDT_Average;}}
-                    else if(attributes[j].name == "height") {needed_height = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "max") {needed_max = scls::Fraction::from_std_string(attributes[j].value);max_used=true;}
-                    else if(attributes[j].name == "min") {needed_min = scls::Fraction::from_std_string(attributes[j].value);min_used=true;}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "width") {needed_width = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value);}
-                }
-
-                // Add and configure the datas set
-                std::shared_ptr<Graphic::Datas_Set> created_datas_set = graphic.new_datas_set(needed_name);
-                created_datas_set.get()->set_display_type(needed_display_type);
-                if(max_used){created_datas_set.get()->set_fixed_max(needed_max);}
-                if(min_used){created_datas_set.get()->set_fixed_min(needed_min);}
-                if(current_balise_name == "histogram"){created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Histogram);}
-                else{created_datas_set.get()->set_type(Graphic::Datas_Set::Datas_Set_Type::DST_Point_Cloud);}
-                created_datas_set.get()->set_height(needed_height);created_datas_set.get()->set_width(needed_width);
-                created_datas_set.get()->set_x(needed_x);created_datas_set.get()->set_y(needed_y);
-
-                // Handle the balises
-                std::vector<std::shared_ptr<scls::XML_Text>> sub_texts = xml->sub_texts()[i].get()->sub_texts();
-                for(int j = 0;j<static_cast<int>(sub_texts.size());j++) {
-                    std::string balise_content = sub_texts[j].get()->xml_balise();
-                    std::string current_balise_name = sub_texts[j].get()->xml_balise_name();
-                    std::vector<scls::XML_Attribute>& attributes = sub_texts[j].get()->xml_balise_attributes();
-                    if(current_balise_name == "data"){
-                        int number = 1;scls::Fraction value = 0;
-                        for(int k = 0;k<static_cast<int>(attributes.size());k++) {
-                            if(attributes[k].name == "number") {number = std::stoi(attributes[k].value);}
-                            else if(attributes[k].name == "value") {value = scls::Fraction::from_std_string(attributes[k].value);}
-                        }
-                        for(int k = 0;k<number;k++){created_datas_set.get()->add_data(value);}
-                    }
-                    else if(current_balise_name == "data_random"){
-                        int number = 1;scls::Fraction value_min = 0;scls::Fraction value_max = 5;
-                        for(int k = 0;k<static_cast<int>(attributes.size());k++) {
-                            if(attributes[k].name == "number") {number = std::stoi(attributes[k].value);}
-                            else if(attributes[k].name == "min") {value_min = scls::Fraction::from_std_string(attributes[k].value);}
-                            else if(attributes[k].name == "max") {value_max = scls::Fraction::from_std_string(attributes[k].value);}
-                        }
-                        for(int k = 0;k<number;k++){scls::Fraction value = value_min + (rand()%static_cast<int>((value_max - value_min).to_double()));created_datas_set.get()->add_data(value);}
-                    }
-                }
-            }
-            else if(current_balise_name == "line") {
-                // Get the datas about a vector of the graphic
-                scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
-                std::string needed_name = std::string();
-                scls::Fraction x_1 = 0;scls::Fraction x_2 = 0;scls::Fraction y_1 = 0;scls::Fraction y_2 = 0;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = scls::Color::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "x_1") {x_1 = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "x_2") {x_2 = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y_1") {y_1 = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "y_2") {y_2 = scls::Fraction::from_std_string(attributes[j].value);}
-                }
-                // Add the form
-                std::shared_ptr<Form_2D> created_form = graphic.new_line(needed_name, x_1, y_1, x_2, y_2);
-                created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
-            }
-            else if(current_balise_name == "point" || current_balise_name == "vec" || current_balise_name == "vector") {
-                // Get the datas about a vector of the graphic
-                std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "x") {
-                        // X of the vector
-                        needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();
-                    }
-                    else if(attributes[j].name == "y") {
-                        // Y of the vector
-                        needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();
-                    }
-                }
-                // Add the vector
-                if(current_balise_name == "point"){graphic.add_point(Vector(needed_name, needed_x, needed_y));}
-                else if(current_balise_name == "vec" || current_balise_name == "vector"){graphic.add_vector(Vector(needed_name, needed_x, needed_y));}
-            }
-            else if(current_balise_name == "random_object") {
-                // Create random objects
-                enum Needed_Object {NO_Circle};
-                scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=2;scls::Color color = scls::Color(255, 255, 255);
-                std::string needed_name = std::string("random_object");
-                scls::Fraction needed_max_x = 0;scls::Fraction needed_max_y = 0;
-                scls::Fraction needed_min_x = 0;scls::Fraction needed_min_y = 0;
-                Needed_Object needed_object = NO_Circle;
-                scls::Fraction needed_radius = 1;
-                int number = 1;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                    else if(attributes[j].name == "max_x") {needed_max_x = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "max_y") {needed_max_y = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "min_x") {needed_min_x = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "min_y") {needed_min_y = scls::Fraction::from_std_string(attributes[j].value);}
-                    else if(attributes[j].name == "number") {number = std::stoi(attributes[j].value);}
-                    else if(attributes[j].name == "radius") {needed_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                }
-
-                // Add the objects
-                if(needed_object == Needed_Object::NO_Circle) {
-                    for(int j = 0;j<number;j++) {
-                        scls::Fraction random_x = scls::random_fraction(needed_min_x, needed_max_x);
-                        scls::Fraction random_y = scls::random_fraction(needed_min_y, needed_max_y);
-                        std::shared_ptr<Circle> new_circle = graphic.new_circle(needed_name + std::to_string(j), random_x, random_y, needed_radius);
-                        new_circle.get()->set_border_color(border_color);new_circle.get()->set_border_radius(border_radius.to_double());new_circle.get()->set_color(color);
-                    }
-                }
-            }
-            else if(current_balise_name == "text") {
-                // Get the datas about a text of the graphic
-                std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "content") {needed_content = attributes[j].value;}
-                    else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
-                    else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
-                }
-                // Add the text
-                graphic.new_text(needed_content, Vector(std::string("text-center") , needed_x, needed_y), text_style);
-            }
-            else if(current_balise_name == "text_style") {
-                // Get the datas about the style text of the graphic
-                std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
-                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                    if(attributes[j].name == "background_color") {text_style.get()->set_background_color(scls::Color::from_std_string(attributes[j].value));}
-                    else if(attributes[j].name == "font_size") {text_style.get()->set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
-                }
-            }
-        }
         // Set the datas
         graphic.set_middle(graphic_x.to_double(), graphic_y.to_double());
         graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
@@ -596,8 +639,8 @@ namespace pleos {
         else{scls::Text_Image_Line::generate_word(current_text, current_position_in_plain_text, needed_style, word_to_add);}
     }
 
-    // Loads the needed balises
-    void Text::load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {
+    // Loads the PLEOS balises
+    void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {
         std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("case_plus", current_balise);
@@ -635,6 +678,9 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("point_cloud_linked", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("repeat", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
         current_balise.get()->style.get()->set_margin_bottom(16);
         defined_balises.get()->set_defined_balise("table", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
@@ -644,6 +690,9 @@ namespace pleos {
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("trees", current_balise);
     }
+
+    // Loads the needed balises
+    void Text::load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {load_balises_pleos(defined_balises);}
 
     // Creates a text block from a block of text
     std::shared_ptr<scls::__GUI_Text_Metadatas::__GUI_Text_Block> GUI_Text::__create_text_block_object(scls::Text_Image_Block* block_to_apply) {

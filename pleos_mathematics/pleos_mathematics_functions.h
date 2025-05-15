@@ -359,7 +359,7 @@ namespace pleos {
         // Adds a function to the graphic
         std::shared_ptr<Graphic_Function> add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
-        inline void reset(){a_forms_2d.clear();a_functions.clear();a_points.clear();a_vectors.clear();};
+        inline void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_points.clear();a_vectors.clear();};
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image(int width_in_pixel, int height_in_pixel);
 
