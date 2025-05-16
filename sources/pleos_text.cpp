@@ -237,10 +237,10 @@ namespace pleos {
                 if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = scls::Color::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
-                else if(attributes[j].name == "x_1") {x_1 = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "x_2") {x_2 = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "y_1") {y_1 = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "y_2") {y_2 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x_start" || attributes[j].name == "x_1") {x_1 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x_end" || attributes[j].name == "x_2") {x_2 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y_start" || attributes[j].name == "y_1") {y_1 = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "y_end" || attributes[j].name == "y_2") {y_2 = scls::Fraction::from_std_string(attributes[j].value);}
             }
             // Add the form
             std::shared_ptr<Form_2D> created_form = graphic.new_line(needed_name, x_1, y_1, x_2, y_2);
@@ -298,7 +298,8 @@ namespace pleos {
             // Get the datas about a text of the graphic
             std::string needed_content = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "content") {needed_content = attributes[j].value;}
+                if(attributes[j].name == "background_color") {text_style.get()->set_background_color(scls::Color::from_std_string(attributes[j].value));}
+                else if(attributes[j].name == "content") {needed_content = attributes[j].value;}
                 else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                 else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
