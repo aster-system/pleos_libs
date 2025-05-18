@@ -78,11 +78,13 @@ namespace pleos {
         Vector(std::string name):a_name(name){};
         Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
         Vector(scls::Formula x, scls::Formula y):Vector(std::string(), x, y){};
+        Vector(scls::Point_2D point):Vector(std::string(), point.x(), point.y()){};
         Vector():Vector(""){};
 
         // Returns a vector 3D from a point
         static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
-        // Returns this vector in a point 3D
+        // Returns this vector in a point 2D / 3D
+        inline scls::Point_2D to_point_2d() {if(a_coordinates.size() > 1){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), 0);}return scls::Point_2D();};
         inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
         // Returns a copy of this vector
         Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(a_coordinates[i].get()->formula_copy());}return to_return;};
@@ -250,34 +252,41 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, Vector center, scls::Formula radius):a_center(center),a_name(name),a_radius(radius){};
+        Circle(std::string name, Vector center, scls::Fraction radius):a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
 
        // Returns the radius of the circle
-        virtual scls::Formula radius(){return a_radius;};
+        virtual scls::Fraction radius(){return a_transform.get()->scale_x() / 2;};
 
         // Getters and setters
+        inline scls::Fraction angle_end() const {return a_angle_end;};
+        inline scls::Fraction angle_start() const {return a_angle_start;};
+        inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
-        inline Vector center() const {return a_center;};
+        inline Vector center() const {return a_transform.get()->position();};
         inline scls::Color color() const {return a_color;};
         inline std::string name() const {return a_name;};
+        inline void set_angle_end(scls::Fraction new_angle_end){a_angle_end = new_angle_end;};
+        inline void set_angle_start(scls::Fraction new_angle_start){a_angle_start = new_angle_start;};
         inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
-        inline void set_center(Vector new_center){a_center = new_center;};
+        inline void set_center(Vector new_center){a_transform.get()->set_position(new_center.to_point_2d());};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
+        inline void set_radius(scls::Fraction new_radius){a_transform.get()->set_scale_x(new_radius * 2);}
     private:
+        // Transformation in the circle
+        std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
+
+        // Angle to start / end the drawing
+        scls::Fraction a_angle_end = 360;scls::Fraction a_angle_start = 0;
         // Color of the border of the circle
         scls::Color a_border_color;
         // Radius of the border
         int a_border_radius = 0;
-        // Center of the circle
-        Vector a_center;
         // Color of the circle
         scls::Color a_color;
         // Name of the circle
         std::string a_name = std::string();
-        // Radius of the circle
-        scls::Formula a_radius;
     };
 }
 

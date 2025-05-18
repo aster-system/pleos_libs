@@ -36,6 +36,18 @@ namespace pleos {
 	//
 	//*********
 
+	// Returns a Point_2D value
+    scls::Point_2D Text_Environment::value_point_2d(std::string base)const{
+        // Format the text
+        while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
+        while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
+
+        // Get the point
+        std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
+        if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
+        return scls::Point_2D(value_number(cutted.at(0)), value_number(cutted.at(1)));
+    };
+
 	// Handle utilities balises
 	#define BALISE_REPEAT 0
 	struct Utility_Balise {int times = 1;int type = -1;scls::Fraction value_start = 0;scls::Fraction value_end=1;};
@@ -102,19 +114,39 @@ namespace pleos {
         else if(current_balise_name == "border") {scls::border_from_xml(xml, graphic.style());}
         else if(current_balise_name == "circle") {
             // Get the datas about a circle of the graphic
+            scls::Fraction angle_end = 360;scls::Fraction angle_start = 0;
             scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;scls::Color color = scls::Color(255, 255, 255);
             std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+            std::vector<Graphic::Graphic_Collision_Type> collisions;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
+            scls::Point_2D velocity_start = scls::Point_2D(0, 0);
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                if(attributes[j].name == "angle_end") {angle_end = environment.value_number(attributes[j].value);}
+                else if(attributes[j].name == "angle_start") {angle_start = environment.value_number(attributes[j].value);}
+                else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "collision") {if(attributes[j].value == std::string("circle")){collisions.push_back(Graphic::Graphic_Collision_Type::GCT_Circle);}else{collisions.push_back(Graphic::Graphic_Collision_Type::GCT_Rect);}}
                 else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "gravity" || attributes[j].name == "use_gravity") {use_gravity = (attributes[j].value == std::string("1") || attributes[j].value == std::string("true"));}
                 else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "physic") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
                 else if(attributes[j].name == "radius") {radius = environment.value_number(attributes[j].value);}
+                else if(attributes[j].name == "velocity") {velocity_start = environment.value_point_2d(attributes[j].value);}
                 else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                 else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
+
             // Add the circle
             std::shared_ptr<Circle> circle = *graphic.add_circle(needed_name, Vector(needed_name + std::string("-center") , needed_x, needed_y), radius);
+            circle.get()->set_angle_end(angle_end);circle.get()->set_angle_start(angle_start);
             circle.get()->set_border_color(border_color);circle.get()->set_border_radius(border_radius.to_double());circle.get()->set_color(color);
+
+            // Handle physic
+            if(use_physic != 0){
+                if(graphic.physic_map().size() <= 0){graphic.load_physic_map(0, 0);}
+                std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = std::make_shared<pleos::Graphic::Graphic_Physic>(circle.get()->attached_transform_shared_ptr());
+                physic.get()->set_use_gravity(use_gravity);physic.get()->set_static(use_physic == 1);graphic.add_physic_object(physic);
+                for(int k = 0;k<static_cast<int>(collisions.size());k++){physic.get()->new_collision(collisions.at(k));}
+                physic.get()->set_velocity(velocity_start);
+            }
         }
         else if(current_balise_name == "form") {
             // Get the datas about a vector of the graphic
@@ -322,20 +354,20 @@ namespace pleos {
             Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
 
             if(utility.type == BALISE_REPEAT) {
-                Text_Environment::Variable* needed_variable = environment.create_variable("x");
-                needed_variable->value = utility.value_start;scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
+                scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("x");
+                needed_variable->set_value(utility.value_start);scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
                 for(int j = 0;j<utility.times;j++){
                     __graphic_from_xml_balises(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);
-                    needed_variable->value += step;
+                    (*needed_variable->value) += step;
                 }
             }
             else{__graphic_from_xml_balise(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
         }
 	}
-	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {
+	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {
 	    graphic.style()->set_border_width(1);
-	    graphic_height_in_pixel = 200;bool graphic_height_in_pixel_used = false;
-        graphic_width_in_pixel = 200;bool graphic_width_in_pixel_used = false;
+	    if(graphic_height_in_pixel <= 0){graphic_height_in_pixel = 200;}bool graphic_height_in_pixel_used = false;
+        if(graphic_width_in_pixel <= 0){graphic_width_in_pixel = 200;}bool graphic_width_in_pixel_used = false;
         bool use_ratio_base = false;
         std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
         for(int j = 0;j<static_cast<int>(attributes.size());j++) {
@@ -345,13 +377,14 @@ namespace pleos {
         }
 
         // Get the datas about the graphic
-        scls::Fraction graphic_height = 10;scls::Fraction graphic_width = 10;
+        scls::Fraction graphic_width = 10;
+        scls::Fraction graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;
         scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
         std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
 
         // Handle a lot of balises
-        Text_Environment environment;
-        __graphic_from_xml_balises(xml, environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);
+        if(environment == 0){Text_Environment temp;__graphic_from_xml_balises(xml, temp, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
+        else{__graphic_from_xml_balises(xml, *environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
 
         // Set the datas
         graphic.set_middle(graphic_x.to_double(), graphic_y.to_double());
@@ -364,7 +397,7 @@ namespace pleos {
         }
 	}
 	void graphic_from_xml(std::shared_ptr<Graphic> graphic_shared_ptr, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel){graphic_from_xml(*graphic_shared_ptr.get(), xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);}
-	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = std::make_shared<Graphic>();graphic_from_xml(to_return, xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
+	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();graphic_from_xml(to_return, xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
 	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style){
 	    int graphic_width_in_pixel = 0;int graphic_height_in_pixel = 0;
 	    std::shared_ptr<scls::Image> to_return = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel).get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);

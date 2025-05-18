@@ -69,24 +69,28 @@ namespace pleos {
         // Text_Environment constructor
         Text_Environment(){};
 
-        // Handle variables
-        // Creates a variable
-        Variable* create_variable(std::string name){return create_variable_shared_ptr(name).get();};
-        std::shared_ptr<Variable> create_variable_shared_ptr(std::string name){std::shared_ptr<Variable> variable=variable_shared_ptr_by_name(name);if(variable.get()!=0){return variable;}variable=std::make_shared<Variable>();a_variables.push_back(variable);variable.get()->name=name;return variable;};
-        // Returns a variable by its name
-        Variable* variable_by_name(std::string name)const{return variable_shared_ptr_by_name(name).get();};
-        std::shared_ptr<Variable> variable_shared_ptr_by_name(std::string name)const{for(int i = 0;i<static_cast<int>(a_variables.size());i++){if(a_variables.at(i).get()->name == name){return a_variables.at(i);}} return std::shared_ptr<Variable>();};
+        // Handle unknowns
+        // Creates a unknown
+        scls::__Formula_Base::Unknown* create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
+        std::shared_ptr<scls::__Formula_Base::Unknown> create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
+        // Returns a value by its name
+        scls::Fraction value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0){return 0;}return (unknow->value.get()->value(0).real());};
+        // Returns a unknown by its name
+        inline scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
+        inline std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
 
         // Returns a number value
-        scls::Fraction value_number(std::string base)const{Variable*variable=variable_by_name(base);if(variable!=0){return variable->value;}return scls::Fraction::from_std_string(base);};
+        scls::Fraction value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();};
+        // Returns a Point_2D value
+        scls::Point_2D value_point_2d(std::string base)const;
 
         // Getters and setters
-        inline std::vector<std::shared_ptr<Variable>>& variables(){return a_variables;};
+        inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
 
     private:
 
         // Variables
-        std::vector<std::shared_ptr<Variable>> a_variables;
+        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<scls::__Formula_Base::Unknowns_Container>();
 	};
 
     //*********
@@ -96,7 +100,8 @@ namespace pleos {
 	//*********
 
 	// Creates and returns a graphic from an std::string
-	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	inline void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel){graphic_from_xml(graphic, xml, needed_style, 0, graphic_width_in_pixel, graphic_height_in_pixel);};
 	void graphic_from_xml(std::shared_ptr<Graphic> graphic_shared_ptr, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
 	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
 	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);

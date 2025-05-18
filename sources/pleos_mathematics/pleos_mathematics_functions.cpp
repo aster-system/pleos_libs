@@ -751,14 +751,14 @@ namespace pleos {
     //******************
 
     // Annoying functions to draw the image
-    int Graphic_Base_Object::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x.to_double()) * graphic_base()->a_pixel_by_case_x + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
-    int Graphic_Base_Object::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - graphic_base()->a_middle_x) * graphic_base()->a_pixel_by_case_x + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
-    int Graphic_Base_Object::graphic_y_to_pixel_y(double y){return std::ceil((y - graphic_base()->a_middle_y.to_double()) * graphic_base()->a_pixel_by_case_y) + (graphic_base()->a_height_in_pixel / 2.0);};
-    int Graphic_Base_Object::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - graphic_base()->a_middle_y) * graphic_base()->a_pixel_by_case_y + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double());};
-    int Graphic_Base_Object::graphic_y_to_pixel_y_inversed(double y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
-    int Graphic_Base_Object::graphic_y_to_pixel_y_inversed(scls::Fraction y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
-    scls::Fraction Graphic_Base_Object::pixel_x_to_graphic_x(int x){return graphic_base()->a_middle_x + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_x));}
-    scls::Fraction Graphic_Base_Object::pixel_y_to_graphic_y(int y){return graphic_base()->a_middle_y + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_y));}
+    int Graphic::Graphic_Base_Object::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x.to_double()) * graphic_base()->a_pixel_by_case_x + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
+    int Graphic::Graphic_Base_Object::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - graphic_base()->a_middle_x) * graphic_base()->a_pixel_by_case_x + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
+    int Graphic::Graphic_Base_Object::graphic_y_to_pixel_y(double y){return std::ceil((y - graphic_base()->a_middle_y.to_double()) * graphic_base()->a_pixel_by_case_y) + (graphic_base()->a_height_in_pixel / 2.0);};
+    int Graphic::Graphic_Base_Object::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - graphic_base()->a_middle_y) * graphic_base()->a_pixel_by_case_y + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double());};
+    int Graphic::Graphic_Base_Object::graphic_y_to_pixel_y_inversed(double y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
+    int Graphic::Graphic_Base_Object::graphic_y_to_pixel_y_inversed(scls::Fraction y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
+    scls::Fraction Graphic::Graphic_Base_Object::pixel_x_to_graphic_x(int x){return graphic_base()->a_middle_x + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_x));}
+    scls::Fraction Graphic::Graphic_Base_Object::pixel_y_to_graphic_y(int y){return graphic_base()->a_middle_y + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(graphic_base()->a_pixel_by_case_y));}
 
     // Returns the datas set to an image
     std::shared_ptr<scls::Image> Graphic::Datas_Set::to_image() {
@@ -1176,11 +1176,11 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {
             std::shared_ptr<Circle> current_circle = a_circles[i];
             Vector center = current_circle.get()->center();
-            double radius = current_circle.get()->radius().to_polymonial().known_monomonial().factor().real().to_double();
+            double radius = current_circle.get()->radius().to_double();
             radius = radius * pixel_by_case_x();
             double needed_x = graphic_x_to_pixel_x(center.x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
+            to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->angle_start().to_double(), current_circle.get()->angle_end().to_double(), current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
         }
         // Draw the forms
         for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {draw_form(a_forms_2d[i].get(), to_return);}
@@ -1212,6 +1212,38 @@ namespace pleos {
     //******************
 
     // Checks if a collision occurs with an another collision
+    Collision_Rect_Rect __check_collision_circle_circle(Graphic::Graphic_Collision* collision_1, Graphic::Graphic_Collision* collision_2, Graphic::Graphic_Physic* dynamic_object_1){
+        // Get the distance
+        scls::Point_2D position_1 = collision_1->position_next();scls::Point_2D position_2 = collision_2->position_next();
+        double distance = position_1.distance(position_2);
+        scls::Fraction max_distance = (collision_1->attached_transform()->scale_x() / 2 + collision_2->attached_transform()->scale_x() / 2).abs();
+        scls::Fraction min_distance = (collision_1->attached_transform()->scale_x() / 2 - collision_2->attached_transform()->scale_x() / 2).abs();
+        if(distance > max_distance.abs() || distance < min_distance){return Collision_Rect_Rect();}
+
+        // Set collision_1 as the biggest collision
+        if(collision_1->attached_transform()->scale_x() < collision_2->attached_transform()->scale_x()){Graphic::Graphic_Collision* temp = collision_1;collision_1 = collision_2;collision_2=temp;}
+
+        // Get the datas about the collision
+        Collision_Rect_Rect to_return;
+        to_return.happens = true;
+        scls::Point_2D position_from_1 = (position_1 - position_2).normalized();
+        scls::Point_2D position_from_2 = (position_2 - position_1).normalized();
+        if(distance < collision_1->attached_transform()->scale_x() / 2){position_from_2 *= -1;}
+        double kept_proportion = 1.0;
+        scls::Point_2D velocity_2 = collision_2->attached_transform()->velocity();
+        double angle_tangent_1 = scls::vector_2d_angle(position_from_1);
+        double needed_angle = scls::vector_2d_angle(velocity_2) - angle_tangent_1;
+        scls::Fraction multiplier = scls::Fraction::from_double(velocity_2.norm());
+        scls::Point_2D new_velocity = (position_from_1 - (velocity_2 - position_from_1)).normalized(); // new_velocity = position_from_1.rotated(angle_tangent_1 - needed_angle).normalized() * multiplier
+        new_velocity += position_from_1.rotated(angle_tangent_1 - needed_angle).normalized();
+        if(distance < collision_1->attached_transform()->scale_x() / 2){multiplier *= -1;}
+        new_velocity.normalized();new_velocity *= multiplier * 0.8;
+        std::cout << "U " << angle_tangent_1 << " " << needed_angle << " " << multiplier.to_double() << std::endl;
+        dynamic_object_1->set_velocity(new_velocity);
+
+        // Return the result
+        return to_return;
+    }
     Collision_Rect_Rect __check_collision_rect_line(Graphic::Graphic_Collision* collision_rect, Graphic::Graphic_Collision* collision_line, Graphic::Graphic_Physic* dynamic_object_1){
         // Check bottom collision
         scls::Crossing_Datas_Segment datas_bottom = scls::check_crossing_segment(collision_rect->min_x().to_double(), collision_rect->min_y().to_double(), collision_rect->max_x().to_double(), collision_rect->min_y().to_double(), collision_line->x_1().to_double(), collision_line->y_1().to_double(), collision_line->x_2().to_double(), collision_line->y_2().to_double());
@@ -1223,9 +1255,9 @@ namespace pleos {
         if(!datas_bottom.crossed_in_segment && !datas_right.crossed_in_segment){return Collision_Rect_Rect();}
 
         // Get the differences
-        double slope_x = std::abs(collision_line->x_2().to_double() - collision_line->x_1().to_double());
-        double slope_y = std::abs(collision_line->y_2().to_double() - collision_line->y_1().to_double());
-        double temp = 0;scls::normalize_3d(slope_x, temp, slope_y);
+        scls::Fraction slope_x = (collision_line->x_2() - collision_line->x_1()).abs();
+        scls::Fraction slope_y = (collision_line->y_2() - collision_line->y_1()).abs();
+        scls::Fraction temp = 0;scls::normalize_3d(slope_x, temp, slope_y);
         Collision_Rect_Rect to_return;
         to_return.happens = true;
         if(datas_bottom.crossed_in_segment){to_return.side_bottom = true;}
@@ -1233,13 +1265,13 @@ namespace pleos {
 
         // Check the movement
         if(to_return.side_bottom && to_return.side_right) {
-            double force_distribution = 0.5;
+            scls::Fraction force_distribution = scls::Fraction(1, 2);
             std::cout << slope_x << " " << slope_y << " " << dynamic_object_1->velocity_x() << " " << dynamic_object_1->velocity_y() << std::endl;
 
             // Handle next movement
             if(dynamic_object_1->next_movement_x() > 0 && dynamic_object_1->next_movement_y() < 0){
                 // Handle both axis at once
-                dynamic_object_1->accelerate_x(dynamic_object_1->velocity_x() * slope_y * -force_distribution);
+                dynamic_object_1->accelerate_x(dynamic_object_1->velocity_x() * slope_y * force_distribution * -1);
                 dynamic_object_1->accelerate_y(dynamic_object_1->velocity_x() * slope_y * force_distribution);
             }
             else {
@@ -1247,18 +1279,10 @@ namespace pleos {
                 if(dynamic_object_1->next_movement_y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity_y() * force_distribution);dynamic_object_1->remove_y_velocity();}
             }
         }
-        if(to_return.side_bottom && !to_return.side_right) {
-            if(dynamic_object_1->velocity().y() < 0){dynamic_object_1->remove_y_velocity();}
-        }
-        if(to_return.side_left) {
-            if(dynamic_object_1->velocity().x() < 0){dynamic_object_1->remove_x_velocity();}
-        }
-        if(to_return.side_right && !to_return.side_bottom) {
-            if(dynamic_object_1->velocity().x() > 0){dynamic_object_1->remove_x_velocity();}
-        }
-        if(to_return.side_top) {
-            if(dynamic_object_1->velocity().y() > 0){dynamic_object_1->remove_y_velocity();}
-        }
+        if(to_return.side_bottom && !to_return.side_right) {if(dynamic_object_1->velocity().y() < 0){dynamic_object_1->remove_y_velocity();}}
+        if(to_return.side_left) {if(dynamic_object_1->velocity().x() < 0){dynamic_object_1->remove_x_velocity();}}
+        if(to_return.side_right && !to_return.side_bottom) {if(dynamic_object_1->velocity().x() > 0){dynamic_object_1->remove_x_velocity();}}
+        if(to_return.side_top) {if(dynamic_object_1->velocity().y() > 0){dynamic_object_1->remove_y_velocity();}}
 
         // Return the result
         return to_return;
@@ -1312,27 +1336,21 @@ namespace pleos {
         // Check the movement
         if(to_return.side_bottom) {
             // Friction
-            if(dynamic_object_1->velocity_y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity_x() * -0.01);}
+            if(dynamic_object_1->velocity_y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity_x() * scls::Fraction(-1, 100));}
 
             // Contact
-            if(dynamic_object_1->velocity_y() < 0){dynamic_object_1->remove_y_velocity();dynamic_object_1->set_velocity_y(to_return.distance);}
+            if(dynamic_object_1->velocity_y() < 0){dynamic_object_1->set_velocity_y(scls::Fraction::from_double(to_return.distance));}
         }
-        if(to_return.side_left) {
-            if(dynamic_object_1->next_movement_x() < 0){dynamic_object_1->remove_x_velocity();dynamic_object_1->set_velocity_x(to_return.distance);}
-        }
-        if(to_return.side_right) {
-            if(dynamic_object_1->next_movement_x() > 0){dynamic_object_1->remove_x_velocity();dynamic_object_1->set_velocity_x(-to_return.distance);}
-        }
-        if(to_return.side_top) {
-            if(dynamic_object_1->velocity_y() > 0){dynamic_object_1->remove_y_velocity();dynamic_object_1->set_velocity_y(-to_return.distance);}
-        }
+        if(to_return.side_left) {if(dynamic_object_1->next_movement_x() < 0){dynamic_object_1->set_velocity_x(scls::Fraction::from_double(to_return.distance));}}
+        if(to_return.side_right) {if(dynamic_object_1->next_movement_x() > 0){dynamic_object_1->set_velocity_x(scls::Fraction::from_double(-to_return.distance));}}
+        if(to_return.side_top) {if(dynamic_object_1->velocity_y() > 0){dynamic_object_1->set_velocity_y(scls::Fraction::from_double(-to_return.distance));}}
 
         // Return the result
         return to_return;
     };
     Collision_Rect_Rect __check_collision(Graphic::Graphic_Collision* collision_1, Graphic::Graphic_Collision* collision_2, Graphic::Graphic_Physic* dynamic_object_1) {
         // Asserts
-        if(collision_2 == 0 || collision_2->attached_object() == collision_1->attached_object()){return Collision_Rect_Rect();}
+        if(collision_2 == 0 || collision_2->attached_transform() == collision_1->attached_transform()){return Collision_Rect_Rect();}
 
         // Both objects are rect
         if(collision_1->type() == Graphic::Graphic_Collision_Type::GCT_Rect && collision_2->type() == Graphic::Graphic_Collision_Type::GCT_Rect) {
@@ -1343,14 +1361,28 @@ namespace pleos {
             Collision_Rect_Rect current_result = __check_collision_rect_line(collision_1, collision_2, dynamic_object_1);
             if(current_result.happens) {return current_result;}
         }
+        else if(collision_1->type() == Graphic::Graphic_Collision_Type::GCT_Circle && collision_2->type() == Graphic::Graphic_Collision_Type::GCT_Circle) {
+            Collision_Rect_Rect current_result = __check_collision_circle_circle(collision_1, collision_2, dynamic_object_1);
+            if(current_result.happens) {return current_result;}
+        }
 
         return Collision_Rect_Rect();
     }
 
+    // Add a line / rect collision to the graphic object
+    void Graphic::Graphic_Physic::add_collision(std::shared_ptr<Graphic_Collision> collision){a_collisions.push_back(collision);};
+    void Graphic::Graphic_Physic::add_collision(scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2){
+        a_collisions.push_back(std::make_shared<Graphic_Collision>(a_attached_transform));
+        std::shared_ptr<Graphic_Collision> collision=a_collisions.at(a_collisions.size()-1);
+        collision.get()->set_x_1(x_1);collision.get()->set_y_1(y_1);
+        collision.get()->set_x_2(x_2);collision.get()->set_y_2(y_2);
+        collision.get()->set_type(Graphic_Collision_Type::GCT_Line);
+    };
+
     // Checks if a collision occurs with an another object
     void Graphic::Graphic_Physic::check_collision(Graphic::Graphic_Collision* collision) {
         // Asserts
-        if(collision == 0 || collision->attached_object() == attached_object()){return;}
+        if(collision == 0 || collision->attached_transform() == attached_transform()){return;}
 
         // Check each collision
         for(int i = 0;i<static_cast<int>(a_collisions.size());i++) {
@@ -1360,11 +1392,11 @@ namespace pleos {
     }
 
     // Returns a new a collision to the graphic object
-    std::shared_ptr<Graphic::Graphic_Collision> Graphic::Graphic_Physic::new_collision(){
-        std::shared_ptr<Graphic::Graphic_Collision>to_return=std::make_shared<Graphic::Graphic_Collision>(a_attached_object);
-        add_collision(to_return);
-        to_return.get()->set_height(a_attached_object.lock().get()->height());
-        to_return.get()->set_width(a_attached_object.lock().get()->width());
+    std::shared_ptr<Graphic::Graphic_Collision> Graphic::Graphic_Physic::new_collision(Graphic_Collision_Type type){
+        std::shared_ptr<Graphic::Graphic_Collision>to_return=std::make_shared<Graphic::Graphic_Collision>(a_attached_transform);
+        to_return.get()->set_type(type);add_collision(to_return);
+        to_return.get()->set_height(a_attached_transform.lock().get()->scale_y());
+        to_return.get()->set_width(a_attached_transform.lock().get()->scale_x());
         return to_return;
     };
 
@@ -1379,7 +1411,7 @@ namespace pleos {
         a_physic_map_start_y = middle_loading_y - height / 2;
 
         // Create the cases
-        a_physic_map = std::vector<std::vector<Physic_Case>>(width, std::vector<Physic_Case>(height));
+        a_physic_map = std::vector<std::vector<std::shared_ptr<Physic_Case>>>(width, std::vector<std::shared_ptr<Physic_Case>>(height, std::make_shared<Physic_Case>()));
     }
 
     // Graphic constructor
@@ -1391,10 +1423,10 @@ namespace pleos {
     // Scale the GUI Object
     void Graphic_Object::Graphic_GUI_Object::scale(Graphic* graphic, int image_width, int image_height){
         // Get the needed values
-        int new_height = std::ceil(graphic->pixel_by_case_y()) * a_height.to_double();
-        int new_x = graphic->graphic_x_to_pixel_x((a_x - a_width / 2).to_double(), image_width);
-        int new_y = graphic->graphic_y_to_pixel_y((a_y - a_height / 2).to_double(), image_height);
-        int new_width = std::ceil(graphic->pixel_by_case_x()) * a_width.to_double();
+        int new_height = std::ceil(graphic->pixel_by_case_y()) * height().to_double();
+        int new_x = graphic->graphic_x_to_pixel_x((x() - width() / 2).to_double(), image_width);
+        int new_y = graphic->graphic_y_to_pixel_y((y() - height() / 2).to_double(), image_height);
+        int new_width = std::ceil(graphic->pixel_by_case_x()) * width().to_double();
 
         // Check if the object have to be rendered or not
         if(new_x > image_width || new_y > image_height || new_x < -new_width || new_y < -new_height){a_object.get()->set_visible(false);return;}
@@ -1413,7 +1445,6 @@ namespace pleos {
     int __graphic_object_render_number = 0;
     void Graphic_Object::update_event() {
         GUI_Object::update_event();
-        //if(window_struct().time_since_last_fps_calculation() <= 0){std::cout << "R " << __graphic_object_render_number << std::endl;__graphic_object_render_number=0;}
 
         // Update the object
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
@@ -1486,66 +1517,61 @@ namespace pleos {
     }
 
     // Updates the physic
-    scls::Point_3D gravity = scls::Point_3D(0, -9.8, 0);
+    scls::Point_2D gravity = scls::Point_2D(0, scls::Fraction(-98, 10));
     int Graphic_Object::update_physic() {
         // Realised updates
         int needed_update = 0;
 
         // Apply gravity
-        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
-            if(a_gui_objects[i].get()->physic_object() != 0 && a_gui_objects[i].get()->physic_object()->use_gravity()) {
-                a_gui_objects[i].get()->physic_object()->velocity() += (gravity * window_struct().delta_time());
-                needed_update++;
-            }
-        }
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {if(graphic()->physic_objects().at(i).get()->use_gravity()){graphic()->physic_objects().at(i).get()->accelerate(gravity * scls::Fraction::from_double(window_struct().delta_time()));needed_update++;}}
 
         // Update raw velocity
-        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {if(a_gui_objects[i].get()->physic_object() != 0){a_gui_objects[i].get()->physic_object()->update_raw_velocity();} }
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {graphic()->physic_objects().at(i).get()->update_raw_velocity();}
 
         // Update each objects in the case
-        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
-            if(a_gui_objects[i].get()->physic_object() != 0) {
-                if(!a_gui_objects[i].get()->physic_object()->is_static()) {
-                    // Get the needed datas
-                    int needed_height = a_gui_objects[i].get()->max_y_next().to_double_ceil() - a_gui_objects[i].get()->min_y_next().to_double_floor();
-                    int needed_width = a_gui_objects[i].get()->max_x_next().to_double_ceil() - a_gui_objects[i].get()->min_x_next().to_double_floor();
-                    int x_start = a_gui_objects[i].get()->min_x_next().to_double_floor();
-                    int y_start = a_gui_objects[i].get()->min_y_next().to_double_floor();
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {
+            if(!graphic()->physic_objects().at(i)->is_static()) {
+                // Get the needed datas
+                int needed_height = graphic()->physic_objects().at(i)->max_y_next().to_double_ceil() - graphic()->physic_objects().at(i)->min_y_next().to_double_floor();
+                int needed_width = graphic()->physic_objects().at(i)->max_x_next().to_double_ceil() - graphic()->physic_objects().at(i)->min_x_next().to_double_floor();
+                int x_start = graphic()->physic_objects().at(i)->min_x_next().to_double_floor();
+                int y_start = graphic()->physic_objects().at(i)->min_y_next().to_double_floor();
 
-                    // Check the cases
-                    for(int j = 0;j<needed_width;j++) {
-                        for(int h = 0;h<needed_height;h++) {
-                            Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
-                            if(current_case->static_objects_collisions.size() > 0){
-                                for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
-                                    a_gui_objects[i].get()->physic_object()->check_collision(current_case->static_objects_collisions[h].lock().get());
-                                }
+                // Check the cases
+                for(int j = 0;j<needed_width;j++) {
+                    for(int h = 0;h<needed_height;h++) {
+                        Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
+                        if(current_case != 0 && current_case->static_objects_collisions.size() > 0){
+                            for(int h = 0;h<static_cast<int>(current_case->static_objects_collisions.size());h++) {
+                                graphic()->physic_objects().at(i)->check_collision(current_case->static_objects_collisions[h].lock().get());
                             }
                         }
                     }
                 }
-                else if(a_gui_objects[i].get()->moved_during_this_frame()) {
-                    // Delete the last cases
-                    for(int j = 0;j<static_cast<int>(a_gui_objects[i].get()->physic_object()->used_physic_case().size());j++) {
-                        for(int k = 0;k<static_cast<int>(a_gui_objects[i].get()->physic_object()->collisions().size());k++) {
-                            a_gui_objects[i].get()->physic_object()->used_physic_case()[j]->delete_static_object_collision(a_gui_objects[i].get()->physic_object()->collisions()[k].get());
-                        }
+            }
+            else if(graphic()->physic_objects().at(i)->moved_during_this_frame()) {
+                // Delete the last cases
+                for(int j = 0;j<static_cast<int>(graphic()->physic_objects().at(i)->used_physic_case().size());j++) {
+                    for(int k = 0;k<static_cast<int>(graphic()->physic_objects().at(i)->collisions().size());k++) {
+                        graphic()->physic_objects().at(i)->used_physic_case()[j]->delete_static_object_collision(graphic()->physic_objects().at(i)->collisions()[k].get());
                     }
+                }
 
-                    // Get the needed datas
-                    int needed_height = a_gui_objects[i].get()->max_y_next().to_double_ceil() - a_gui_objects[i].get()->min_y_next().to_double_floor();
-                    int needed_width = a_gui_objects[i].get()->max_x_next().to_double_ceil() - a_gui_objects[i].get()->min_x_next().to_double_floor();
-                    int x_start = a_gui_objects[i].get()->min_x_next().to_double_floor();
-                    int y_start = a_gui_objects[i].get()->min_y_next().to_double_floor();
+                // Get the needed datas
+                int needed_height = graphic()->physic_objects().at(i)->max_y_next().to_double_ceil() - graphic()->physic_objects().at(i)->min_y_next().to_double_floor();
+                int needed_width = graphic()->physic_objects().at(i)->max_x_next().to_double_ceil() - graphic()->physic_objects().at(i)->min_x_next().to_double_floor();
+                int x_start = graphic()->physic_objects().at(i)->min_x_next().to_double_floor();
+                int y_start = graphic()->physic_objects().at(i)->min_y_next().to_double_floor();
 
-                    // Add the cases
-                    for(int j = 0;j<needed_width;j++) {
-                        for(int h = 0;h<needed_height;h++) {
-                            Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
-                            for(int l = 0;l<static_cast<int>(a_gui_objects[i].get()->physic_object()->collisions().size());l++){
-                                current_case->static_objects_collisions.push_back(a_gui_objects[i].get()->physic_object()->collisions()[l]);
+                // Add the cases
+                for(int j = 0;j<needed_width;j++) {
+                    for(int h = 0;h<needed_height;h++) {
+                        Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
+                        if(current_case != 0){
+                            for(int l = 0;l<static_cast<int>(graphic()->physic_objects().at(i)->collisions().size());l++){
+                                current_case->static_objects_collisions.push_back(graphic()->physic_objects().at(i)->collisions()[l]);
                             }
-                            a_gui_objects[i].get()->physic_object()->used_physic_case().push_back(current_case);
+                            graphic()->physic_objects().at(i)->used_physic_case().push_back(current_case);
                         }
                     }
                 }
@@ -1553,11 +1579,8 @@ namespace pleos {
         }
 
         // Apply next movement
-        for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
-            if(a_gui_objects[i].get()->physic_object() != 0) {
-                a_gui_objects[i].get()->__move();
-                needed_update++;
-            }
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {
+            graphic()->physic_objects().at(i).get()->__move();needed_update++;
         }
 
         return needed_update;
@@ -1568,7 +1591,7 @@ namespace pleos {
         // Set the good image
         int needed_width = width_in_pixel();int needed_height = height_in_pixel();
         if(use_image()) {
-            std::shared_ptr<scls::Image> needed_image = a_datas.to_image(needed_width, needed_height);
+            std::shared_ptr<scls::Image> needed_image = a_datas.get()->to_image(needed_width, needed_height);
             texture()->set_image(needed_image);
         }
         __graphic_object_render_number++;
@@ -1576,7 +1599,7 @@ namespace pleos {
         // Update the objects
         for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {
             Graphic_Object::Graphic_GUI_Object* current = a_gui_objects.at(i).get();
-            current->scale(&a_datas, needed_width, needed_height);
+            current->scale(a_datas.get(), needed_width, needed_height);
         }
 
         // Update the parent
