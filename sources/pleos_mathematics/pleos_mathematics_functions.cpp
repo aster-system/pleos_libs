@@ -1234,11 +1234,10 @@ namespace pleos {
         double angle_tangent_1 = scls::vector_2d_angle(position_from_1);
         double needed_angle = scls::vector_2d_angle(velocity_2) - angle_tangent_1;
         scls::Fraction multiplier = scls::Fraction::from_double(velocity_2.norm());
-        scls::Point_2D new_velocity = (position_from_1 - (velocity_2 - position_from_1)).normalized(); // new_velocity = position_from_1.rotated(angle_tangent_1 - needed_angle).normalized() * multiplier
-        new_velocity += position_from_1.rotated(angle_tangent_1 - needed_angle).normalized();
+        scls::Point_2D new_velocity = (position_from_1 - (velocity_2 - position_from_1)); // new_velocity = position_from_1.rotated(angle_tangent_1 - needed_angle).normalized() * multiplier
+        new_velocity += position_from_1.rotated(angle_tangent_1 - needed_angle) * multiplier;
         if(distance < collision_1->attached_transform()->scale_x() / 2){multiplier *= -1;}
-        new_velocity.normalized();new_velocity *= multiplier * 0.8;
-        std::cout << "U " << angle_tangent_1 << " " << needed_angle << " " << multiplier.to_double() << std::endl;
+        new_velocity.normalize();new_velocity *= multiplier * scls::Fraction(99, 100);
         dynamic_object_1->set_velocity(new_velocity);
 
         // Return the result
