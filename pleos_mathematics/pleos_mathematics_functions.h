@@ -360,7 +360,7 @@ namespace pleos {
         // Adds a function to the graphic
         std::shared_ptr<Graphic_Function> add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
-        inline void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;};
+        inline void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;set_draw_base(true);set_draw_sub_bases(true);};
         // Returns the image of the graphic
         std::shared_ptr<scls::Image> to_image(int width_in_pixel, int height_in_pixel);
 
@@ -451,6 +451,7 @@ namespace pleos {
         void draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return);
 
         // Getters and setters
+        inline std::vector<std::shared_ptr<Circle>>& circles(){return a_circles;};
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
@@ -767,7 +768,7 @@ namespace pleos {
         inline void reset(){a_datas.get()->reset();};
         // Returns the image of the graphic
         inline std::shared_ptr<scls::Image> to_image(){return a_datas.get()->to_image(width_in_pixel(), height_in_pixel());};
-        inline bool use_image() const {return a_datas.get()->draw_base() && a_datas.get()->draw_sub_bases();};
+        inline bool use_image() const {return (a_datas.get()->draw_base() && a_datas.get()->draw_sub_bases()) || (a_datas.get()->circles().size() > 0 || a_datas.get()->texts().size() > 0 || a_datas.get()->vectors().size() > 0);};
 
         // Handle circles
         // Adds a circle to the graphic
