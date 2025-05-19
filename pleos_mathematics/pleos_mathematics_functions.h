@@ -366,7 +366,7 @@ namespace pleos {
 
         // Handle circles
         // Adds a circle to the graphic
-        inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::Fraction radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));return &a_circles[a_circles.size() - 1];};
+        inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
         // Creates a new circle in the graphic
         inline std::shared_ptr<Circle> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::Fraction radius){return *add_circle(circle_name, Vector(x, y), radius);};
         // Removes circle from the graphic
@@ -468,6 +468,7 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
         inline void set_style(scls::Text_Style new_style) {a_style = std::make_shared<scls::Text_Style>(new_style);};
+        inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
         inline scls::Text_Style* style() const {return a_style.get();};
         inline std::vector<std::shared_ptr<Graphic_Text>>& texts(){return a_texts;};
         inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_vectors;};
@@ -484,8 +485,22 @@ namespace pleos {
             // Class representating a collision in a graphic object
         public:
 
+            // Base of a collision
+            struct Collision {
+                // If the collision happens or not
+                bool happens = false;
+                // Type of the collision
+                Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
+            };
+
+            // Datas for a circle collision
+            struct Collision_Circle : public Collision {
+                // Angle of the collision
+                double angle;
+            };
+
             // Datas for a rect collision
-            struct Collision_Rect_Rect {
+            struct Collision_Rect_Rect : public Collision {
                 // Possible side for collision
                 #define PLEOS_PHYSIC_RECT_COLLISION_BOTTOM 3
                 #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
@@ -494,8 +509,6 @@ namespace pleos {
 
                 // Distance between the colliding side
                 double distance;
-                // If the collision happens or not
-                bool happens = false;
                 // Sides of the collision
                 bool side_bottom = false;
                 bool side_left = false;
@@ -608,7 +621,7 @@ namespace pleos {
             // Getters and setters
             inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
-            inline std::vector<Graphic_Collision::Collision_Rect_Rect>& current_collisions_results(){return a_current_collisions_results;};
+            inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
             inline bool is_static() const {return a_static;};
             inline bool moved_during_this_frame() const {return attached_transform()->moved_during_this_frame();};
             inline const scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
@@ -633,7 +646,7 @@ namespace pleos {
             // Collisions in the physic object
             std::vector<std::shared_ptr<Graphic_Collision>> a_collisions;
             // Current collision of the object
-            std::vector<Graphic_Collision::Collision_Rect_Rect> a_current_collisions_results;
+            std::vector<std::shared_ptr<Graphic_Collision::Collision>> a_current_collisions_results;
 
             // Delta time of the object
             scls::Fraction a_delta_time = scls::Fraction(1, 100);
@@ -664,6 +677,8 @@ namespace pleos {
         std::shared_ptr<scls::Text_Style> a_style = std::make_shared<scls::Text_Style>();
         // This object
         std::weak_ptr<Graphic> a_this_object;
+        // Unknowns in the graphic
+        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
 
         // Loaded function
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;
@@ -696,6 +711,8 @@ namespace pleos {
         // Physic objects
         std::vector<std::shared_ptr<Graphic_Physic>> a_physic_objects;
     };
+    typedef Graphic::Graphic_Collision::Collision Collision;
+    typedef Graphic::Graphic_Collision::Collision_Circle Collision_Circle;
     typedef Graphic::Graphic_Collision::Collision_Rect_Rect Collision_Rect_Rect;
 
     class Graphic_Object : public scls::GUI_Object {
@@ -834,6 +851,8 @@ namespace pleos {
         inline void set_draw_base(bool new_draw_base) {a_datas.get()->set_draw_base(new_draw_base);};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_datas.get()->set_draw_sub_bases(new_draw_sub_bases);};
         inline void set_operation_at_click(int new_operation_at_click) {a_operation_at_click = new_operation_at_click;};
+        inline void set_update_physic_with_events(bool new_update_physic_with_events){a_update_physic_with_events = new_update_physic_with_events;};
+        inline bool update_physic_with_events() const {return a_update_physic_with_events;};
         inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_datas.get()->vectors();};
 
         //******************
@@ -855,6 +874,8 @@ namespace pleos {
         std::shared_ptr<Graphic> a_datas = Graphic::new_graphic();
         // Other object in the graphic
         std::vector<std::shared_ptr<Graphic_GUI_Object>> a_gui_objects;
+        // If the physic should be updated with the events
+        bool a_update_physic_with_events = true;
 
         // Created objects at click
         std::vector<std::shared_ptr<Vector>> a_created_vectors_at_click;

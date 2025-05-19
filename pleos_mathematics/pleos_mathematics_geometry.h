@@ -252,33 +252,35 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, Vector center, scls::Fraction radius):a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
+        Circle(std::string name, Vector center, scls::__Formula_Base radius):a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
 
-       // Returns the radius of the circle
+        // Returns the radius of the circle
         virtual scls::Fraction radius(){return a_transform.get()->scale_x() / 2;};
+        virtual std::shared_ptr<scls::__Formula_Base> radius_formula_shared_ptr(){return ((*a_transform.get()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
 
         // Getters and setters
-        inline scls::Fraction angle_end() const {return a_angle_end;};
-        inline scls::Fraction angle_start() const {return a_angle_start;};
+        inline scls::Formula angle_end() const {return a_angle_end;};
+        inline scls::Formula angle_start() const {return a_angle_start;};
+        inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
         inline Vector center() const {return a_transform.get()->position();};
         inline scls::Color color() const {return a_color;};
         inline std::string name() const {return a_name;};
-        inline void set_angle_end(scls::Fraction new_angle_end){a_angle_end = new_angle_end;};
-        inline void set_angle_start(scls::Fraction new_angle_start){a_angle_start = new_angle_start;};
+        inline void set_angle_end(scls::Formula new_angle_end){a_angle_end = new_angle_end;};
+        inline void set_angle_start(scls::Formula new_angle_start){a_angle_start = new_angle_start;};
         inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
         inline void set_center(Vector new_center){a_transform.get()->set_position(new_center.to_point_2d());};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
-        inline void set_radius(scls::Fraction new_radius){a_transform.get()->set_scale_x(new_radius * 2);}
+        inline void set_radius(scls::__Formula_Base new_radius){a_transform.get()->set_scale_x((new_radius * 2).formula_copy());}
     private:
         // Transformation in the circle
         std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
 
         // Angle to start / end the drawing
-        scls::Fraction a_angle_end = 360;scls::Fraction a_angle_start = 0;
+        scls::Formula a_angle_end = 360;scls::Formula a_angle_start = 0;
         // Color of the border of the circle
         scls::Color a_border_color;
         // Radius of the border

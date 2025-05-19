@@ -114,21 +114,21 @@ namespace pleos {
         else if(current_balise_name == "border") {scls::border_from_xml(xml, graphic.style());}
         else if(current_balise_name == "circle") {
             // Get the datas about a circle of the graphic
-            scls::Fraction angle_end = 360;scls::Fraction angle_start = 0;
+            scls::__Formula_Base angle_end = 360;scls::__Formula_Base angle_start = 0;
             scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;scls::Color color = scls::Color(255, 255, 255);
-            std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::Fraction radius = 1;
+            std::string needed_name = std::string();scls::Fraction needed_x = 0;scls::Fraction needed_y = 0;scls::__Formula_Base radius = 1;
             std::vector<Graphic::Graphic_Collision_Type> collisions;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
             scls::Point_2D velocity_start = scls::Point_2D(0, 0);
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "angle_end") {angle_end = environment.value_number(attributes[j].value);}
-                else if(attributes[j].name == "angle_start") {angle_start = environment.value_number(attributes[j].value);}
+                if(attributes[j].name == "angle_end") {angle_end = *environment.value_formula(attributes[j].value).formula_base();}
+                else if(attributes[j].name == "angle_start") {angle_start = *environment.value_formula(attributes[j].value).formula_base();}
                 else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "collision") {if(attributes[j].value == std::string("circle")){collisions.push_back(Graphic::Graphic_Collision_Type::GCT_Circle);}else{collisions.push_back(Graphic::Graphic_Collision_Type::GCT_Rect);}}
                 else if(attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "gravity" || attributes[j].name == "use_gravity") {use_gravity = (attributes[j].value == std::string("1") || attributes[j].value == std::string("true"));}
                 else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
                 else if(attributes[j].name == "physic") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
-                else if(attributes[j].name == "radius") {radius = environment.value_number(attributes[j].value);}
+                else if(attributes[j].name == "radius") {radius = (*environment.value_formula(attributes[j].value).formula_base());}
                 else if(attributes[j].name == "velocity") {velocity_start = environment.value_point_2d(attributes[j].value);}
                 else if(attributes[j].name == "x") {needed_x = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                 else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}

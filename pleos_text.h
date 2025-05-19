@@ -69,6 +69,9 @@ namespace pleos {
         // Text_Environment constructor
         Text_Environment(){};
 
+        // Clears the environment
+        void clear(){a_unknowns.get()->clear();};
+
         // Handle unknowns
         // Creates a unknown
         scls::__Formula_Base::Unknown* create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
@@ -79,6 +82,8 @@ namespace pleos {
         inline scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
         inline std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
 
+        // Returns a formula value
+        scls::__Formula_Base::Formula value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());};
         // Returns a number value
         scls::Fraction value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();};
         // Returns a Point_2D value
@@ -86,6 +91,7 @@ namespace pleos {
 
         // Getters and setters
         inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
+        inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
 
     private:
 
