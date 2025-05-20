@@ -48,6 +48,94 @@ namespace pleos {
         // Class representating a base object to display in a graphic
     public:
 
+        // Collision in a graphic object
+        enum Graphic_Collision_Type {GCT_Circle, GCT_Line, GCT_Rect};
+        class Graphic_Collision {
+            // Class representating a collision in a graphic object
+        public:
+
+            // Base of a collision
+            struct Collision {
+                // If the collision happens or not
+                bool happens = false;
+                // Other collided object
+                std::weak_ptr<__Graphic_Object_Base> other_object;
+                // Type of the collision
+                Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
+            };
+
+            // Datas for a circle collision
+            struct Collision_Circle : public Collision {
+                // Angle of the collision
+                double angle;
+            };
+
+            // Datas for a rect collision
+            struct Collision_Rect_Rect : public Collision {
+                // Possible side for collision
+                #define PLEOS_PHYSIC_RECT_COLLISION_BOTTOM 3
+                #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
+                #define PLEOS_PHYSIC_RECT_COLLISION_RIGHT 4
+                #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
+
+                // Distance between the colliding side
+                double distance;
+                // Sides of the collision
+                bool side_bottom = false;
+                bool side_left = false;
+                bool side_right = false;
+                bool side_top = false;
+            };
+
+            // Graphic_Collision constructor
+            Graphic_Collision(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_object(attached_object),a_attached_transform(attached_transform){};
+
+            // Getters and setters
+            inline __Graphic_Object_Base* attached_object()const{return a_attached_object.lock().get();};
+            inline std::weak_ptr<__Graphic_Object_Base> attached_object_weak_ptr()const{return a_attached_object;};
+            inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
+            inline scls::Fraction direct_x_1() const {return a_x_1;};
+            inline scls::Fraction direct_x_2() const {return a_x_2;};
+            inline scls::Fraction direct_y_1() const {return a_y_1;};
+            inline scls::Fraction direct_y_2() const {return a_y_2;};
+            inline scls::Fraction height() const {return a_height;};
+            inline scls::Fraction max_x() const {return attached_transform()->x() + a_width / 2;};
+            inline scls::Fraction max_x_next() const {return attached_transform()->max_x_next();};
+            inline scls::Fraction max_y() const {return attached_transform()->y() + a_height / 2;};
+            inline scls::Fraction max_y_next() const {return attached_transform()->max_y_next();};
+            inline scls::Fraction min_x() const {return attached_transform()->x() - a_width / 2;};
+            inline scls::Fraction min_x_next() const {return attached_transform()->min_x_next();};
+            inline scls::Fraction min_y() const {return attached_transform()->y() - a_height / 2;};
+            inline scls::Fraction min_y_next() const {return attached_transform()->min_y_next();};
+            inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
+            inline void set_height(scls::Fraction new_height) {a_height = new_height;};
+            inline void set_type(Graphic_Collision_Type new_type){a_type = new_type;};
+            inline void set_width(scls::Fraction new_width) {a_width = new_width;};
+            inline void set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
+            inline void set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
+            inline void set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
+            inline void set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
+            inline Graphic_Collision_Type type()const{return a_type;};
+            inline scls::Fraction width() const {return a_width;};
+            inline scls::Fraction x_1() const {return attached_transform()->x() + a_x_1;};
+            inline scls::Fraction x_2() const {return attached_transform()->x() + a_x_2;};
+            inline scls::Fraction y_1() const {return attached_transform()->y() + a_y_1;};
+            inline scls::Fraction y_2() const {return attached_transform()->y() + a_y_2;};
+        private:
+            // Attached object
+            std::weak_ptr<__Graphic_Object_Base> a_attached_object;
+            std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
+            // Type of the collision
+            Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
+
+            // Scale of the collision
+            scls::Fraction a_height = 1;scls::Fraction a_width = 1;
+
+            // Two points (needed for lines)
+            scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
+            scls::Fraction a_x_2 = 0;scls::Fraction a_y_2 = 0;
+        };
+
         // __Graphic_Object_Base constructor
         __Graphic_Object_Base(){};
 
@@ -56,12 +144,28 @@ namespace pleos {
 
         // Getters and setters
         inline double opacity() const {return a_opacity;};
+        inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
+        inline bool should_delete() const {return a_should_delete;};
+
+        //******************
+        // Hierarchy functions
+        //******************
+
+        // Function called when a collision occurs
+        virtual void when_collision(Graphic_Collision::Collision* collision){};
 
     private:
         // Opacity of the object
         double a_opacity = 1.0;
+        // If the object should be delete
+        bool a_should_delete = false;
     };
+    typedef __Graphic_Object_Base::Graphic_Collision Graphic_Collision;
+    typedef __Graphic_Object_Base::Graphic_Collision::Collision Collision;
+    typedef __Graphic_Object_Base::Graphic_Collision_Type Graphic_Collision_Type;
+    typedef __Graphic_Object_Base::Graphic_Collision::Collision_Circle Collision_Circle;
+    typedef __Graphic_Object_Base::Graphic_Collision::Collision_Rect_Rect Collision_Rect_Rect;
 
     //******************
     //
@@ -248,11 +352,11 @@ namespace pleos {
     //
     //******************
 
-    class Circle {
+    class Circle : public __Graphic_Object_Base {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, Vector center, scls::__Formula_Base radius):a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
+        Circle(std::string name, Vector center, scls::__Formula_Base radius):__Graphic_Object_Base(),a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
 
         // Returns the radius of the circle
         virtual scls::Fraction radius(){return a_transform.get()->scale_x() / 2;};

@@ -38,6 +38,57 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
+    //*********
+	//
+	// The Text_Environment class
+	//
+	//*********
+
+	class Text_Environment {
+	    // Class representating an environment for text in PLEOS
+    public:
+
+        // Variables
+        struct Variable {
+            // Name of the variable
+            std::string name = std::string("x");
+            // Value of the variable
+            scls::Fraction value = 0;
+        };
+
+        // Text_Environment constructor
+        Text_Environment(){};
+
+        // Clears the environment
+        void clear(){a_unknowns.get()->clear();};
+
+        // Handle unknowns
+        // Creates a unknown
+        scls::__Formula_Base::Unknown* create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
+        std::shared_ptr<scls::__Formula_Base::Unknown> create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
+        // Returns a value by its name
+        scls::Fraction value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0){return 0;}return (unknow->value.get()->value(0).real());};
+        // Returns a unknown by its name
+        inline scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
+        inline std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
+
+        // Returns a formula value
+        scls::__Formula_Base::Formula value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());};
+        // Returns a number value
+        scls::Fraction value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();};
+        // Returns a Point_2D value
+        scls::Point_2D value_point_2d(std::string base)const;
+
+        // Getters and setters
+        inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
+        inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
+
+    private:
+
+        // Variables
+        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<scls::__Formula_Base::Unknowns_Container>();
+	};
+
     // Possible studied type
     enum Studied_Type {ST_Sequence};
 
@@ -178,11 +229,11 @@ namespace pleos {
     public:
 
         // Base object in a graphic
-        class Graphic_Base_Object{
+        class Graphic_Base_Object : public __Graphic_Object_Base{
             // Class representating the base of an object in a graphic
         public:
             // Graphic_Base_Object constructor
-            Graphic_Base_Object(std::weak_ptr<Graphic> graphic_base):a_graphic(graphic_base){};
+            Graphic_Base_Object(std::weak_ptr<Graphic> graphic_base):__Graphic_Object_Base(),a_graphic(graphic_base){};
 
             // Soft reset the object
             virtual void soft_reset(){a_transform.get()->soft_reset();};
@@ -331,7 +382,7 @@ namespace pleos {
         };
 
         // Sets the middle of the base
-        inline void set_middle(double middle_x, double middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
+        inline void set_middle(scls::Fraction middle_x, scls::Fraction middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
         // Sets the scale of the base
         inline void set_scale(double width, double height){a_graphic_base.get()->a_height = height;a_graphic_base.get()->a_width = width;};
 
@@ -366,9 +417,12 @@ namespace pleos {
 
         // Handle circles
         // Adds a circle to the graphic
+        inline void add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);};
         inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
         // Creates a new circle in the graphic
         inline std::shared_ptr<Circle> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::Fraction radius){return *add_circle(circle_name, Vector(x, y), radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){std::shared_ptr<T>created_circle=std::make_shared<T>(circle_name, center, radius);add_circle(created_circle);created_circle.get()->attached_transform()->set_unknowns(a_unknowns);return created_circle;};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::__Formula_Base radius){return new_circle<T>(circle_name, Vector(x, y), radius);};
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
 
@@ -475,92 +529,18 @@ namespace pleos {
 
         //******************
         //
-        // Physic handling
+        // Loading handling
         //
         //******************
 
-        // Collision in a graphic object
-        enum Graphic_Collision_Type {GCT_Circle, GCT_Line, GCT_Rect};
-        class Graphic_Collision {
-            // Class representating a collision in a graphic object
-        public:
+        // Balises in the graphic
+        virtual void graphic_from_xml_balise(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
 
-            // Base of a collision
-            struct Collision {
-                // If the collision happens or not
-                bool happens = false;
-                // Type of the collision
-                Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
-            };
-
-            // Datas for a circle collision
-            struct Collision_Circle : public Collision {
-                // Angle of the collision
-                double angle;
-            };
-
-            // Datas for a rect collision
-            struct Collision_Rect_Rect : public Collision {
-                // Possible side for collision
-                #define PLEOS_PHYSIC_RECT_COLLISION_BOTTOM 3
-                #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
-                #define PLEOS_PHYSIC_RECT_COLLISION_RIGHT 4
-                #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
-
-                // Distance between the colliding side
-                double distance;
-                // Sides of the collision
-                bool side_bottom = false;
-                bool side_left = false;
-                bool side_right = false;
-                bool side_top = false;
-            };
-
-            // Graphic_Collision constructor
-            Graphic_Collision(std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_transform(attached_transform){};
-
-            // Getters and setters
-            inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
-            inline scls::Fraction direct_x_1() const {return a_x_1;};
-            inline scls::Fraction direct_x_2() const {return a_x_2;};
-            inline scls::Fraction direct_y_1() const {return a_y_1;};
-            inline scls::Fraction direct_y_2() const {return a_y_2;};
-            inline scls::Fraction height() const {return a_height;};
-            inline scls::Fraction max_x() const {return attached_transform()->x() + a_width / 2;};
-            inline scls::Fraction max_x_next() const {return attached_transform()->max_x_next();};
-            inline scls::Fraction max_y() const {return attached_transform()->y() + a_height / 2;};
-            inline scls::Fraction max_y_next() const {return attached_transform()->max_y_next();};
-            inline scls::Fraction min_x() const {return attached_transform()->x() - a_width / 2;};
-            inline scls::Fraction min_x_next() const {return attached_transform()->min_x_next();};
-            inline scls::Fraction min_y() const {return attached_transform()->y() - a_height / 2;};
-            inline scls::Fraction min_y_next() const {return attached_transform()->min_y_next();};
-            inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
-            inline void set_height(scls::Fraction new_height) {a_height = new_height;};
-            inline void set_type(Graphic_Collision_Type new_type){a_type = new_type;};
-            inline void set_width(scls::Fraction new_width) {a_width = new_width;};
-            inline void set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
-            inline void set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
-            inline void set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
-            inline void set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
-            inline Graphic_Collision_Type type()const{return a_type;};
-            inline scls::Fraction width() const {return a_width;};
-            inline scls::Fraction x_1() const {return attached_transform()->x() + a_x_1;};
-            inline scls::Fraction x_2() const {return attached_transform()->x() + a_x_2;};
-            inline scls::Fraction y_1() const {return attached_transform()->y() + a_y_1;};
-            inline scls::Fraction y_2() const {return attached_transform()->y() + a_y_2;};
-        private:
-            // Attached object
-            std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
-            // Type of the collision
-            Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
-
-            // Scale of the collision
-            scls::Fraction a_height = 1;scls::Fraction a_width = 1;
-
-            // Two points (needed for lines)
-            scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
-            scls::Fraction a_x_2 = 0;scls::Fraction a_y_2 = 0;
-        };
+        //******************
+        //
+        // Physic handling
+        //
+        //******************
 
         // Physic case
         struct Physic_Case{
@@ -579,8 +559,8 @@ namespace pleos {
             // Class representating a physic handler in a graphic object
         public:
             // Graphic_Physic constructor
-            Graphic_Physic(std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_transform(attached_transform){};
-            Graphic_Physic(std::weak_ptr<Graphic_Base_Object> attached_object):Graphic_Physic(attached_object.lock().get()->transform_shared_ptr()){};
+            Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_object(attached_object),a_attached_transform(attached_transform){};
+            Graphic_Physic(std::weak_ptr<Graphic_Base_Object> attached_object):Graphic_Physic(attached_object, attached_object.lock().get()->transform_shared_ptr()){};
 
             // Softs reset the object
             virtual void soft_reset();
@@ -619,6 +599,7 @@ namespace pleos {
             inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
 
             // Getters and setters
+            inline __Graphic_Object_Base* attached_object()const{return a_attached_object.lock().get();};
             inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
@@ -642,6 +623,7 @@ namespace pleos {
             inline scls::Fraction velocity_y() {return velocity().y();};
         private:
             // Attached object
+            std::weak_ptr<__Graphic_Object_Base> a_attached_object;
             std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
             // Collisions in the physic object
             std::vector<std::shared_ptr<Graphic_Collision>> a_collisions;
@@ -665,18 +647,21 @@ namespace pleos {
         inline std::vector<std::vector<std::shared_ptr<Physic_Case>>>& physic_map(){return a_physic_map;};
         inline std::vector<std::shared_ptr<Graphic_Physic>>& physic_objects(){return a_physic_objects;};
 
-    private:
+    protected:
 
         // Graphic constructor
         Graphic(){a_style.get()->set_background_color(scls::Color(0, 0, 0, 0));};
+
+        // This object
+        std::weak_ptr<Graphic> a_this_object;
+
+    private:
 
         // Things to draw
         bool a_draw_base = true;
         bool a_draw_sub_bases = true;
         // Style of the graphic
         std::shared_ptr<scls::Text_Style> a_style = std::make_shared<scls::Text_Style>();
-        // This object
-        std::weak_ptr<Graphic> a_this_object;
         // Unknowns in the graphic
         std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
 
@@ -711,9 +696,6 @@ namespace pleos {
         // Physic objects
         std::vector<std::shared_ptr<Graphic_Physic>> a_physic_objects;
     };
-    typedef Graphic::Graphic_Collision::Collision Collision;
-    typedef Graphic::Graphic_Collision::Collision_Circle Collision_Circle;
-    typedef Graphic::Graphic_Collision::Collision_Rect_Rect Collision_Rect_Rect;
 
     class Graphic_Object : public scls::GUI_Object {
         // Class representating an object containing a graphic
@@ -831,6 +813,9 @@ namespace pleos {
         inline scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::Image>& needed_image){return a_datas.get()->pixel_x_to_graphic_x(x, needed_image);};
         inline scls::Fraction pixel_y_to_graphic_y(int y, int needed_height){return a_datas.get()->pixel_y_to_graphic_y(y, needed_height);};
         inline scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::Image>& needed_image){return a_datas.get()->pixel_y_to_graphic_y(y, needed_image);};
+
+        // Create a new graphic
+        template <typename T> void set_datas(){a_datas = T::new_graphic();};
 
         // Getters and setters
         inline std::vector<std::shared_ptr<Vector>>& created_vectors_at_click(){return a_created_vectors_at_click;};

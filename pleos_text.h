@@ -50,57 +50,6 @@ namespace pleos {
 
     //*********
 	//
-	// The Text_Environment class
-	//
-	//*********
-
-	class Text_Environment {
-	    // Class representating an environment for text in PLEOS
-    public:
-
-        // Variables
-        struct Variable {
-            // Name of the variable
-            std::string name = std::string("x");
-            // Value of the variable
-            scls::Fraction value = 0;
-        };
-
-        // Text_Environment constructor
-        Text_Environment(){};
-
-        // Clears the environment
-        void clear(){a_unknowns.get()->clear();};
-
-        // Handle unknowns
-        // Creates a unknown
-        scls::__Formula_Base::Unknown* create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
-        std::shared_ptr<scls::__Formula_Base::Unknown> create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
-        // Returns a value by its name
-        scls::Fraction value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0){return 0;}return (unknow->value.get()->value(0).real());};
-        // Returns a unknown by its name
-        inline scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
-        inline std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
-
-        // Returns a formula value
-        scls::__Formula_Base::Formula value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());};
-        // Returns a number value
-        scls::Fraction value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();};
-        // Returns a Point_2D value
-        scls::Point_2D value_point_2d(std::string base)const;
-
-        // Getters and setters
-        inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
-        inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
-
-    private:
-
-        // Variables
-        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<scls::__Formula_Base::Unknowns_Container>();
-	};
-
-    //*********
-	//
 	// PLEOS Text handler
 	//
 	//*********
