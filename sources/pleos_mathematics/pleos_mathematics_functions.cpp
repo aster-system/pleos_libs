@@ -1180,7 +1180,7 @@ namespace pleos {
             radius = radius * pixel_by_case_x();
             double needed_x = graphic_x_to_pixel_x(center.x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
             double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->angle_start().value_to_double(a_unknowns.get()), current_circle.get()->angle_end().value_to_double(a_unknowns.get()), current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
+            to_return.get()->fill_circle(needed_x, needed_y, radius, current_circle.get()->angle_start().value_to_double(a_unknowns.get()) , current_circle.get()->angle_end().value_to_double(a_unknowns.get()), current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
         }
         // Draw the forms
         for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {draw_form(a_forms_2d[i].get(), to_return);}
@@ -1511,9 +1511,15 @@ namespace pleos {
         if(collision_1->attached_transform()->scale_x() < collision_2->attached_transform()->scale_x()){Graphic_Collision* temp = collision_1;collision_1 = collision_2;collision_2=temp;}
 
         // Get the datas about the collision
+        // Collision 1
         std::shared_ptr<Collision_Circle> to_return_1 = std::make_shared<Collision_Circle>();
         to_return_1.get()->happens = true;
-        to_return_1.get()->other_object = collision_1->attached_object_weak_ptr();
+        to_return_1.get()->__other_object = collision_2->attached_object_weak_ptr();
+        // Collision 2
+        std::shared_ptr<Collision_Circle> to_return_2 = std::make_shared<Collision_Circle>();
+        to_return_2.get()->happens = true;
+        to_return_2.get()->other_collision = to_return_1;
+        to_return_2.get()->__other_object = collision_1->attached_object_weak_ptr();
 
         // Calculate the needed angle
         scls::Point_2D position_from_1 = (position_1 - position_2).normalized();
@@ -1523,7 +1529,8 @@ namespace pleos {
         scls::Point_2D velocity_2 = collision_2->attached_transform()->velocity();
         double angle_tangent_1 = scls::vector_2d_angle(position_from_1);
         double needed_angle = scls::vector_2d_angle(velocity_2) - angle_tangent_1;
-        to_return_1.get()->angle = scls::vector_2d_angle(position_from_2);
+        to_return_1.get()->angle = scls::vector_2d_angle(position_from_1);
+        to_return_2.get()->angle = scls::vector_2d_angle(position_from_2);
 
         // Calculate the velocity of the object 1
         scls::Fraction multiplier = scls::Fraction::from_double(velocity_2.norm());
@@ -1534,7 +1541,7 @@ namespace pleos {
         dynamic_object_1->set_velocity(new_velocity);
 
         // Return the result
-        return to_return_1;
+        return to_return_2;
     }
     std::shared_ptr<Collision> __check_collision_rect_line(Graphic_Collision* collision_rect, Graphic_Collision* collision_line, Graphic::Graphic_Physic* dynamic_object_1){
         // Check bottom collision

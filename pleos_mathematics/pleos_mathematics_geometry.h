@@ -58,14 +58,21 @@ namespace pleos {
             struct Collision {
                 // If the collision happens or not
                 bool happens = false;
+
                 // Other collided object
-                std::weak_ptr<__Graphic_Object_Base> other_object;
+                std::shared_ptr<Collision> other_collision;
+                std::weak_ptr<__Graphic_Object_Base> __other_object;
+                template <typename T = __Graphic_Object_Base> T* other_object() const {return reinterpret_cast<T*>(__other_object.lock().get());};
+
                 // Type of the collision
                 Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
             };
 
             // Datas for a circle collision
             struct Collision_Circle : public Collision {
+                // Collision_Circle constructor
+                Collision_Circle(){type = Graphic_Collision_Type::GCT_Circle;};
+
                 // Angle of the collision
                 double angle;
             };
@@ -121,6 +128,7 @@ namespace pleos {
             inline scls::Fraction x_2() const {return attached_transform()->x() + a_x_2;};
             inline scls::Fraction y_1() const {return attached_transform()->y() + a_y_1;};
             inline scls::Fraction y_2() const {return attached_transform()->y() + a_y_2;};
+
         private:
             // Attached object
             std::weak_ptr<__Graphic_Object_Base> a_attached_object;
@@ -144,22 +152,33 @@ namespace pleos {
 
         // Getters and setters
         inline double opacity() const {return a_opacity;};
-        inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
+        inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
+        inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
         inline bool should_delete() const {return a_should_delete;};
 
         //******************
         // Hierarchy functions
         //******************
 
+        // Convert a collision to a collision circle
+        static Graphic_Collision::Collision_Circle* collision_circle(Graphic_Collision::Collision* collision){if(collision == 0 || collision->type != Graphic_Collision_Type::GCT_Circle){return 0;} return reinterpret_cast<Graphic_Collision::Collision_Circle*>(collision);};
+
         // Function called when a collision occurs
         virtual void when_collision(Graphic_Collision::Collision* collision){};
+
+    protected:
+
+        // Returns the used unknowns
+        inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
         // Opacity of the object
         double a_opacity = 1.0;
         // If the object should be delete
         bool a_should_delete = false;
+        // Unknowns in the object
+        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
     };
     typedef __Graphic_Object_Base::Graphic_Collision Graphic_Collision;
     typedef __Graphic_Object_Base::Graphic_Collision::Collision Collision;

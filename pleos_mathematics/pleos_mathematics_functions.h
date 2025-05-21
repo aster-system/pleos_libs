@@ -418,10 +418,10 @@ namespace pleos {
         // Handle circles
         // Adds a circle to the graphic
         inline void add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);};
-        inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
+        inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));a_circles.at(a_circles.size()-1).get()->set_unknowns(a_unknowns);a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
         // Creates a new circle in the graphic
         inline std::shared_ptr<Circle> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::Fraction radius){return *add_circle(circle_name, Vector(x, y), radius);};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){std::shared_ptr<T>created_circle=std::make_shared<T>(circle_name, center, radius);add_circle(created_circle);created_circle.get()->attached_transform()->set_unknowns(a_unknowns);return created_circle;};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){std::shared_ptr<T>created_circle=std::make_shared<T>(circle_name, center, radius);created_circle.get()->set_unknowns(a_unknowns);add_circle(created_circle);created_circle.get()->attached_transform()->set_unknowns(a_unknowns);return created_circle;};
         template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::__Formula_Base radius){return new_circle<T>(circle_name, Vector(x, y), radius);};
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles[i].get()->name()==circle_name){std::shared_ptr<Circle> temp = a_circles[i];a_circles.erase(a_circles.begin() + i);return temp;} }return std::shared_ptr<Circle>();};
