@@ -1753,7 +1753,7 @@ namespace pleos {
         }
 
         // Update the physic
-        int needed_update_physic = 0;if(update_physic_with_events()){needed_update_physic = update_physic();}
+        int needed_update_physic = 0;if(update_physic_with_events()){needed_update_physic = update_physic(1);}
 
         // Move the plane
         bool modified = (needed_update_physic > 0);
@@ -1819,7 +1819,7 @@ namespace pleos {
 
     // Updates the physic
     scls::Point_2D gravity = scls::Point_2D(0, scls::Fraction(-98, 10));
-    int Graphic_Object::update_physic() {
+    int Graphic_Object::update_physic(double multiplier) {
         // Soft-reset the physic
         for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {
             graphic()->physic_objects().at(i).get()->soft_reset();
@@ -1832,7 +1832,7 @@ namespace pleos {
         int needed_update = 0;
 
         // Apply gravity
-        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {if(graphic()->physic_objects().at(i).get()->use_gravity()){graphic()->physic_objects().at(i).get()->accelerate(gravity * scls::Fraction::from_double(window_struct().delta_time()));needed_update++;}}
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {if(graphic()->physic_objects().at(i).get()->use_gravity()){graphic()->physic_objects().at(i).get()->accelerate(gravity * scls::Fraction::from_double(window_struct().delta_time() * multiplier));needed_update++;}}
 
         // Update raw velocity
         for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {graphic()->physic_objects().at(i).get()->update_raw_velocity();}

@@ -851,7 +851,7 @@ namespace pleos {
         // Returns a physic case by its coordinates
         inline Graphic::Physic_Case* physic_case(int x, int y){return a_datas.get()->physic_case(x, y);};
         // Updates the physic
-        int update_physic();
+        int update_physic(double multiplier);
 
     private:
 
