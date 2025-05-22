@@ -1819,7 +1819,7 @@ namespace pleos {
 
     // Updates the physic
     scls::Point_2D gravity = scls::Point_2D(0, scls::Fraction(-98, 10));
-    int Graphic_Object::update_physic(double multiplier) {
+    int Graphic_Object::update_physic(double used_delta_time) {
         // Soft-reset the physic
         for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {
             graphic()->physic_objects().at(i).get()->soft_reset();
@@ -1832,7 +1832,7 @@ namespace pleos {
         int needed_update = 0;
 
         // Apply gravity
-        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {if(graphic()->physic_objects().at(i).get()->use_gravity()){graphic()->physic_objects().at(i).get()->accelerate(gravity * scls::Fraction::from_double(window_struct().delta_time() * multiplier));needed_update++;}}
+        for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {if(graphic()->physic_objects().at(i).get()->use_gravity()){graphic()->physic_objects().at(i).get()->accelerate(gravity * scls::Fraction::from_double(used_delta_time));needed_update++;}}
 
         // Update raw velocity
         for(int i = 0;i<static_cast<int>(graphic()->physic_objects().size());i++) {graphic()->physic_objects().at(i).get()->update_raw_velocity();}
