@@ -218,7 +218,7 @@ namespace pleos {
         double a_height = -1;double a_width = -1;
         int a_height_in_pixel = -1;int a_width_in_pixel = -1;
 
-        scls::Fraction a_middle_x = 0;
+        scls::Fraction a_middle_x =  0;
         scls::Fraction a_middle_y = 0;
         double a_pixel_by_case_x = 100;
         double a_pixel_by_case_y = 100;
@@ -419,6 +419,8 @@ namespace pleos {
         // Adds a circle to the graphic
         inline void add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);};
         inline std::shared_ptr<Circle>* add_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){a_circles.push_back(std::make_shared<Circle>(circle_name, center, radius));a_circles.at(a_circles.size()-1).get()->set_unknowns(a_unknowns);a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
+        // Returns a circle by its name
+        inline Circle* circle_by_name(std::string name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles.at(i).get()->name() == name){return a_circles.at(i).get();}}return 0;};
         // Creates a new circle in the graphic
         inline std::shared_ptr<Circle> new_circle(std::string circle_name, scls::Fraction x, scls::Fraction y, scls::Fraction radius){return *add_circle(circle_name, Vector(x, y), radius);};
         template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, Vector center, scls::__Formula_Base radius){std::shared_ptr<T>created_circle=std::make_shared<T>(circle_name, center, radius);created_circle.get()->set_unknowns(a_unknowns);add_circle(created_circle);created_circle.get()->attached_transform()->set_unknowns(a_unknowns);return created_circle;};
@@ -446,25 +448,7 @@ namespace pleos {
         inline std::shared_ptr<Form_2D> new_form(std::string name){std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);add_form(to_return);return to_return;};
         inline std::shared_ptr<Form_2D> new_form(std::string name, std::string points){std::shared_ptr<Form_2D>needed_form=new_form(name);set_form_points(needed_form.get(), points);return needed_form;};
         // Creates and returns a form from a face
-        inline std::shared_ptr<Form_2D> new_form_from_face(std::string name, scls::model_maker::Face* face){
-            std::shared_ptr<Form_2D>to_return=new_form(name);
-
-            // Add the points
-            for(int i = 0;i<static_cast<int>(face->points().size());i++) {
-                std::string current_name = name + std::string("-") + std::to_string(i);
-                std::shared_ptr<Vector> current_vector = add_point(current_name, face->points()[i].get());
-                to_return.get()->add_point(current_vector);
-            }
-            // Add the exclusion points
-            std::string final_points = std::string();
-            for(int i = 0;i<static_cast<int>(face->exclusion_points().size());i++) {
-                std::string current_name = name + std::string("-") + std::to_string(i);
-                std::shared_ptr<Vector> current_vector = add_point(current_name, face->exclusion_points()[i].get());
-                to_return.get()->add_exclusion_point(current_vector);
-            }
-
-            return to_return;
-        };
+        std::shared_ptr<Form_2D> new_form_from_face(std::string name, scls::model_maker::Face* face);
         // Sets the points in a form of the graphic
         void set_form_points(Form_2D* needed_form, std::string points){std::vector<std::string> cutted = scls::cut_string(points, ";");for(int i = 0;i<static_cast<int>(cutted.size());i++){needed_form->add_point(point_shared_ptr(cutted[i]));}};
         void set_form_points(std::shared_ptr<Form_2D> needed_form, std::string points){set_form_points(needed_form.get(), points);};
@@ -491,7 +475,8 @@ namespace pleos {
         inline std::shared_ptr<Vector> point_shared_ptr(std::string point_name){for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points[i].get()->name() == point_name){return a_points[i];}}return std::shared_ptr<Vector>();};
         inline Vector* point(std::string point_name){return point_shared_ptr(point_name).get();};
         // Creates and returns a new point in the graphic
-        inline std::shared_ptr<Vector> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>needed=std::make_shared<Vector>(name, x, y);add_point(needed);return needed;};
+        inline std::shared_ptr<Vector> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>needed=std::make_shared<Vector>(name, x, y);needed.get()->set_type(Vector_Type::VT_Point);add_point(needed);return needed;};
+        inline std::shared_ptr<Vector> new_point(std::string name, scls::Point_2D needed_point){return new_point(name, needed_point.x(), needed_point.y());};
 
         // Handle texts
         // Creates and returns a new text in the graphic
@@ -510,6 +495,7 @@ namespace pleos {
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
+        inline scls::Fraction height() const {return a_graphic_base.get()->a_height;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline void middle_x_add(scls::Fraction value) {a_graphic_base.get()->a_middle_x += value;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
@@ -518,6 +504,7 @@ namespace pleos {
         inline void pixel_by_case_x_add(double value) const {a_graphic_base.get()->a_pixel_by_case_x += value;};
         inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
         inline void pixel_by_case_y_add(double value) const {a_graphic_base.get()->a_pixel_by_case_y += value;};
+        inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_background_color(scls::Color new_background_color){a_style.get()->set_background_color(new_background_color);};
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
@@ -526,6 +513,7 @@ namespace pleos {
         inline scls::Text_Style* style() const {return a_style.get();};
         inline std::vector<std::shared_ptr<Graphic_Text>>& texts(){return a_texts;};
         inline std::vector<std::shared_ptr<Vector>>& vectors(){return a_vectors;};
+        inline scls::Fraction width() const {return a_graphic_base.get()->a_width;};
 
         //******************
         //
@@ -542,22 +530,19 @@ namespace pleos {
         //
         //******************
 
-        // Physic case
-        struct Physic_Case{
-            // Static objects in the case
-            inline void delete_static_object_collision(Graphic_Collision* object){for(int i=0;i<static_cast<int>(static_objects_collisions.size());i++){if(static_objects_collisions[i].lock().get()==object){static_objects_collisions.erase(static_objects_collisions.begin() + i);break;}}};
-            std::vector<std::weak_ptr<Graphic_Collision>> static_objects_collisions;
-        };
-
-        // Loads 100 X 100 physic map
-        void load_physic_map(int middle_loading_x, int middle_loading_y);
-        // Returns a physic case by its coordinates
-        inline Physic_Case* physic_case(int x, int y){return a_physic_map[(-a_physic_map_start_x) + x][(-a_physic_map_start_y) + y].get();};
-
         // Physic in a graphic object
         class Graphic_Physic {
             // Class representating a physic handler in a graphic object
         public:
+
+            // Physic case
+            struct Physic_Case{
+                // Static objects in the case
+                inline void delete_static_object_collision(Graphic_Collision* object){for(int i=0;i<static_cast<int>(static_objects_collisions.size());i++){if(static_objects_collisions[i].lock().get()==object){static_objects_collisions.erase(static_objects_collisions.begin() + i);static_objects_collisions_physic.erase(static_objects_collisions_physic.begin() + i);break;}}};
+                std::vector<std::weak_ptr<Graphic_Collision>> static_objects_collisions;
+                std::vector<std::weak_ptr<Graphic_Physic>> static_objects_collisions_physic;
+            };
+
             // Graphic_Physic constructor
             Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_object(attached_object),a_attached_transform(attached_transform){};
             Graphic_Physic(std::weak_ptr<Graphic_Base_Object> attached_object):Graphic_Physic(attached_object, attached_object.lock().get()->transform_shared_ptr()){};
@@ -569,7 +554,7 @@ namespace pleos {
             void add_collision(std::shared_ptr<Graphic_Collision> collision);
             void add_collision(scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2);
             // Checks if a collision occurs with an another collision
-            void check_collision(Graphic_Collision* collision);
+            void check_collision(Graphic_Collision* collision, Graphic::Graphic_Physic* other_object);
             // Returns a new a collision to the graphic object
             std::shared_ptr<Graphic_Collision> new_collision(Graphic_Collision_Type type);
             std::shared_ptr<Graphic_Collision> new_collision(){return new_collision(Graphic_Collision_Type::GCT_Rect);};
@@ -598,17 +583,24 @@ namespace pleos {
             inline scls::Fraction min_y_next() const {return attached_transform()->min_y_next();};
             inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
 
+            // Calculates the point of the trajectory of the function
+            std::vector<scls::Point_2D> trajectory_points(int point_number, scls::Fraction time_separation);
+
             // Getters and setters
             inline __Graphic_Object_Base* attached_object()const{return a_attached_object.lock().get();};
             inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
             inline bool is_static() const {return a_static;};
+            inline bool loaded_in_map() const {return a_loaded_in_map;};
             inline bool moved_during_this_frame() const {return attached_transform()->moved_during_this_frame();};
-            inline const scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
+            inline scls::Point_2D position() const {return a_attached_transform.lock().get()->position();};
+            inline scls::Point_2D position(int normalize) const {return a_attached_transform.lock().get()->position(normalize);};
+            inline scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
             inline scls::Fraction raw_velocity_x() {return raw_velocity().x();};
             inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
             inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
+            inline void set_loaded_in_map(bool new_loaded_map){a_loaded_in_map = new_loaded_map;};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
             inline void set_velocity(scls::Point_2D new_velocity){attached_transform()->set_velocity(new_velocity);};
@@ -618,6 +610,7 @@ namespace pleos {
             inline void set_velocity_y(scls::Fraction new_velocity_y){set_velocity_y(new_velocity_y, false);};
             inline bool use_gravity() const {return a_use_gravity;};
             inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
+            inline scls::Point_2D velocity(int normalize) const {return a_attached_transform.lock().get()->velocity(normalize);};
             inline scls::Point_2D velocity() const {return a_attached_transform.lock().get()->velocity();};
             inline scls::Fraction velocity_x() {return velocity().x();};
             inline scls::Fraction velocity_y() {return velocity().y();};
@@ -632,6 +625,8 @@ namespace pleos {
 
             // Delta time of the object
             scls::Fraction a_delta_time = scls::Fraction(1, 100);
+            // If the object is loaded in the map
+            bool a_loaded_in_map = false;
             // If the object is static or not
             bool a_static = true;
             // If the object use gravity or not
@@ -639,9 +634,14 @@ namespace pleos {
             // Used physic cases
             std::vector<Physic_Case*> a_used_physic_case;
         };
+        typedef Graphic_Physic::Physic_Case Physic_Case;
 
         // Adds a physic object
         void add_physic_object(std::shared_ptr<Graphic_Physic> new_object){a_physic_objects.push_back(new_object);}
+        // Loads 100 X 100 physic map
+        void load_physic_map(int middle_loading_x, int middle_loading_y);
+        // Returns a physic case by its coordinates
+        inline Physic_Case* physic_case(int x, int y){return a_physic_map[(-a_physic_map_start_x) + x][(-a_physic_map_start_y) + y].get();};
 
         // Getters and setters
         inline std::vector<std::vector<std::shared_ptr<Physic_Case>>>& physic_map(){return a_physic_map;};
@@ -707,12 +707,12 @@ namespace pleos {
             // Graphic_GUI_Object constructor
             Graphic_GUI_Object(std::weak_ptr<Graphic> graphic_base, std::shared_ptr<scls::GUI_Object>needed_object,Graphic_Object*attached_graphic):Graphic::Graphic_Base_Object(graphic_base),a_attached_graphic(attached_graphic),a_object(needed_object){needed_object.get()->set_ignore_click(true);needed_object.get()->set_texture_alignment(scls::T_Fill);};
 
-            // Resets the physic in the object
-            virtual void reset_physic(){if(a_physic_object.get()!=0){a_physic_object.get()->soft_reset();}};
             // Soft resets the object
-            virtual void soft_reset(){Graphic::Graphic_Base_Object::soft_reset();};
-            // Updates the event of the object
-            virtual void update_event(){};
+            virtual void soft_reset(){Graphic::Graphic_Base_Object::soft_reset();object()->soft_reset();};
+            virtual void soft_reset_physic(){if(a_physic_object.get()!=0){a_physic_object.get()->soft_reset();}};
+            // Updates the object
+            virtual void update(){object()->update();};
+            virtual void update_event(){object()->update_event();};
 
             // Move the GUI object
             void move_x(double new_velocity){physic_object()->set_velocity_x(new_velocity);};
@@ -758,6 +758,7 @@ namespace pleos {
         // Soft reset the object
         virtual void soft_reset(){a_created_vectors_at_click.clear();for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++){a_gui_objects.at(i).get()->soft_reset();}};
         // Updates the object
+        virtual void update();
         virtual void update_event();
         virtual void update_texture();
 
@@ -785,6 +786,8 @@ namespace pleos {
         // Adds a points to the graphic
         inline void add_point(std::shared_ptr<Vector> needed_point){a_datas.get()->add_point(needed_point);};
         inline void add_point(Vector needed_point){a_datas.get()->add_point(needed_point);};
+        // Creates and returns a new point in the graphic
+        inline std::shared_ptr<Vector> new_point(std::string name, scls::Point_2D needed_point){return a_datas.get()->new_point(name, needed_point.x(), needed_point.y());};
 
         // Handle vectors
         // Adds a vector to the graphic
@@ -833,6 +836,7 @@ namespace pleos {
         inline void pixel_by_case_x_add(double value) const {a_datas.get()->pixel_by_case_x_add(value);};
         inline double pixel_by_case_y() const {return a_datas.get()->pixel_by_case_y();};
         inline void pixel_by_case_y_add(double value) const {a_datas.get()->pixel_by_case_y_add(value);};
+        inline std::vector<std::shared_ptr<Vector>>& points(){return a_datas.get()->points();};
         inline void set_draw_base(bool new_draw_base) {a_datas.get()->set_draw_base(new_draw_base);};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_datas.get()->set_draw_sub_bases(new_draw_sub_bases);};
         inline void set_operation_at_click(int new_operation_at_click) {a_operation_at_click = new_operation_at_click;};

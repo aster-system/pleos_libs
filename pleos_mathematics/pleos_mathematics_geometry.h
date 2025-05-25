@@ -40,6 +40,114 @@ namespace pleos {
 
     //******************
     //
+    // The "Vector" class
+    //
+    //******************
+
+    enum Vector_Type{VT_Arrow, VT_Point, VT_Vector};
+    class Vector {
+        // Class representating a mathematical vector (more mathematically advanced and geenralised than scls::Vector_3D)
+    public:
+
+        // Vector constructor
+        Vector(std::string name):a_name(name){};
+        Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
+        Vector(scls::Formula x, scls::Formula y):Vector(std::string(), x, y){};
+        Vector(scls::Point_2D point):Vector(std::string(), point.x(), point.y()){};
+        Vector():Vector(""){};
+
+        // Returns a vector 3D from a point
+        static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
+        // Returns this vector in a point 2D / 3D
+        inline scls::Point_2D to_point_2d() {if(a_coordinates.size() > 1){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), 0);}return scls::Point_2D();};
+        inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
+        // Returns a copy of this vector
+        Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(a_coordinates[i].get()->formula_copy());}return to_return;};
+
+        // Returns the mesured angle between to vector
+        scls::Formula angle(Vector* needed_vector, std::string* redaction, scls::Textual_Math_Settings* settings);
+        inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0, 0);};
+        // Returns the complex number form of the vector (and the redaction if needed)
+        scls::Formula complex_number(std::string* redaction, scls::Textual_Math_Settings* settings);
+        // Returns the introduction of the vector
+        inline std::string introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string(settings) + std::string(";") + y()->to_std_string(settings) + std::string(").");};
+        // Returns the norm of the vector (and the redaction if needed)
+        scls::Formula norm(std::string* redaction, scls::Textual_Math_Settings* settings);
+        inline scls::Formula norm() {return norm(0, 0);};
+        // Rotates the vector
+        inline void rotate(scls::Fraction angle){scls::Point_3D point = scls::Point_3D(x_to_double(), 0, y_to_double());point.rotate_y(angle.to_double());set_x(scls::Fraction(point.x() * 100000.0, 100000.0));set_y(scls::Fraction(point.z() * 100000.0, 100000.0));};
+
+        // Returns the possible known coordinates
+        inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
+        inline void set_x_end(scls::Formula formula) {if(a_coordinates_end.size() <= 0){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[0].get())=formula;};
+        inline void set_y(scls::Formula formula) {while(a_coordinates.size() <= 1){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[1].get())=formula;};
+        inline void set_y_end(scls::Formula formula) {if(a_coordinates_end.size() <= 1){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[1].get())=formula;};
+        inline scls::Formula* x() const {if(a_coordinates.size() <= 0){return 0;} return a_coordinates[0].get();};
+        inline scls::Formula* x_end() const {if(a_coordinates_end.size() <= 0){return 0;} return a_coordinates_end[0].get();};
+        inline double x_end_to_double() const{if(x_end() == 0){return 0;}return x_end()->value(0).real().to_double();};
+        inline double x_to_double() const{if(x() == 0){return 0;}return x()->value(0).real().to_double();};
+        inline scls::Formula* y() const {if(a_coordinates.size() <= 1){return 0;} return a_coordinates[1].get();};
+        inline scls::Formula* y_end() const {if(a_coordinates_end.size() <= 1){return 0;} return a_coordinates_end[1].get();};
+        inline double y_end_to_double() const{if(y_end() == 0){return 0;}return y_end()->value(0).real().to_double();};
+        inline double y_to_double() const{if(y() == 0){return 0;}return y()->value(0).real().to_double();};
+        inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
+        inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
+
+        // Operators methods
+        // With Fractions
+        void __multiply(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_coordinates.size());i++){a_coordinates[i].get()->__multiply(value);}};
+        // With Vector
+        void __add(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__add(value.a_coordinates[i].get());}};
+        void __substract(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__substract(value.a_coordinates[i].get());}};
+
+        // Operators
+        // With Fractions
+        Vector operator*=(scls::Fraction value){__multiply(value);return *this;};
+        Vector operator*(scls::Fraction value) const {Vector new_value(vector_copy());new_value.__multiply(value);return new_value;};
+        // With Vector
+        Vector& operator+=(Vector value){__add(value);return *this;};
+        Vector operator+(Vector value) const {Vector new_value(vector_copy());new_value.__add(value);return new_value;};
+        Vector& operator-=(Vector value){__substract(value);return *this;};
+        Vector operator-(Vector value) const {Vector new_value(vector_copy());new_value.__substract(value);return new_value;};
+
+        // Getters and setters
+        inline scls::Color color() const {return a_color;};
+        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates(){return a_coordinates;};
+        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates_end(){return a_coordinates_end;};
+        inline scls::Fraction drawing_proportion() const {return a_drawing_proportion;};
+        inline std::string name() const {return a_name;};
+        inline void set_color(scls::Color new_color){a_color = new_color;};
+        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
+        inline void set_drawing_proportion(scls::Fraction new_drawing_proportion){a_drawing_proportion=new_drawing_proportion;};
+        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(type_name() + std::string(" ") + a_name);}};
+        inline void set_type(Vector_Type new_type){a_type=new_type;};
+        inline Vector_Type type() const {return a_type;};
+        inline std::string type_name(bool capitalise_first_letter) const {if(capitalise_first_letter){if(a_type == Vector_Type::VT_Point){return std::string("Point");}return std::string("Vecteur");}if(a_type == Vector_Type::VT_Point){return std::string("point");}return std::string("vecteur");};
+        inline std::string type_name() const {return type_name(true);};
+
+    private:
+        // Connected object to this vector
+        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+
+        // Color of the vector
+        scls::Color a_color = scls::Color(0, 0, 0);
+        // Coordinates of the vector
+        std::vector<std::shared_ptr<scls::Formula>> a_coordinates;
+        std::vector<std::shared_ptr<scls::Formula>> a_coordinates_end;
+        // Drawing proportion
+        scls::Fraction a_drawing_proportion = 1;
+        // Name of the vector
+        std::string a_name;
+        // Type of the vector
+        Vector_Type a_type = Vector_Type::VT_Vector;
+
+        // Last norm of the vector
+        scls::Formula a_last_norm; bool a_last_norm_calculated = false;
+    };
+
+    //******************
+    //
     // The base of all the next class
     //
     //******************
@@ -64,6 +172,8 @@ namespace pleos {
                 std::weak_ptr<__Graphic_Object_Base> __other_object;
                 template <typename T = __Graphic_Object_Base> T* other_object() const {return reinterpret_cast<T*>(__other_object.lock().get());};
 
+                // Acceleration generated by the force
+                scls::Point_2D acceleration;
                 // Type of the collision
                 Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
             };
@@ -146,11 +256,14 @@ namespace pleos {
 
         // __Graphic_Object_Base constructor
         __Graphic_Object_Base(){};
+        __Graphic_Object_Base(scls::Point_2D position):a_transform(std::make_shared<scls::Transform_Object_2D>(position)){};
 
         // Returns a color adapted with the needed opacity
         scls::Color color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
 
         // Getters and setters
+        inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
+        inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
         inline double opacity() const {return a_opacity;};
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
@@ -173,6 +286,9 @@ namespace pleos {
         inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
+        // Transformation in the circle
+        std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
+
         // Opacity of the object
         double a_opacity = 1.0;
         // If the object should be delete
@@ -188,113 +304,6 @@ namespace pleos {
 
     //******************
     //
-    // The "Vector" class
-    //
-    //******************
-
-    enum Vector_Type{VT_Arrow, VT_Point, VT_Vector};
-    class Vector {
-        // Class representating a mathematical vector (more mathematically advanced and geenralised than scls::Vector_3D)
-    public:
-
-        // Vector constructor
-        Vector(std::string name):a_name(name){};
-        Vector(std::string name, scls::Formula x, scls::Formula y):Vector(name){a_coordinates.push_back(std::make_shared<scls::Formula>(x));a_coordinates.push_back(std::make_shared<scls::Formula>(y));};
-        Vector(scls::Formula x, scls::Formula y):Vector(std::string(), x, y){};
-        Vector(scls::Point_2D point):Vector(std::string(), point.x(), point.y()){};
-        Vector():Vector(""){};
-
-        // Returns a vector 3D from a point
-        static std::shared_ptr<Vector> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Vector>(std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
-        // Returns this vector in a point 2D / 3D
-        inline scls::Point_2D to_point_2d() {if(a_coordinates.size() > 1){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_2D(x()->to_polymonial().monomonial().factor().real().to_double(), 0);}return scls::Point_2D();};
-        inline scls::Point_3D to_point_3d() {if(a_coordinates.size() > 2){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), y()->to_polymonial().monomonial().factor().real().to_double(), z()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 1){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0, y()->to_polymonial().monomonial().factor().real().to_double());}else if(a_coordinates.size() > 0){return scls::Point_3D(x()->to_polymonial().monomonial().factor().real().to_double(), 0,0);}return scls::Point_3D();};
-        // Returns a copy of this vector
-        Vector vector_copy() const {Vector to_return(a_name);for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(a_coordinates.size());i++){to_return.a_coordinates.push_back(a_coordinates[i].get()->formula_copy());}return to_return;};
-
-        // Returns the mesured angle between to vector
-        scls::Formula angle(Vector* needed_vector, std::string* redaction, scls::Textual_Math_Settings* settings);
-        inline scls::Formula angle(Vector* needed_vector) {return angle(needed_vector, 0, 0);};
-        // Returns the complex number form of the vector (and the redaction if needed)
-        scls::Formula complex_number(std::string* redaction, scls::Textual_Math_Settings* settings);
-        // Returns the introduction of the vector
-        inline std::string introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(" tel que ") + name() + std::string("(") + x()->to_std_string(settings) + std::string(";") + y()->to_std_string(settings) + std::string(").");};
-        // Returns the norm of the vector (and the redaction if needed)
-        scls::Formula norm(std::string* redaction, scls::Textual_Math_Settings* settings);
-        inline scls::Formula norm() {return norm(0, 0);};
-        // Rotates the vector
-        inline void rotate(scls::Fraction angle){scls::Point_3D point = scls::Point_3D(x_to_double(), 0, y_to_double());point.rotate_y(angle.to_double());set_x(scls::Fraction(point.x() * 100000.0, 100000.0));set_y(scls::Fraction(point.z() * 100000.0, 100000.0));};
-
-        // Returns the possible known coordinates
-        inline void set_x(scls::Formula formula) {if(a_coordinates.size() <= 0){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[0].get())=formula;};
-        inline void set_x_end(scls::Formula formula) {if(a_coordinates_end.size() <= 0){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[0].get())=formula;};
-        inline void set_y(scls::Formula formula) {while(a_coordinates.size() <= 1){a_coordinates.push_back(std::make_shared<scls::Formula>());}(*a_coordinates[1].get())=formula;};
-        inline void set_y_end(scls::Formula formula) {if(a_coordinates_end.size() <= 1){a_coordinates_end.push_back(std::make_shared<scls::Formula>());}(*a_coordinates_end[1].get())=formula;};
-        inline scls::Formula* x() const {if(a_coordinates.size() <= 0){return 0;} return a_coordinates[0].get();};
-        inline scls::Formula* x_end() const {if(a_coordinates_end.size() <= 0){return 0;} return a_coordinates_end[0].get();};
-        inline double x_end_to_double() const{if(x_end() == 0){return 0;}return x_end()->value(0).real().to_double();};
-        inline double x_to_double() const{if(x() == 0){return 0;}return x()->value(0).real().to_double();};
-        inline scls::Formula* y() const {if(a_coordinates.size() <= 1){return 0;} return a_coordinates[1].get();};
-        inline scls::Formula* y_end() const {if(a_coordinates_end.size() <= 1){return 0;} return a_coordinates_end[1].get();};
-        inline double y_end_to_double() const{if(y_end() == 0){return 0;}return y_end()->value(0).real().to_double();};
-        inline double y_to_double() const{if(y() == 0){return 0;}return y()->value(0).real().to_double();};
-        inline scls::Formula* z() const {if(a_coordinates.size() <= 2){return 0;} return a_coordinates[2].get();};
-        inline scls::Formula* w() const {if(a_coordinates.size() <= 3){return 0;} return a_coordinates[3].get();};
-
-        // Operators methods
-        // With Fractions
-        void __multiply(scls::Fraction value){for(int i = 0;i<static_cast<int>(a_coordinates.size());i++){a_coordinates[i].get()->__multiply(value);}};
-        // With Vector
-        void __add(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__add(value.a_coordinates[i].get());}};
-        void __substract(Vector value){for(int i = 0;i<static_cast<int>(a_coordinates.size()) && i < static_cast<int>(value.a_coordinates.size());i++){a_coordinates[i].get()->__substract(value.a_coordinates[i].get());}};
-
-        // Operators
-        // With Fractions
-        Vector operator*=(scls::Fraction value){__multiply(value);return *this;};
-        Vector operator*(scls::Fraction value) const {Vector new_value(vector_copy());new_value.__multiply(value);return new_value;};
-        // With Vector
-        Vector& operator+=(Vector value){__add(value);return *this;};
-        Vector operator+(Vector value) const {Vector new_value(vector_copy());new_value.__add(value);return new_value;};
-        Vector& operator-=(Vector value){__substract(value);return *this;};
-        Vector operator-(Vector value) const {Vector new_value(vector_copy());new_value.__substract(value);return new_value;};
-
-        // Getters and setters
-        inline scls::Color color() const {return a_color;};
-        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
-        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates(){return a_coordinates;};
-        inline std::vector<std::shared_ptr<scls::Formula>>& coordinates_end(){return a_coordinates_end;};
-        inline scls::Fraction drawing_proportion() const {return a_drawing_proportion;};
-        inline std::string name() const {return a_name;};
-        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
-        inline void set_drawing_proportion(scls::Fraction new_drawing_proportion){a_drawing_proportion=new_drawing_proportion;};
-        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(type_name() + std::string(" ") + a_name);}};
-        inline void set_type(Vector_Type new_type){a_type=new_type;};
-        inline Vector_Type type() const {return a_type;};
-        inline std::string type_name(bool capitalise_first_letter) const {if(capitalise_first_letter){if(a_type == Vector_Type::VT_Point){return std::string("Point");}return std::string("Vecteur");}if(a_type == Vector_Type::VT_Point){return std::string("point");}return std::string("vecteur");};
-        inline std::string type_name() const {return type_name(true);};
-
-    private:
-        // Connected object to this vector
-        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
-
-        // Color of the vector
-        scls::Color a_color = scls::Color(0, 0, 0);
-        // Coordinates of the vector
-        std::vector<std::shared_ptr<scls::Formula>> a_coordinates;
-        std::vector<std::shared_ptr<scls::Formula>> a_coordinates_end;
-        // Drawing proportion
-        scls::Fraction a_drawing_proportion = 1;
-        // Name of the vector
-        std::string a_name;
-        // Type of the vector
-        Vector_Type a_type = Vector_Type::VT_Vector;
-
-        // Last norm of the vector
-        scls::Formula a_last_norm; bool a_last_norm_calculated = false;
-    };
-
-    //******************
-    //
     // The "Form_2D" class
     //
     //******************
@@ -306,7 +315,7 @@ namespace pleos {
         struct Link {double drawing_proportion = 1;};
 
         // Form_2D constructor
-        Form_2D(std::string name):a_name(name){};
+        Form_2D(std::string name):__Graphic_Object_Base(),a_name(name){};
 
         // Adds an exclusion point to the form
         inline void add_exclusion_point(std::shared_ptr<Vector> point){a_exclusion_points.push_back(point);};
@@ -315,6 +324,8 @@ namespace pleos {
         // Moves the points in teh form
         inline void move_x(scls::Fraction movement){for(int i = 0;i<static_cast<int>(a_points.size());i++){(*a_points[i].get()->x()) += movement;}};
         inline void move_y(scls::Fraction movement){for(int i = 0;i<static_cast<int>(a_points.size());i++){(*a_points[i].get()->y()) += movement;}};
+        // Creates a new point to the form
+        inline std::shared_ptr<Vector> new_point(scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>point=std::make_shared<Vector>(x, y);a_points.push_back(point);a_points_link.push_back(Link());return point;};
         // Rotates the form
         inline void rotate(scls::Fraction angle){for(int i = 0;i<static_cast<int>(a_points.size());i++){a_points[i].get()->rotate(angle);}};
 
@@ -375,33 +386,28 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, Vector center, scls::__Formula_Base radius):__Graphic_Object_Base(),a_transform(std::make_shared<scls::Transform_Object_2D>(center.to_point_2d())),a_name(name){set_radius(radius);};
+        Circle(std::string name, Vector center, scls::__Formula_Base radius):__Graphic_Object_Base(center.to_point_2d()),a_name(name){set_radius(radius);};
 
         // Returns the radius of the circle
-        virtual scls::Fraction radius(){return a_transform.get()->scale_x() / 2;};
-        virtual std::shared_ptr<scls::__Formula_Base> radius_formula_shared_ptr(){return ((*a_transform.get()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
+        virtual scls::Fraction radius(){return attached_transform()->scale_x() / 2;};
+        virtual std::shared_ptr<scls::__Formula_Base> radius_formula_shared_ptr(){return ((*attached_transform()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
 
         // Getters and setters
         inline scls::Formula angle_end() const {return a_angle_end;};
         inline scls::Formula angle_start() const {return a_angle_start;};
-        inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
-        inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
-        inline Vector center() const {return a_transform.get()->position();};
+        inline Vector center() const {return attached_transform()->position();};
         inline scls::Color color() const {return a_color;};
         inline std::string name() const {return a_name;};
         inline void set_angle_end(scls::Formula new_angle_end){a_angle_end = new_angle_end;};
         inline void set_angle_start(scls::Formula new_angle_start){a_angle_start = new_angle_start;};
         inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
-        inline void set_center(Vector new_center){a_transform.get()->set_position(new_center.to_point_2d());};
+        inline void set_center(Vector new_center){attached_transform()->set_position(new_center.to_point_2d());};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
-        inline void set_radius(scls::__Formula_Base new_radius){a_transform.get()->set_scale_x((new_radius * 2).formula_copy());}
+        inline void set_radius(scls::__Formula_Base new_radius){attached_transform()->set_scale_x((new_radius * 2).formula_copy());}
     private:
-        // Transformation in the circle
-        std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
-
         // Angle to start / end the drawing
         scls::Formula a_angle_end = 360;scls::Formula a_angle_start = 0;
         // Color of the border of the circle

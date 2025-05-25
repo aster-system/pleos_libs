@@ -101,6 +101,7 @@ namespace pleos {
         }
 
         // Get the datas about the graphic
+        graphic.set_scale(0, 0);
         scls::Fraction graphic_width = 10;
         scls::Fraction graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;
         scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
@@ -111,6 +112,11 @@ namespace pleos {
         else{__graphic_from_xml_balises(xml, *environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
 
         // Set the datas
+        graphic_width = graphic.width();
+        graphic_height = graphic.height();
+        if(graphic_width != 0 && graphic_height == 0){graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
+        else if(graphic_width == 0 && graphic_height != 0){graphic_width = scls::Fraction(graphic_width_in_pixel, graphic_height_in_pixel) * graphic_height;}
+        else if(graphic_width == 0 && graphic_height == 0){graphic_width = 10;graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
         graphic.set_middle(graphic_x.to_double(), graphic_y.to_double());
         graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
 
