@@ -1009,9 +1009,7 @@ namespace pleos {
         double distance = contact_point.distance(position_1);
         double min_distance = std::abs(collision_1->attached_transform()->scale_x().to_double() / 2.0);
         if(distance > min_distance){return Collision_Result();}
-        std::cout << "N " << contact_point.x() << " " << contact_point.y() << std::endl;
         if(!contact_point.in_rect(line_start, line_vector)){return Collision_Result();}
-        std::cout << "O " << std::endl;
 
         // Get the datas about the collision
         // Collision 1

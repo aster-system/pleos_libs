@@ -89,6 +89,7 @@ namespace pleos {
             inline scls::Fraction max_y() const {return a_transform.get()->max_y();};
             inline scls::Fraction min_x() const {return a_transform.get()->min_x();};
             inline scls::Fraction min_y() const {return a_transform.get()->min_y();};
+            inline scls::Point_2D position() const {return a_transform.get()->position();};
             inline void set_height(scls::Fraction new_height){a_transform.get()->set_scale_y(new_height);};
             inline void set_this_object(std::weak_ptr<Graphic_Base_Object> new_this_object){a_this_object = new_this_object;};
             inline void set_width(scls::Fraction new_width){a_transform.get()->set_scale_x(new_width);};
