@@ -29,7 +29,7 @@
 
 // Include SCLS Graphic Benoit
 #include "../../scls-graphic-benoit/scls_graphic.h"
-#include "pleos_mathematics/pleos_mathematics_functions.h"
+#include "pleos_graphic.h"
 #include "pleos_it.h"
 #include "pleos_table.h"
 
