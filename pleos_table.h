@@ -126,6 +126,7 @@ namespace pleos {
 
         // Set the value of an std::string case
         void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = tig->image_shared_ptr(value, *needed_style);};
+        void set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
 
         // Returns the table to an image
         std::shared_ptr<scls::Image> to_image();

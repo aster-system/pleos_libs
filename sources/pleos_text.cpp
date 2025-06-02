@@ -43,6 +43,7 @@ namespace pleos {
         while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
 
         // Get the point
+        base = scls::replace(base, std::string(";"), std::string(","));
         std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
         if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
         return scls::Point_2D(value_number(cutted.at(0)), value_number(cutted.at(1)));
@@ -71,23 +72,27 @@ namespace pleos {
     }
 
 	// Creates and returns a graphic from an std::string
-	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y){
+	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y, int repetition_n){
 	    // Handle a lot of balises
         for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
             // Handle utilities
             Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
 
             if(utility.type == BALISE_REPEAT) {
+                environment.add_repetition();
                 scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("x");
                 needed_variable->set_value(utility.value_start);scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
                 for(int j = 0;j<utility.times;j++){
-                    __graphic_from_xml_balises(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);
+                    environment.set_repetition(j);
+                    __graphic_from_xml_balises(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y, j);
                     (*needed_variable->value) += step;
                 }
+                environment.remove_repetition();
             }
             else{graphic.graphic_from_xml_balise(xml->sub_texts().at(i), environment, text_style);}
         }
 	}
+	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y){return __graphic_from_xml_balises(xml, environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y, 0);}
 	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {
 	    graphic.style()->set_border_width(1);
 	    if(graphic_height_in_pixel <= 0){graphic_height_in_pixel = 200;}bool graphic_height_in_pixel_used = false;

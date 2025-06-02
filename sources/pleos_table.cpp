@@ -142,6 +142,19 @@ namespace pleos {
         return a_cases[x][y].get();
     };
 
+    // Set the value of an std::string case
+    void Table::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig) {
+        std::shared_ptr<scls::Image> img = tig->image_shared_ptr(value, *needed_style);
+        (*case_at(x, y)->image.get()) = img;
+        for(int i = 0;i<width;i++) {
+            for(int j = 0;j<height;j++) {
+                if(!(i == 0 && j == 0)) {
+                    (*case_at(x + i, y + j)->image.get()) = img.get()->copy_image();
+                }
+            }
+        }
+    }
+
 	// Returns the table to an image
     std::shared_ptr<scls::Image> Table::to_image() {
         // Get the needed datas

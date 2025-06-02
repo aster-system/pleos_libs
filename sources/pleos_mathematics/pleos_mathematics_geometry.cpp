@@ -91,6 +91,21 @@ namespace pleos {
 
     //******************
     //
+    // The base of all the next class
+    //
+    //******************
+
+    // Returns the needed XML text to generate this object
+    std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
+    std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
+    std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
+    std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + x().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + y().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + width().to_std_string(0);}
+
+    //******************
+    //
     // The "Form_2D" class
     //
     //******************
@@ -117,4 +132,18 @@ namespace pleos {
         }
         return to_return;
     }
+
+    //******************
+    //
+    // The "Circle" class
+    //
+    //******************
+
+    // Returns the needed XML text to generate this object
+    std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end().to_std_string(0));}
+    std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start().to_std_string(0));}
+    std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
+    std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
+    std::string Circle::to_xml_text_object_name(){return std::string("circle");}
+    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
 }

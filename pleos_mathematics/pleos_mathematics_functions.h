@@ -62,6 +62,16 @@ namespace pleos {
         // Clears the environment
         void clear(){a_unknowns.get()->clear();};
 
+        // Handle repetitions
+        // Adds a repetition
+        inline void add_repetition(){a_repetitions.push_back(0);};
+        // Returns the last repetition
+        inline int last_repetition(){if(a_repetitions.size() <= 0){return 0;}return a_repetitions.at(a_repetitions.size() - 1);}
+        // Removes the last repetition
+        inline void remove_repetition(){if(a_repetitions.size() > 0){a_repetitions.pop_back();}};
+        // Sets the last repetition
+        inline void set_repetition(int value){if(a_repetitions.size() > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
+
         // Handle unknowns
         // Creates a unknown
         scls::__Formula_Base::Unknown* create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
@@ -85,6 +95,8 @@ namespace pleos {
 
     private:
 
+        // Repetitions
+        std::vector<int> a_repetitions;
         // Variables
         std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<scls::__Formula_Base::Unknowns_Container>();
 	};

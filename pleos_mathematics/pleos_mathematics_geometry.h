@@ -256,7 +256,21 @@ namespace pleos {
 
         // __Graphic_Object_Base constructor
         __Graphic_Object_Base(){};
-        __Graphic_Object_Base(scls::Point_2D position):a_transform(std::make_shared<scls::Transform_Object_2D>(position)){};
+        __Graphic_Object_Base(std::string name, scls::Point_2D position):a_name(name),a_transform(std::make_shared<scls::Transform_Object_2D>(position)){};
+        __Graphic_Object_Base(std::string name):a_name(name){};
+        __Graphic_Object_Base(scls::Point_2D position):__Graphic_Object_Base(std::string(), position){};
+
+        // Soft reset the object
+        virtual void soft_reset(){a_transform.get()->soft_reset();};
+        // Returns the needed XML text to generate this object
+        virtual std::string to_xml_text(){return std::string();};
+        std::string to_xml_text_color(std::string attribute_name, scls::Color color);
+        std::string to_xml_text_height(std::string attribute_name);
+        std::string to_xml_text_name();
+        std::string to_xml_text_object_name();
+        std::string to_xml_text_x();
+        std::string to_xml_text_y();
+        std::string to_xml_text_width(std::string attribute_name);
 
         // Returns a color adapted with the needed opacity
         scls::Color color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
@@ -264,11 +278,27 @@ namespace pleos {
         // Getters and setters
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
+        inline scls::Fraction height() const {return a_transform.get()->scale_y();};
+        inline scls::Fraction max_x() const {return a_transform.get()->max_x();};
+        inline scls::Fraction max_y() const {return a_transform.get()->max_y();};
+        inline scls::Fraction min_x() const {return a_transform.get()->min_x();};
+        inline scls::Fraction min_y() const {return a_transform.get()->min_y();};
+        inline std::string name() const {return a_name;};
         inline double opacity() const {return a_opacity;};
+        inline scls::Point_2D position() const {return a_transform.get()->position();};
+        inline void set_height(scls::Fraction new_height){a_transform.get()->set_scale_y(new_height);};
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
+        inline void set_position(scls::Point_2D new_position){attached_transform()->set_position(new_position);};
+        inline void set_name(std::string new_name) {a_name = new_name;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
         inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
         inline bool should_delete() const {return a_should_delete;};
+        inline void set_width(scls::Fraction new_width){a_transform.get()->set_scale_x(new_width);};
+        inline void set_x(scls::Fraction new_x){a_transform.get()->set_x(new_x);};
+        inline void set_y(scls::Fraction new_y){a_transform.get()->set_y(new_y);};
+        inline scls::Fraction width() const {return a_transform.get()->scale_x();};
+        inline scls::Fraction x() const {return a_transform.get()->x();};
+        inline scls::Fraction y() const {return a_transform.get()->y();};
 
         //******************
         // Hierarchy functions
@@ -289,6 +319,8 @@ namespace pleos {
         // Transformation in the circle
         std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
 
+        // Name of the object
+        std::string a_name = std::string();
         // Opacity of the object
         double a_opacity = 1.0;
         // If the object should be delete
@@ -315,7 +347,7 @@ namespace pleos {
         struct Link {double drawing_proportion = 1;};
 
         // Form_2D constructor
-        Form_2D(std::string name):__Graphic_Object_Base(),a_name(name){};
+        Form_2D(std::string name):__Graphic_Object_Base(name){};
 
         // Adds an exclusion point to the form
         inline void add_exclusion_point(std::shared_ptr<Vector> point){a_exclusion_points.push_back(point);};
@@ -346,7 +378,6 @@ namespace pleos {
         inline std::vector<std::shared_ptr<Vector>>& exclusion_points(){return a_exclusion_points;};
         inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
         inline Link& link(int position){return a_points_link[position];};
-        inline std::string name() const {return a_name;};
         inline std::vector<std::shared_ptr<Vector>>& points(){return a_points;};
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
         inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
@@ -354,7 +385,6 @@ namespace pleos {
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
-        inline void set_name(std::string new_name){a_name = new_name;if(connected_object() != 0){connected_object()->set_text(std::string("Forme ") + a_name);}};
 
     private:
         // Color of the border of the form
@@ -365,8 +395,6 @@ namespace pleos {
         scls::Color a_color = scls::Color(0, 255, 0);
         // Connected object to this vector
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
-        // Name of the circle
-        std::string a_name = std::string();
 
         // Exclusions points in the circle
         std::vector<std::shared_ptr<Vector>> a_exclusion_points;
@@ -386,11 +414,22 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, Vector center, scls::__Formula_Base radius):__Graphic_Object_Base(center.to_point_2d()),a_name(name){set_radius(radius);};
+        Circle(std::string name, Vector center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):__Graphic_Object_Base(name, center.to_point_2d()){set_radius_x(radius_x);set_radius_y(radius_y);};
+        Circle(std::string name, Vector center, scls::__Formula_Base radius):Circle(name, center, radius, radius){};
 
         // Returns the radius of the circle
-        virtual scls::Fraction radius(){return attached_transform()->scale_x() / 2;};
-        virtual std::shared_ptr<scls::__Formula_Base> radius_formula_shared_ptr(){return ((*attached_transform()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
+        virtual scls::Fraction radius_x(){return attached_transform()->scale_x() / 2;};
+        virtual std::shared_ptr<scls::__Formula_Base> radius_x_formula_shared_ptr(){return ((*attached_transform()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
+        virtual scls::Fraction radius_y(){return attached_transform()->scale_y() / 2;};
+        virtual std::shared_ptr<scls::__Formula_Base> radius_y_formula_shared_ptr(){return ((*attached_transform()->scale_y_formula_shared_ptr().get()) / 2).formula_copy();};
+
+        // Returns the needed XML text to generate this object
+        virtual std::string to_xml_text();
+        std::string to_xml_text_angle_end();
+        std::string to_xml_text_angle_start();
+        std::string to_xml_text_radius_x();
+        std::string to_xml_text_radius_y();
+        virtual std::string to_xml_text_object_name();
 
         // Getters and setters
         inline scls::Formula angle_end() const {return a_angle_end;};
@@ -399,25 +438,23 @@ namespace pleos {
         inline int border_radius() const {return a_border_radius;};
         inline Vector center() const {return attached_transform()->position();};
         inline scls::Color color() const {return a_color;};
-        inline std::string name() const {return a_name;};
         inline void set_angle_end(scls::Formula new_angle_end){a_angle_end = new_angle_end;};
         inline void set_angle_start(scls::Formula new_angle_start){a_angle_start = new_angle_start;};
         inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
         inline void set_center(Vector new_center){attached_transform()->set_position(new_center.to_point_2d());};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
-        inline void set_radius(scls::__Formula_Base new_radius){attached_transform()->set_scale_x((new_radius * 2).formula_copy());}
+        inline void set_radius_x(scls::__Formula_Base new_radius_x){attached_transform()->set_scale_x((new_radius_x * 2).formula_copy());}
+        inline void set_radius_y(scls::__Formula_Base new_radius_y){attached_transform()->set_scale_y((new_radius_y * 2).formula_copy());}
     private:
         // Angle to start / end the drawing
         scls::Formula a_angle_end = 360;scls::Formula a_angle_start = 0;
         // Color of the border of the circle
-        scls::Color a_border_color;
+        scls::Color a_border_color = scls::Color(0, 0, 0);
         // Radius of the border
-        int a_border_radius = 0;
+        int a_border_radius = 5;
         // Color of the circle
-        scls::Color a_color;
-        // Name of the circle
-        std::string a_name = std::string();
+        scls::Color a_color = scls::Color(255, 255, 255);
     };
 }
 
