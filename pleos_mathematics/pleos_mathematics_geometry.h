@@ -256,7 +256,7 @@ namespace pleos {
 
         // __Graphic_Object_Base constructor
         __Graphic_Object_Base(){};
-        __Graphic_Object_Base(std::string name, scls::Point_2D position):a_name(name),a_transform(std::make_shared<scls::Transform_Object_2D>(position)){};
+        __Graphic_Object_Base(std::string name, scls::Point_2D position):a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){};
         __Graphic_Object_Base(std::string name):a_name(name){};
         __Graphic_Object_Base(scls::Point_2D position):__Graphic_Object_Base(std::string(), position){};
 

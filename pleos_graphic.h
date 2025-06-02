@@ -232,7 +232,7 @@ namespace pleos {
         // Resets the object
         inline void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;set_draw_base(true);set_draw_sub_bases(true);};
         // Returns the image of the graphic
-        std::shared_ptr<scls::Image> to_image(int width_in_pixel, int height_in_pixel);
+        virtual std::shared_ptr<scls::Image> to_image(int width_in_pixel, int height_in_pixel);
 
         // Handle circles
         // Adds a circle to the graphic
@@ -296,6 +296,7 @@ namespace pleos {
         inline std::shared_ptr<Vector> point_shared_ptr(std::string point_name){for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points[i].get()->name() == point_name){return a_points[i];}}return std::shared_ptr<Vector>();};
         inline Vector* point(std::string point_name){return point_shared_ptr(point_name).get();};
         // Creates and returns a new point in the graphic
+        template <typename T> std::shared_ptr<T> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<T>needed=std::make_shared<T>(name, x, y);needed.get()->set_type(Vector_Type::VT_Point);add_point(needed);return needed;};
         inline std::shared_ptr<Vector> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<Vector>needed=std::make_shared<Vector>(name, x, y);needed.get()->set_type(Vector_Type::VT_Point);add_point(needed);return needed;};
         inline std::shared_ptr<Vector> new_point(std::string name, scls::Point_2D needed_point){return new_point(name, needed_point.x(), needed_point.y());};
 
@@ -317,6 +318,7 @@ namespace pleos {
         // Getters and setters
         inline scls::Color background_color()const{return a_style.get()->background_color();};
         inline scls::Image* background_texture() const {return a_background_texture.get();};
+        inline std::shared_ptr<scls::Image> background_texture_shared_ptr() const {return a_background_texture;};
         inline std::vector<std::shared_ptr<Circle>>& circles(){return a_circles;};
         inline bool draw_background_texture() const {return a_draw_background_texture;};
         inline bool draw_base() const {return a_draw_base;};
@@ -498,12 +500,18 @@ namespace pleos {
         //******************
 
         // Balises circle in the graphic
-        bool graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, Circle* circle, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
+        bool graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
+        // Balises object in the graphic
+        bool graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
         // Balises physic in the graphic
         bool graphic_from_xml_balise_attribute_physic(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, std::shared_ptr<Graphic_Physic>& physic, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
 
         // Balises in the graphic
         virtual void graphic_from_xml_balise(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style);
+        virtual void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
+        virtual void graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int graphic_width_in_pixel, int graphic_height_in_pixel);
+        void graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
+        void graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment);
 
     protected:
 

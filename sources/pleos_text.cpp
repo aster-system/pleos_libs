@@ -49,90 +49,8 @@ namespace pleos {
         return scls::Point_2D(value_number(cutted.at(0)), value_number(cutted.at(1)));
     };
 
-	// Handle utilities balises
-	#define BALISE_REPEAT 0
-	struct Utility_Balise {int times = 1;int type = -1;scls::Fraction value_start = 0;scls::Fraction value_end=1;};
-    Utility_Balise utilities_balise(std::shared_ptr<scls::XML_Text> xml) {
-        Utility_Balise to_return;
-
-        // Handle the balise
-        std::string balise_content = xml.get()->xml_balise();
-        std::string current_balise_name = xml.get()->xml_balise_name();
-        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
-        if(current_balise_name == std::string("repeat")) {
-            // Repeat instructions
-            to_return.type = BALISE_REPEAT;
-            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                if(attributes[i].name == "times") {to_return.times = std::stoi(attributes.at(i).value);}
-            }
-        }
-
-        // Return the result
-        return to_return;
-    }
-
 	// Creates and returns a graphic from an std::string
-	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y, int repetition_n){
-	    // Handle a lot of balises
-        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
-            // Handle utilities
-            Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
-
-            if(utility.type == BALISE_REPEAT) {
-                environment.add_repetition();
-                scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("x");
-                needed_variable->set_value(utility.value_start);scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
-                for(int j = 0;j<utility.times;j++){
-                    environment.set_repetition(j);
-                    __graphic_from_xml_balises(xml->sub_texts().at(i), environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y, j);
-                    (*needed_variable->value) += step;
-                }
-                environment.remove_repetition();
-            }
-            else{graphic.graphic_from_xml_balise(xml->sub_texts().at(i), environment, text_style);}
-        }
-	}
-	void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, Graphic& graphic, std::shared_ptr<scls::Text_Style> text_style, scls::Fraction& graphic_height, scls::Fraction& graphic_width, scls::Fraction& graphic_x, scls::Fraction& graphic_y){return __graphic_from_xml_balises(xml, environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y, 0);}
-	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {
-	    graphic.style()->set_border_width(1);
-	    if(graphic_height_in_pixel <= 0){graphic_height_in_pixel = 200;}bool graphic_height_in_pixel_used = false;
-        if(graphic_width_in_pixel <= 0){graphic_width_in_pixel = 200;}bool graphic_width_in_pixel_used = false;
-        bool use_ratio_base = false;
-        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
-        for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-            if(attributes[j].name == "height") {graphic_height_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_height_in_pixel_used = true;}
-            else if(attributes[j].name == "ratio_base") {use_ratio_base = true;}
-            else if(attributes[j].name == "width") {graphic_width_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_width_in_pixel_used = true;}
-        }
-
-        // Get the datas about the graphic
-        graphic.set_scale(0, 0);
-        scls::Fraction graphic_width = 10;
-        scls::Fraction graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;
-        scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
-        std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
-
-        // Handle a lot of balises
-        if(environment == 0){Text_Environment temp;__graphic_from_xml_balises(xml, temp, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
-        else{__graphic_from_xml_balises(xml, *environment, graphic, text_style, graphic_height, graphic_width, graphic_x, graphic_y);}
-
-        // Set the datas
-        graphic_width = graphic.width();
-        graphic_height = graphic.height();
-        if(graphic_width != 0 && graphic_height == 0){graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
-        else if(graphic_width == 0 && graphic_height != 0){graphic_width = scls::Fraction(graphic_width_in_pixel, graphic_height_in_pixel) * graphic_height;}
-        else if(graphic_width == 0 && graphic_height == 0){graphic_width = 10;graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
-        graphic.set_middle(graphic_x.to_double(), graphic_y.to_double());
-        graphic.set_scale(graphic_width.to_double(), graphic_height.to_double());
-
-        // Get the image
-        if(use_ratio_base){
-            if(graphic_height_in_pixel_used&&!graphic_width_in_pixel_used){graphic_width_in_pixel = static_cast<double>(graphic_height_in_pixel) * (graphic_width.to_double() / graphic_height.to_double());}
-            else if(!graphic_height_in_pixel_used&&graphic_width_in_pixel_used){graphic_height_in_pixel = static_cast<double>(graphic_width_in_pixel) * (graphic_height.to_double() / graphic_width.to_double());}
-        }
-	}
-	void graphic_from_xml(std::shared_ptr<Graphic> graphic_shared_ptr, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel){graphic_from_xml(*graphic_shared_ptr.get(), xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);}
-	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();graphic_from_xml(to_return, xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
+	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();to_return.get()->graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
 	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style){
 	    int graphic_width_in_pixel = 0;int graphic_height_in_pixel = 0;
 	    std::shared_ptr<scls::Image> to_return = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel).get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);
@@ -473,7 +391,7 @@ namespace pleos {
     void GUI_Text::__GUI_Text_Block_Graphic::update_texture(scls::Text_Image_Block* block_to_apply, scls::Image_Generation_Type generation_type){
         int height=0;int width=0;
         graphic()->set_style(*block_to_apply->global_style());
-        graphic_from_xml(*graphic(), block_to_apply->datas()->content, *block_to_apply->global_style(), width, height);
+        graphic()->graphic_from_xml(block_to_apply->datas()->content, *block_to_apply->global_style(), width, height);
 
         // Update the size
         graphic_object()->set_height_in_pixel(height);

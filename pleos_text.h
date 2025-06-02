@@ -55,10 +55,7 @@ namespace pleos {
 	//*********
 
 	// Creates and returns a graphic from an std::string
-	void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-	inline void graphic_from_xml(Graphic& graphic, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel){graphic_from_xml(graphic, xml, needed_style, 0, graphic_width_in_pixel, graphic_height_in_pixel);};
-	void graphic_from_xml(std::shared_ptr<Graphic> graphic_shared_ptr, std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+    std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
 	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style);
 
 	// Creates and returns a linked-list from an std::string

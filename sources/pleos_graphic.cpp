@@ -535,21 +535,48 @@ namespace pleos {
     //
     //******************
 
-    // Balises circle in the graphic
-    bool Graphic::graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, Circle* circle, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style) {
-        // Asserts
-        if(circle == 0){return false;}
+    // Handle utilities balises
+	#define BALISE_REPEAT 0
+	struct Utility_Balise {int times = 1;int type = -1;scls::Fraction value_start = 0;scls::Fraction value_end=1;};
+    Utility_Balise utilities_balise(std::shared_ptr<scls::XML_Text> xml) {
+        Utility_Balise to_return;
 
-        if(attribute.name == "angle_end") {circle->set_angle_end(*environment.value_formula(attribute.value).formula_base());}
-        else if(attribute.name == "angle_start") {circle->set_angle_start(*environment.value_formula(attribute.value).formula_base());}
-        else if(attribute.name == "border_radius" || attribute.name == "width") {circle->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
-        else if(attribute.name == "color" || attribute.name == "background_color") {circle->set_color(scls::Color::from_std_string(attribute.value));}
-        else if(attribute.name == "name") {std::string needed_name = attribute.value;if(environment.last_repetition() != 0){needed_name += std::string("-") + std::to_string(environment.last_repetition());}circle->set_name(needed_name);}
-        else if(attribute.name == "radius") {circle->set_radius_x((*environment.value_formula(attribute.value).formula_base()));circle->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
-        else if(attribute.name == "radius_x") {circle->set_radius_x((*environment.value_formula(attribute.value).formula_base()));}
-        else if(attribute.name == "radius_y") {circle->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
-        else if(attribute.name == "x") {circle->set_x(scls::Fraction::from_std_string(attribute.value));}
-        else if(attribute.name == "y") {circle->set_y(scls::Fraction::from_std_string(attribute.value));}
+        // Handle the balise
+        std::string balise_content = xml.get()->xml_balise();
+        std::string current_balise_name = xml.get()->xml_balise_name();
+        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
+        if(current_balise_name == std::string("repeat")) {
+            // Repeat instructions
+            to_return.type = BALISE_REPEAT;
+            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                if(attributes[i].name == "times") {to_return.times = std::stoi(attributes.at(i).value);}
+            }
+        }
+
+        // Return the result
+        return to_return;
+    }
+
+    // Balises circle in the graphic
+    bool Graphic::graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style) {
+        // Asserts
+        if(circle.get() == 0){return false;}
+
+        if(graphic_from_xml_balise_attribute_object(attribute, circle, environment, text_style)){return true;}
+        else if(attribute.name == "angle_end") {circle.get()->set_angle_end(*environment.value_formula(attribute.value).formula_base());}
+        else if(attribute.name == "angle_start") {circle.get()->set_angle_start(*environment.value_formula(attribute.value).formula_base());}
+        else if(attribute.name == "border_radius" || attribute.name == "width") {circle.get()->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
+        else if(attribute.name == "color" || attribute.name == "background_color") {circle.get()->set_color(scls::Color::from_std_string(attribute.value));}
+        else if(attribute.name == "radius") {circle.get()->set_radius_x((*environment.value_formula(attribute.value).formula_base()));circle.get()->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
+        else if(attribute.name == "radius_x") {circle.get()->set_radius_x((*environment.value_formula(attribute.value).formula_base()));}
+        else if(attribute.name == "radius_y") {circle.get()->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
+        else{return false;}return true;
+    }
+    // Balises object in the graphic
+    bool Graphic::graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style) {
+        if(attribute.name == "name") {std::string needed_name = attribute.value;if(environment.last_repetition() != 0){needed_name += std::string("-") + std::to_string(environment.last_repetition());}object.get()->set_name(needed_name);}
+        else if(attribute.name == "x") {object.get()->set_x(scls::Fraction::from_std_string(attribute.value));}
+        else if(attribute.name == "y") {object.get()->set_y(scls::Fraction::from_std_string(attribute.value));}
         else{return false;}return true;
     }
     // Balises physic in the graphic
@@ -622,7 +649,7 @@ namespace pleos {
             std::shared_ptr<Circle> circle = *add_circle(std::string(""), Vector(std::string("circle_center"), 0, 0), 1, 1);
             std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(graphic_from_xml_balise_attribute_circle(attributes[j], circle.get(), environment, text_style)) {}
+                if(graphic_from_xml_balise_attribute_circle(attributes[j], circle, environment, text_style)) {}
                 else if(graphic_from_xml_balise_attribute_physic(attributes[j], circle, physic, environment, text_style)) {}
             }
         }
@@ -880,6 +907,66 @@ namespace pleos {
                 if(attributes[j].name == "background_color") {text_style.get()->set_background_color(scls::Color::from_std_string(attributes[j].value));}
                 else if(attributes[j].name == "font_size") {text_style.get()->set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
             }
+        }
+    }
+    void Graphic::__graphic_from_xml_balises(std::shared_ptr<scls::XML_Text> xml, Text_Environment& environment, std::shared_ptr<scls::Text_Style> text_style, int graphic_width_in_pixel, int graphic_height_in_pixel){
+	    // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
+            // Handle utilities
+            Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
+
+            if(utility.type == BALISE_REPEAT) {
+                environment.add_repetition();
+                scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("x");
+                needed_variable->set_value(utility.value_start);scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
+                for(int j = 0;j<utility.times;j++){
+                    environment.set_repetition(j);
+                    Graphic::__graphic_from_xml_balises(xml->sub_texts().at(i), environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);
+                    (*needed_variable->value) += step;
+                }
+                environment.remove_repetition();
+            }
+            else{graphic_from_xml_balise(xml->sub_texts().at(i), environment, text_style);}
+        }
+	}
+    void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int graphic_width_in_pixel, int graphic_height_in_pixel){graphic_from_xml(xml, needed_style, 0, 0, 0);}
+    void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment){graphic_from_xml(xml, needed_style, environment, 0, 0);}
+    void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, Text_Environment* environment, int graphic_width_in_pixel, int graphic_height_in_pixel) {
+        style()->set_border_width(1);
+	    if(graphic_height_in_pixel <= 0){graphic_height_in_pixel = 200;}bool graphic_height_in_pixel_used = false;
+        if(graphic_width_in_pixel <= 0){graphic_width_in_pixel = 200;}bool graphic_width_in_pixel_used = false;
+        bool use_ratio_base = false;
+        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
+        for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+            if(attributes[j].name == "height") {graphic_height_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_height_in_pixel_used = true;}
+            else if(attributes[j].name == "ratio_base") {use_ratio_base = true;}
+            else if(attributes[j].name == "width") {graphic_width_in_pixel = scls::Fraction::from_std_string(attributes[j].value).to_double();graphic_width_in_pixel_used = true;}
+        }
+
+        // Get the datas about the graphic
+        set_scale(0, 0);
+        scls::Fraction graphic_width = 10;
+        scls::Fraction graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;
+        scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
+        std::shared_ptr<scls::Text_Style> text_style = std::make_shared<scls::Text_Style>();
+
+        // Handle a lot of balises
+        if(environment == 0){Text_Environment temp;__graphic_from_xml_balises(xml, temp, text_style, graphic_width_in_pixel, graphic_height_in_pixel);}
+        else{__graphic_from_xml_balises(xml, *environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);}
+
+        // Set the datas
+        graphic_width = width();
+        graphic_height = height();
+        if(graphic_width != 0 && graphic_height == 0){graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
+        else if(graphic_width == 0 && graphic_height != 0){graphic_width = scls::Fraction(graphic_width_in_pixel, graphic_height_in_pixel) * graphic_height;}
+        else if(graphic_width == 0 && graphic_height == 0){graphic_width = 10;graphic_height = scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel) * graphic_width;}
+        set_middle(graphic_x.to_double(), graphic_y.to_double());
+        set_scale(graphic_width.to_double(), graphic_height.to_double());
+
+        // Get the image
+        if(use_ratio_base){
+            if(graphic_height_in_pixel_used&&!graphic_width_in_pixel_used){graphic_width_in_pixel = static_cast<double>(graphic_height_in_pixel) * (graphic_width.to_double() / graphic_height.to_double());}
+            else if(!graphic_height_in_pixel_used&&graphic_width_in_pixel_used){graphic_height_in_pixel = static_cast<double>(graphic_width_in_pixel) * (graphic_height.to_double() / graphic_width.to_double());}
         }
     }
 
