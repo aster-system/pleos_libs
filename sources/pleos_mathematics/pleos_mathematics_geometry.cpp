@@ -98,17 +98,40 @@ namespace pleos {
     // Returns the needed XML text to generate this object
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
     std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
     std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
     std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + x().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + y().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + width().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_width(){return to_xml_text_width(std::string("width"));}
 
     //******************
     //
     // The "Form_2D" class
     //
     //******************
+
+    // Returns this object to an XML text
+    std::string Form_2D::to_xml_text() {
+        // Add the points
+        std::string content = std::string();
+        std::string point_names = std::string();
+        for(int i = 0;i<static_cast<int>(a_points.size());i++){
+            Vector* p = a_points.at(i).get();
+            content += std::string("<point name=") + p->name();
+            if((*p->x()) != 0){content += std::string(" x=") + p->x()->to_std_string(0);}
+            if((*p->y()) != 0){content += std::string(" y=") + p->y()->to_std_string(0);}
+            content += std::string(">");
+            point_names += p->name() + std::string(";");
+        }
+        if(point_names.at(point_names.size() - 1) == ';'){point_names = point_names.substr(0, point_names.size() - 1);}
+
+        // Add the form
+        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
+        return content;
+    }
+    std::string Form_2D::to_xml_text_object_name(){return std::string("form");}
 
     // Returns a list of the points triangulated
     std::vector<std::shared_ptr<Vector>> Form_2D::triangulated_points() {

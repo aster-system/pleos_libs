@@ -266,11 +266,13 @@ namespace pleos {
         virtual std::string to_xml_text(){return std::string();};
         std::string to_xml_text_color(std::string attribute_name, scls::Color color);
         std::string to_xml_text_height(std::string attribute_name);
+        std::string to_xml_text_height();
         std::string to_xml_text_name();
         std::string to_xml_text_object_name();
         std::string to_xml_text_x();
         std::string to_xml_text_y();
         std::string to_xml_text_width(std::string attribute_name);
+        std::string to_xml_text_width();
 
         // Returns a color adapted with the needed opacity
         scls::Color color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
@@ -386,6 +388,9 @@ namespace pleos {
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
 
+        // Returns this object to an XML text
+        virtual std::string to_xml_text();
+        virtual std::string to_xml_text_object_name();
     private:
         // Color of the border of the form
         scls::Color a_border_color = scls::Color(255, 0, 0);

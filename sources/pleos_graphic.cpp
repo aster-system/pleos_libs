@@ -1542,6 +1542,11 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {
             scroller->add_object("circle_" + std::to_string(i), std::string("Cercle \"") + a_circles.at(i).get()->name() + std::string("\""));
         }
+
+        // Add the forms
+        for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {
+            scroller->add_object("form_" + std::to_string(i), std::string("Forme \"") + a_forms_2d.at(i).get()->name() + std::string("\""));
+        }
     }
 
     // Loads the elements to handle a circle
@@ -1596,6 +1601,32 @@ namespace pleos {
         needed_circle->set_x(scls::Fraction::from_std_string(x->text()));
         needed_circle->set_y(scls::Fraction::from_std_string(y->text()));
     }
+    // Loads / saves the elements to handle a form
+    void Graphic::load_form_settings(scls::GUI_Object* object, pleos::Form_2D* needed_form){
+        object->delete_children();
+
+        // Name of the object
+        std::shared_ptr<scls::GUI_Text> name_title_shared_ptr = *object->new_object<scls::GUI_Text>(object->name() + std::string("-name_title"));
+        scls::GUI_Text* name_title = name_title_shared_ptr.get();
+        name_title->attach_left_in_parent(10);name_title->attach_top_in_parent(10);
+        name_title->set_height_in_pixel(40);name_title->set_width_in_scale(scls::Fraction(1, 10));
+        name_title->set_text(std::string("Nom :"));
+        std::shared_ptr<scls::GUI_Text_Input> name_shared_ptr = *object->new_object<scls::GUI_Text_Input>(object->name() + std::string("-name"));
+        scls::GUI_Text_Input* name = name_shared_ptr.get();
+        name->set_border_width_in_pixel(1);
+        name->attach_right_of_object_in_parent(name_title, 10);name->attach_top_in_parent(10);
+        name->set_height_in_pixel(40);name->set_width_in_scale(scls::Fraction(1, 4));
+        name->set_text(needed_form->name());
+    }
+    void Graphic::save_form_settings(scls::GUI_Object* object, pleos::Form_2D* needed_form){
+        // Get the needed datas
+        scls::GUI_Text_Input* name = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-name"));
+        //scls::GUI_Text_Input* x = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-x"));
+        //scls::GUI_Text_Input* y = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-y"));
+        needed_form->set_name(name->text());
+        //needed_form->set_x(scls::Fraction::from_std_string(x->text()));
+        //needed_form->set_y(scls::Fraction::from_std_string(y->text()));
+    }
 
     // Returns the needed XML text to generate this graphic
     std::string Graphic::to_xml_text() {
@@ -1614,6 +1645,10 @@ namespace pleos {
         // Add the circles
         if(to_return.size() > 0){to_return += std::string("\n");}
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {to_return += a_circles.at(i).get()->to_xml_text();to_return += std::string("\n");}
+
+        // Add the forms
+        if(to_return.size() > 0){to_return += std::string("\n");}
+        for(int i = 0;i<static_cast<int>(a_forms_2d.size());i++) {to_return += a_forms_2d.at(i).get()->to_xml_text();to_return += std::string("\n");}
 
         // Add the physic
         if(to_return.size() > 0){to_return += std::string("\n");}

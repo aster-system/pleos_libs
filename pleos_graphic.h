@@ -230,7 +230,7 @@ namespace pleos {
         // Adds a function to the graphic
         std::shared_ptr<Graphic_Function> add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
-        inline void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;set_draw_base(true);set_draw_sub_bases(true);};
+        virtual void reset(){a_circles.clear();a_forms_2d.clear();a_functions.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;set_draw_base(true);set_draw_sub_bases(true);};
         // Returns the image of the graphic
         virtual std::shared_ptr<scls::Image> to_image(int width_in_pixel, int height_in_pixel);
 
@@ -489,6 +489,9 @@ namespace pleos {
         // Loads / saves the elements to handle a circle
         void load_circle_settings(scls::GUI_Object* object, pleos::Circle* needed_circle);
         void save_circle_settings(scls::GUI_Object* object, pleos::Circle* needed_circle);
+        // Loads / saves the elements to handle a form
+        void load_form_settings(scls::GUI_Object* object, pleos::Form_2D* needed_form);
+        void save_form_settings(scls::GUI_Object* object, pleos::Form_2D* needed_form);
 
         // Returns the needed XML text to generate this graphic
         std::string to_xml_text();
