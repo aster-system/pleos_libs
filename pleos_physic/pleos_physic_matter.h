@@ -49,7 +49,7 @@ namespace pleos {
             // Attached circle of the electron
             std::shared_ptr<Circle> circle;
             // Returns the center of the electron
-            inline Vector center() const {return circle.get()->center();};
+            inline scls::Point_2D center() const {return circle.get()->center();};
             // Distance to the nucleus
             scls::Fraction distance = 0;
 
@@ -69,9 +69,9 @@ namespace pleos {
             // Attached electron
             std::shared_ptr<Electron> electron;
             // Position of the end
-            Vector end_position;
+            scls::Point_2D end_position;
             // Position of the start
-            Vector start_position;
+            scls::Point_2D start_position;
         };
 
         // Bohr_Model constructor

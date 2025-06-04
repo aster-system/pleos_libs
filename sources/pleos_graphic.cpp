@@ -135,8 +135,18 @@ namespace pleos {
     // Adds a function to the graphic
     std::shared_ptr<Graphic::Graphic_Function> Graphic::add_function(std::shared_ptr<Function_Studied> function_studied) {std::shared_ptr<Graphic_Function> new_function = std::make_shared<Graphic_Function>(function_studied);a_functions.push_back(new_function);a_graphic_base.get()->a_function_number++;return new_function;}
 
+    // Adds a circle to the graphic
+    void Graphic::add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);circle_to_add.get()->set_index(a_circles.size() - 1);};
+    std::shared_ptr<Circle>* Graphic::add_circle(std::string circle_name, scls::Point_2D center, scls::__Formula_Base radius){return add_circle(circle_name, center, radius, radius);};
+    std::shared_ptr<Circle>* Graphic::add_circle(std::string circle_name, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y){add_circle(std::make_shared<Circle>(circle_name, center, radius_x, radius_y));a_circles.at(a_circles.size()-1).get()->set_unknowns(a_unknowns);a_circles.at(a_circles.size()-1).get()->attached_transform()->set_unknowns(a_unknowns);return &a_circles[a_circles.size() - 1];};
+    // Returns a circle by its id / name
+    Circle* Graphic::circle_by_id(int circle_id){return circle_by_id_shared_ptr(circle_id).get();};
+    std::shared_ptr<Circle> Graphic::circle_by_id_shared_ptr(int circle_id){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles.at(i).get()->id() == circle_id){return a_circles.at(i);}}return std::shared_ptr<Circle>();};
+    Circle* Graphic::circle_by_name(std::string name){return circle_by_name_shared_ptr(name).get();};
+    std::shared_ptr<Circle> Graphic::circle_by_name_shared_ptr(std::string name){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles.at(i).get()->name() == name){return a_circles.at(i);}}return std::shared_ptr<Circle>();};
+
     // Creates the background texture
-    void Graphic::create_background_texture(int image_width, int image_height) {a_background_texture = std::make_shared<scls::Image>(image_width, image_height);}
+    void Graphic::create_background_texture(int image_width, int image_height) {a_background_texture = std::make_shared<scls::Image>(image_width, image_height, scls::Color(0, 0, 0, 0));}
 
     // Draws a datas set on the graphic
     void Graphic::draw_datas_set(Datas_Set* needed_datas_set, std::shared_ptr<scls::Image> to_return) {
@@ -153,36 +163,36 @@ namespace pleos {
         else if(needed_form->points().size() == 2) {draw_line(needed_form->points()[0].get(), needed_form->points()[1].get(), needed_form->color_with_opacity(needed_form->border_color()), needed_form->border_radius(), needed_form->link(0).drawing_proportion, to_return);return;}
 
         // Triangulate the form
-        std::vector<std::shared_ptr<Vector>> triangulated_points = needed_form->triangulated_points();
+        std::vector<std::shared_ptr<Point_2D>> triangulated_points = needed_form->triangulated_points();
 
         // Draw the inner form
         scls::Color inner_color = needed_form->color_with_opacity(needed_form->color());
         if(inner_color.alpha() > 0) {
             for(int i = 0;i<static_cast<int>(triangulated_points.size());i+=3) {
-                std::shared_ptr<Vector> current_point = triangulated_points[i];
-                double first_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-                double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                std::shared_ptr<Point_2D> current_point = triangulated_points[i];
+                double first_x = graphic_x_to_pixel_x(current_point.get()->x().to_double(), to_return);
+                double first_y = graphic_y_to_pixel_y_inversed(current_point.get()->y().to_double(), to_return);
                 current_point = triangulated_points[i + 1];
-                double second_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-                double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                double second_x = graphic_x_to_pixel_x(current_point.get()->x().to_double(), to_return);
+                double second_y = graphic_y_to_pixel_y_inversed(current_point.get()->y().to_double(), to_return);
                 current_point = triangulated_points[i + 2];
-                double third_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-                double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+                double third_x = graphic_x_to_pixel_x(current_point.get()->x().to_double(), to_return);
+                double third_y = graphic_y_to_pixel_y_inversed(current_point.get()->y().to_double(), to_return);
                 to_return.get()->fill_triangle(first_x, first_y, second_x, second_y, third_x, third_y, inner_color);
             } triangulated_points.clear();
         }
 
         // Draw the links
-        std::shared_ptr<Vector> last_point = needed_form->points()[needed_form->points().size() - 1];
-        double last_x = graphic_x_to_pixel_x(last_point.get()->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double last_y = graphic_y_to_pixel_y_inversed(last_point.get()->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        std::shared_ptr<Point_2D> last_point = needed_form->points()[needed_form->points().size() - 1];
+        double last_x = graphic_x_to_pixel_x(last_point.get()->absolute_x().to_double(), to_return);
+        double last_y = graphic_y_to_pixel_y_inversed(last_point.get()->absolute_y().to_double(), to_return);
 
         // Link each points
         scls::Color border_color = needed_form->color_with_opacity(needed_form->border_color());
         for(int j = 0;j<static_cast<int>(needed_form->points().size());j++) {
-            std::shared_ptr<Vector> current_point = needed_form->points()[j];
-            double needed_x = graphic_x_to_pixel_x(current_point.get()->x_to_double(), to_return);
-            double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->y_to_double(), to_return);
+            std::shared_ptr<Point_2D> current_point = needed_form->points()[j];
+            double needed_x = graphic_x_to_pixel_x(current_point.get()->absolute_x().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(current_point.get()->absolute_y().to_double(), to_return);
             Form_2D::Link current_link;
             if(j <= 0){current_link = needed_form->last_link();}
             else{current_link = needed_form->link(j - 1);}
@@ -206,12 +216,12 @@ namespace pleos {
     }
 
     // Draw a line between two points
-    void Graphic::draw_line(Vector* point_1, Vector* point_2, scls::Color color, double width, double proportion, std::shared_ptr<scls::Image> to_return) {
+    void Graphic::draw_line(Point_2D* point_1, Point_2D* point_2, scls::Color color, double width, double proportion, std::shared_ptr<scls::Image> to_return) {
         // Draw a line
-        double last_x = graphic_x_to_pixel_x(point_1->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double last_y = graphic_y_to_pixel_y_inversed(point_1->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double needed_x = graphic_x_to_pixel_x(point_2->x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-        double needed_y = graphic_y_to_pixel_y_inversed(point_2->y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+        double last_x = graphic_x_to_pixel_x(point_1->x().to_double(), to_return);
+        double last_y = graphic_y_to_pixel_y_inversed(point_1->y().to_double(), to_return);
+        double needed_x = graphic_x_to_pixel_x(point_2->x().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(point_2->y().to_double(), to_return);
         // Apply the proportion
         double needed_proportion = proportion;
         double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
@@ -230,14 +240,14 @@ namespace pleos {
     }
 
     // Draws a point on the graphic
-    void Graphic::draw_vector(Vector* needed_point, std::shared_ptr<scls::Image> to_return) {
+    void Graphic::draw_vector(Point_2D* needed_point, std::shared_ptr<scls::Image> to_return) {
         // Get the needed coordinates
-        scls::Fraction needed_x_end = 0;if(needed_point->x_end() != 0){needed_x_end = needed_point->x_end()->to_polymonial().known_monomonial().factor().real();}
+        scls::Fraction needed_x_end = 0;if(needed_point->x_end() != 0){needed_x_end = needed_point->x_end();}
         needed_x_end = graphic_x_to_pixel_x(needed_x_end, to_return);
-        scls::Fraction needed_y_end = 0;if(needed_point->y_end() != 0){needed_y_end = needed_point->y_end()->to_polymonial().known_monomonial().factor().real();}
+        scls::Fraction needed_y_end = 0;if(needed_point->y_end() != 0){needed_y_end = needed_point->y_end();}
         needed_y_end = graphic_y_to_pixel_y_inversed(needed_y_end, to_return);
-        scls::Fraction needed_x_start = graphic_x_to_pixel_x(needed_point->x()->to_polymonial().known_monomonial().factor().real(), to_return);
-        scls::Fraction needed_y_start = graphic_y_to_pixel_y_inversed(needed_point->y()->to_polymonial().known_monomonial().factor().real(), to_return);
+        scls::Fraction needed_x_start = graphic_x_to_pixel_x(needed_point->x(), to_return);
+        scls::Fraction needed_y_start = graphic_y_to_pixel_y_inversed(needed_point->y(), to_return);
         // Apply the drawing proportion
         double hat_position_in_purcentage = 1;double hat_size_in_purcentage = 0.2;
         if(needed_point->drawing_proportion() != 1) {
@@ -325,14 +335,14 @@ namespace pleos {
         // Add the points
         for(int i = 0;i<static_cast<int>(face->points().size());i++) {
             std::string current_name = name + std::string("-") + std::to_string(i);
-            std::shared_ptr<Vector> current_vector = add_point(current_name, face->points()[i].get());
+            std::shared_ptr<Point_2D> current_vector = add_point(current_name, face->points()[i].get());
             to_return.get()->add_point(current_vector);
         }
         // Add the exclusion points
         std::string final_points = std::string();
         for(int i = 0;i<static_cast<int>(face->exclusion_points().size());i++) {
             std::string current_name = name + std::string("-") + std::to_string(i);
-            std::shared_ptr<Vector> current_vector = add_point(current_name, face->exclusion_points()[i].get());
+            std::shared_ptr<Point_2D> current_vector = add_point(current_name, face->exclusion_points()[i].get());
             to_return.get()->add_exclusion_point(current_vector);
         }
 
@@ -496,13 +506,13 @@ namespace pleos {
         // Draw the circles
         for(int i = 0;i<static_cast<int>(a_circles.size());i++) {
             std::shared_ptr<Circle> current_circle = a_circles[i];
-            Vector center = current_circle.get()->center();
+            scls::Point_2D center = current_circle.get()->center();
             double radius_x = current_circle.get()->radius_x_formula_shared_ptr().get()->value_to_double(a_unknowns.get());
             radius_x = radius_x * pixel_by_case_x();
             double radius_y = current_circle.get()->radius_y_formula_shared_ptr().get()->value_to_double(a_unknowns.get());
             radius_y = radius_y * pixel_by_case_y();
-            double needed_x = graphic_x_to_pixel_x(center.x()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
-            double needed_y = graphic_y_to_pixel_y_inversed(center.y()->to_polymonial().known_monomonial().factor().real().to_double(), to_return);
+            double needed_x = graphic_x_to_pixel_x(center.x().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(center.y().to_double(), to_return);
             to_return.get()->fill_circle(needed_x, needed_y, radius_x, radius_y, current_circle.get()->angle_start().value_to_double(a_unknowns.get()) , current_circle.get()->angle_end().value_to_double(a_unknowns.get()), current_circle.get()->color(), current_circle.get()->border_radius(), current_circle.get()->border_color());
         }
         // Draw the forms
@@ -512,8 +522,8 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_texts.size());i++) {
             scls::Text_Style current_style = *a_texts.at(i).get()->style.get();current_style.set_color(a_texts.at(i).get()->color_with_opacity(current_style.color()));
             std::shared_ptr<scls::Image> needed_image = tig.image_shared_ptr(a_texts.at(i).get()->content, current_style);
-            double needed_x = graphic_x_to_pixel_x(a_texts.at(i).get()->x.to_double(), to_return);
-            double needed_y = graphic_y_to_pixel_y_inversed(a_texts.at(i).get()->y.to_double(), to_return);
+            double needed_x = graphic_x_to_pixel_x(a_texts.at(i).get()->x().to_double(), to_return);
+            double needed_y = graphic_y_to_pixel_y_inversed(a_texts.at(i).get()->y().to_double(), to_return);
             to_return.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
         }
         // Draw the vectors
@@ -565,6 +575,7 @@ namespace pleos {
         if(graphic_from_xml_balise_attribute_object(attribute, circle, environment, text_style)){return true;}
         else if(attribute.name == "angle_end") {circle.get()->set_angle_end(*environment.value_formula(attribute.value).formula_base());}
         else if(attribute.name == "angle_start") {circle.get()->set_angle_start(*environment.value_formula(attribute.value).formula_base());}
+        else if(attribute.name == "border_color") {circle.get()->set_border_color(scls::Color::from_std_string(attribute.value));}
         else if(attribute.name == "border_radius" || attribute.name == "width") {circle.get()->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
         else if(attribute.name == "color" || attribute.name == "background_color") {circle.get()->set_color(scls::Color::from_std_string(attribute.value));}
         else if(attribute.name == "radius") {circle.get()->set_radius_x((*environment.value_formula(attribute.value).formula_base()));circle.get()->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
@@ -622,7 +633,7 @@ namespace pleos {
                 scls::Vector_3D base_vector = scls::Vector_3D(1, 0, 0);base_vector.rotate(scls::Vector_3D(0, needed_angle, 0));
                 needed_x_end = needed_x_start + scls::Fraction::from_double(base_vector.x());needed_y_end = needed_y_start + scls::Fraction::from_double(base_vector.z());
             }
-            Vector needed_vector = Vector(needed_name, needed_x_start, needed_y_start);
+            Point_2D needed_vector = Point_2D(needed_name, needed_x_start, needed_y_start);
             needed_vector.set_x_end(needed_x_end);needed_vector.set_y_end(needed_y_end);
             needed_vector.set_type(Vector_Type::VT_Arrow);
             if(current_balise_name == "arrow_hat"){needed_vector.set_drawing_proportion(0);}
@@ -646,7 +657,7 @@ namespace pleos {
         else if(current_balise_name == "border") {scls::border_from_xml(xml, style());}
         else if(current_balise_name == "circle") {
             // Add the circle
-            std::shared_ptr<Circle> circle = *add_circle(std::string(""), Vector(std::string("circle_center"), 0, 0), 1, 1);
+            std::shared_ptr<Circle> circle = *add_circle(std::string(""), scls::Point_2D(0, 0), 1, 1);
             std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(graphic_from_xml_balise_attribute_circle(attributes[j], circle, environment, text_style)) {}
@@ -833,8 +844,8 @@ namespace pleos {
                 }
             }
             // Add the vector
-            if(current_balise_name == "point"){add_point(Vector(needed_name, needed_x, needed_y));}
-            else if(current_balise_name == "vec" || current_balise_name == "vector"){add_vector(Vector(needed_name, needed_x, needed_y));}
+            if(current_balise_name == "point"){add_point(Point_2D(needed_name, needed_x, needed_y));}
+            else if(current_balise_name == "vec" || current_balise_name == "vector"){add_vector(Point_2D(needed_name, needed_x, needed_y));}
         }
         else if(current_balise_name == "rect") {
             // Get the datas about a rectangle in the graphic
@@ -898,7 +909,7 @@ namespace pleos {
                 else if(attributes[j].name == "y") {needed_y = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
             // Add the text
-            new_text(needed_content, Vector(std::string("text-center") , needed_x, needed_y), text_style);
+            new_text(needed_content, scls::Point_2D(needed_x, needed_y), text_style);
         }
         else if(current_balise_name == "text_style") {
             // Get the datas about the style text of the graphic
@@ -1326,7 +1337,7 @@ namespace pleos {
 
     // Updates the object
     int __graphic_object_render_number = 0;
-    std::vector<std::shared_ptr<Vector>> __temp_vectors;
+    std::vector<std::shared_ptr<Point_2D>> __temp_vectors;
     void Graphic_Object::update(){for(int i = 0;i<static_cast<int>(a_gui_objects.size());i++) {if(a_gui_objects[i].get() != 0) {a_gui_objects[i].get()->update();}}};
     void Graphic_Object::update_event() {
         // Update the object
@@ -1371,7 +1382,7 @@ namespace pleos {
                 double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
                 scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
                 scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
-                add_vector(Vector("a", movement_x, movement_y));
+                add_vector(Point_2D("a", movement_x, movement_y));
                 a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
                 modified = true;
             }
@@ -1381,7 +1392,7 @@ namespace pleos {
                 double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
                 scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
                 scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
-                Vector needed_vector = Vector("a", movement_x, movement_y);
+                Point_2D needed_vector = Point_2D("a", movement_x, movement_y);
                 needed_vector.set_type(Vector_Type::VT_Point);
                 add_vector(needed_vector);
                 a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
@@ -1396,7 +1407,7 @@ namespace pleos {
                 double needed_y = window_struct().mouse_y() - (window_struct().window_height() - (y_in_absolute_pixel() + height_in_pixel()));
                 scls::Fraction movement_x = pixel_x_to_graphic_x(needed_x, texture()->image_shared_ptr());
                 scls::Fraction movement_y = pixel_y_to_graphic_y(needed_y, texture()->image_shared_ptr());
-                std::shared_ptr<Vector> needed_vector = std::make_shared<Vector>(std::string("Forme_") + std::to_string(current_form_2d()->points().size()), movement_x, movement_y);
+                std::shared_ptr<Point_2D> needed_vector = std::make_shared<Point_2D>(std::string("Forme_") + std::to_string(current_form_2d()->points().size()), movement_x, movement_y);
                 needed_vector.get()->set_type(Vector_Type::VT_Point);
                 add_point(needed_vector);
                 a_created_vectors_at_click.push_back(vectors().at(vectors().size() - 1));
@@ -1617,15 +1628,41 @@ namespace pleos {
         name->attach_right_of_object_in_parent(name_title, 10);name->attach_top_in_parent(10);
         name->set_height_in_pixel(40);name->set_width_in_scale(scls::Fraction(1, 4));
         name->set_text(needed_form->name());
+
+        // X of the object
+        std::shared_ptr<scls::GUI_Text> x_title_shared_ptr = *object->new_object<scls::GUI_Text>(object->name() + std::string("-x_title"));
+        scls::GUI_Text* x_title = x_title_shared_ptr.get();
+        x_title->attach_left_in_parent(10);x_title->attach_bottom_of_object_in_parent(name_title_shared_ptr, 10);
+        x_title->set_height_in_pixel(40);x_title->set_width_in_scale(scls::Fraction(1, 10));
+        x_title->set_text(std::string("X :"));
+        std::shared_ptr<scls::GUI_Text_Input> x_shared_ptr = *object->new_object<scls::GUI_Text_Input>(object->name() + std::string("-x"));
+        scls::GUI_Text_Input* x = x_shared_ptr.get();
+        x->set_border_width_in_pixel(1);
+        x->attach_right_of_object_in_parent(x_title, 10);x->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
+        x->set_height_in_pixel(40);x->set_width_in_scale(scls::Fraction(1, 4));
+        x->set_text(needed_form->x().to_std_string(0));
+
+        // Y of the object
+        std::shared_ptr<scls::GUI_Text> y_title_shared_ptr = *object->new_object<scls::GUI_Text>(object->name() + std::string("-y_title"));
+        scls::GUI_Text* y_title = y_title_shared_ptr.get();
+        y_title->attach_right_of_object_in_parent(x_shared_ptr, 10);y_title->attach_bottom_of_object_in_parent(name_title_shared_ptr, 10);
+        y_title->set_height_in_pixel(40);y_title->set_width_in_scale(scls::Fraction(1, 10));
+        y_title->set_text(std::string("Y :"));
+        std::shared_ptr<scls::GUI_Text_Input> y_shared_ptr = *object->new_object<scls::GUI_Text_Input>(object->name() + std::string("-y"));
+        scls::GUI_Text_Input* y = y_shared_ptr.get();
+        y->set_border_width_in_pixel(1);
+        y->attach_right_of_object_in_parent(y_title, 10);y->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
+        y->set_height_in_pixel(40);y->set_width_in_scale(scls::Fraction(1, 4));
+        y->set_text(needed_form->y().to_std_string(0));
     }
     void Graphic::save_form_settings(scls::GUI_Object* object, pleos::Form_2D* needed_form){
         // Get the needed datas
         scls::GUI_Text_Input* name = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-name"));
-        //scls::GUI_Text_Input* x = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-x"));
-        //scls::GUI_Text_Input* y = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-y"));
+        scls::GUI_Text_Input* x = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-x"));
+        scls::GUI_Text_Input* y = object->child_by_name<scls::GUI_Text_Input>(object->name() + std::string("-y"));
         needed_form->set_name(name->text());
-        //needed_form->set_x(scls::Fraction::from_std_string(x->text()));
-        //needed_form->set_y(scls::Fraction::from_std_string(y->text()));
+        needed_form->set_x(scls::Fraction::from_std_string(x->text()));
+        needed_form->set_y(scls::Fraction::from_std_string(y->text()));
     }
 
     // Returns the needed XML text to generate this graphic

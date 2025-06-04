@@ -29,71 +29,17 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
-    //******************
-    //
-    // The "Vector" class
-    //
-    //******************
-
-    // Returns the mesured angle between to vector
-    scls::Formula Vector::angle(Vector* needed_vector, std::string* redaction, scls::Textual_Math_Settings* settings) {
-        // Start the redaction
-        if(redaction != 0) {
-            (*redaction) += std::string("Nous cherchons l'angle entre le vecteur ") + name() + std::string(" et le vecteur ") + needed_vector->name() + std::string(". ");
-        }
-
-        // Get the needed norm
-        if(!a_last_norm_calculated){norm(redaction, settings);}
-        scls::Formula needed_norm = a_last_norm;
-
-        // Start the redaction
-        if(redaction != 0) {
-            (*redaction) += std::string("Nous savons que la norme de ") + name() + std::string(" est ") + needed_norm.to_std_string(settings) + std::string(". ");
-        }
-
-        return 0;
-    }
-
-    // Returns the complex number form of the vector (and the redaction if needed)
-    scls::Formula Vector::complex_number(std::string* redaction, scls::Textual_Math_Settings* settings) {
-        // Start the redaction
-        if(redaction != 0 && x() != 0 && y() != 0) {
-            (*redaction) += std::string("Nous cherchons le nombre complexe affixe du vecteur ") + name() + std::string(". ");
-            (*redaction) += std::string("Pour cela, nous avons besoin des coordonnées du vecteur. ");
-            (*redaction) += std::string("</br>");
-            (*redaction) += std::string("<math><mi>Z</mi><mo>=</mo>") + x()->to_mathml(settings) + std::string("<mo>+</mo>") + (*y() * scls::Complex(0, 1)).to_mathml(settings) + std::string("</math>");
-        }
-
-        return (*x()) + (*y() * scls::Complex(0, 1));
-    }
-
-    // Returns the norm of the vector (and the redaction if needed)
-    scls::Formula Vector::norm(std::string* redaction, scls::Textual_Math_Settings* settings) {
-        // Start the redaction
-        if(redaction != 0) {
-            (*redaction) += std::string("Nous cherchons la norme du vecteur ") + name() + std::string(". ");
-        }
-
-        // Do the calculation
-        scls::Formula to_return;
-        for(int i = 0;i<static_cast<int>(a_coordinates.size());i++) {to_return += (*a_coordinates[i].get()) * (*a_coordinates[i].get());}
-        to_return.set_applied_function<scls::__Sqrt_Function>();
-
-        // Returns the needed result
-        if(redaction != 0) {
-            double value = to_return.applied_function()->real_value(&to_return);
-            (*redaction) += std::string("La norme du vecteur ") + name() + std::string(" est donc ") + scls::format_number_to_text(value) + std::string(".");
-        }
-        a_last_norm = to_return;
-        a_last_norm_calculated = true;
-        return to_return;
-    }
 
     //******************
     //
     // The base of all the next class
     //
     //******************
+
+    // __Graphic_Object_Base constructor
+    int __current_id = 0;
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::Point_2D position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
 
     // Returns the needed XML text to generate this object
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
@@ -112,16 +58,19 @@ namespace pleos {
     //
     //******************
 
+    // Returns the introduction of the form 2D
+    std::string Form_2D::introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(".");};
+
     // Returns this object to an XML text
     std::string Form_2D::to_xml_text() {
         // Add the points
         std::string content = std::string();
         std::string point_names = std::string();
         for(int i = 0;i<static_cast<int>(a_points.size());i++){
-            Vector* p = a_points.at(i).get();
+            Point_2D* p = a_points.at(i).get();
             content += std::string("<point name=") + p->name();
-            if((*p->x()) != 0){content += std::string(" x=") + p->x()->to_std_string(0);}
-            if((*p->y()) != 0){content += std::string(" y=") + p->y()->to_std_string(0);}
+            if(p->x() != 0){content += std::string(" x=") + p->x().to_std_string(0);}
+            if(p->y() != 0){content += std::string(" y=") + p->y().to_std_string(0);}
             content += std::string(">");
             point_names += p->name() + std::string(";");
         }
@@ -134,7 +83,7 @@ namespace pleos {
     std::string Form_2D::to_xml_text_object_name(){return std::string("form");}
 
     // Returns a list of the points triangulated
-    std::vector<std::shared_ptr<Vector>> Form_2D::triangulated_points() {
+    std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points() {
         // Triangulate the face with the model maker part of SCLS
         scls::model_maker::Face form_to_face;
         for(int i = 0;i<static_cast<int>(points().size());i++) {
@@ -148,13 +97,17 @@ namespace pleos {
         form_to_face.triangulate();
 
         // Get the needed result
-        std::vector<std::shared_ptr<Vector>> to_return = std::vector<std::shared_ptr<Vector>>(form_to_face.points_for_rendering().size());
+        std::vector<std::shared_ptr<Point_2D>> to_return = std::vector<std::shared_ptr<Point_2D>>(form_to_face.points_for_rendering().size());
         for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {
             scls::model_maker::Point* current_point = form_to_face.points_for_rendering()[i].get();
-            to_return[i]=Vector::from_point(current_point);
+            to_return[i]=Point_2D::from_point(current_point);
         }
         return to_return;
     }
+
+    // Returns the name of the type of the form
+    std::string Form_2D::type_name(bool capitalise_first_letter) const {std::string to_return=std::string();if(a_points.size()==3){if(capitalise_first_letter){return std::string("Triangle");}return std::string("triangle");}if(capitalise_first_letter){to_return+=std::string("Forme");}else{to_return+=std::string("forme");}to_return+=std::string(" à ")+std::to_string(a_points.size())+std::string(" points");return to_return;};
+    std::string Form_2D::type_name() const {return type_name(true);};
 
     //******************
     //
@@ -168,5 +121,5 @@ namespace pleos {
     std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
     std::string Circle::to_xml_text_object_name(){return std::string("circle");}
-    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
+    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
 }
