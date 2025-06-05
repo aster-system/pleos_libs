@@ -61,6 +61,13 @@ namespace pleos {
     // Returns the introduction of the form 2D
     std::string Form_2D::introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(".");};
 
+    // Creates a new point to the form
+    std::shared_ptr<Point_2D> Form_2D::new_point(scls::Fraction x, scls::Fraction y){
+        std::shared_ptr<Point_2D> point = std::make_shared<Point_2D>(name() + std::string("_") + std::to_string(a_points.size()), x, y);
+        add_point(point);
+        return point;
+    };
+
     // Returns this object to an XML text
     std::string Form_2D::to_xml_text() {
         // Add the points
@@ -77,8 +84,9 @@ namespace pleos {
         if(point_names.at(point_names.size() - 1) == ';'){point_names = point_names.substr(0, point_names.size() - 1);}
 
         // Add the form
-        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
+        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
         return content;
+
     }
     std::string Form_2D::to_xml_text_object_name(){return std::string("form");}
 

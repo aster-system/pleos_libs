@@ -414,7 +414,7 @@ namespace pleos {
         inline void add_point_external(std::shared_ptr<Point_2D> point){a_points.push_back(point);a_points_link.push_back(Link());};
         inline void add_point(std::shared_ptr<Point_2D> point){point.get()->attached_transform()->set_parent(attached_transform());add_point_external(point);};
         // Creates a new point to the form
-        inline std::shared_ptr<Point_2D> new_point(scls::Fraction x, scls::Fraction y){std::shared_ptr<Point_2D>point=std::make_shared<Point_2D>(x, y);add_point(point);return point;};
+        std::shared_ptr<Point_2D> new_point(scls::Fraction x, scls::Fraction y);
 
         // Returns a list of the points triangulated
         std::vector<std::shared_ptr<Point_2D>> triangulated_points();

@@ -44,6 +44,7 @@ namespace pleos {
 
         double a_height = -1;double a_width = -1;
         int a_height_in_pixel = -1;int a_width_in_pixel = -1;
+        bool a_height_used = false;bool a_width_used = false;
 
         scls::Fraction a_middle_x =  0;
         scls::Fraction a_middle_y = 0;
@@ -201,7 +202,8 @@ namespace pleos {
         // Sets the middle of the base
         inline void set_middle(scls::Fraction middle_x, scls::Fraction middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
         // Sets the scale of the base
-        inline void set_scale(double width, double height){a_graphic_base.get()->a_height = height;a_graphic_base.get()->a_width = width;};
+        void set_scale(double width, double height, bool width_used, bool height_used);
+        void set_scale(double width, double height);
 
         // Annoying functions to draw the image
         int graphic_x_to_pixel_x(double x, int needed_width);
@@ -329,6 +331,7 @@ namespace pleos {
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
         inline scls::Fraction height() const {return a_graphic_base.get()->a_height;};
+        inline bool height_used() const {return a_graphic_base.get()->a_height_used;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline void middle_x_add(scls::Fraction value) {a_graphic_base.get()->a_middle_x += value;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
@@ -347,6 +350,7 @@ namespace pleos {
         inline std::vector<std::shared_ptr<Graphic_Text>>& texts(){return a_texts;};
         inline std::vector<std::shared_ptr<Point_2D>>& vectors(){return a_vectors;};
         inline scls::Fraction width() const {return a_graphic_base.get()->a_width;};
+        inline bool width_used() const {return a_graphic_base.get()->a_width_used;};
 
         //******************
         //
