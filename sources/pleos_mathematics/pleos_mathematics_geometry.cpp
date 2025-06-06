@@ -41,6 +41,9 @@ namespace pleos {
     __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
     __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::Point_2D position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
 
+    // Returns an introduction of the object
+    std::string __Graphic_Object_Base::introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons l'object \"") + name() + std::string("\".");};
+
     // Returns the needed XML text to generate this object
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
     std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height().to_std_string(0);}
@@ -70,8 +73,24 @@ namespace pleos {
 
     // Returns this object to an XML text
     std::string Form_2D::to_xml_text() {
-        // Add the points
+        // Basic datas
         std::string content = std::string();
+
+        // The form is a line
+        if(a_points.size() == 2) {
+            // Needed coordinates
+            scls::Fraction x_1 = a_points.at(0).get()->absolute_x();
+            scls::Fraction x_2 = a_points.at(1).get()->absolute_x();
+            scls::Fraction y_1 = a_points.at(0).get()->absolute_y();
+            scls::Fraction y_2 = a_points.at(1).get()->absolute_y();
+            std::cout << "A " << x_1.to_double() << " " << y_1.to_double() << std::endl;
+
+            // Add the form
+            content += std::string("<line") + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x_1=") + x_1.to_std_string(0) + std::string(" y_1=") + y_1.to_std_string(0) + std::string(" x_2=") + x_2.to_std_string(0) + std::string(" y_2=") + y_2.to_std_string(0) + std::string(">");
+            return content;
+        }
+
+        // Add the points
         std::string point_names = std::string();
         for(int i = 0;i<static_cast<int>(a_points.size());i++){
             Point_2D* p = a_points.at(i).get();

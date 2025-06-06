@@ -160,7 +160,7 @@ namespace pleos {
     void Graphic::draw_form(Form_2D* needed_form, std::shared_ptr<scls::Image> to_return) {
         // Asserts
         if(needed_form->points().size() < 2){return;}
-        else if(needed_form->points().size() == 2) {draw_line(needed_form->points()[0].get(), needed_form->points()[1].get(), needed_form->color_with_opacity(needed_form->border_color()), needed_form->border_radius(), needed_form->link(0).drawing_proportion, to_return);return;}
+        else if(needed_form->points().size() == 2) {draw_line(needed_form->points().at(0).get(), needed_form->points().at(1).get(), needed_form->color_with_opacity(needed_form->border_color()), needed_form->border_radius(), needed_form->link(0).drawing_proportion, to_return);return;}
 
         // Triangulate the form
         std::vector<std::shared_ptr<Point_2D>> triangulated_points = needed_form->triangulated_points();
@@ -218,10 +218,11 @@ namespace pleos {
     // Draw a line between two points
     void Graphic::draw_line(Point_2D* point_1, Point_2D* point_2, scls::Color color, double width, double proportion, std::shared_ptr<scls::Image> to_return) {
         // Draw a line
-        double last_x = graphic_x_to_pixel_x(point_1->x().to_double(), to_return);
-        double last_y = graphic_y_to_pixel_y_inversed(point_1->y().to_double(), to_return);
-        double needed_x = graphic_x_to_pixel_x(point_2->x().to_double(), to_return);
-        double needed_y = graphic_y_to_pixel_y_inversed(point_2->y().to_double(), to_return);
+        std::cout << "E " << point_1 << " " << point_2 << " " << point_1->absolute_x().to_double() << " " << point_1->absolute_y().to_double() << " " << point_1->x().to_double() << " " << point_1->y().to_double() << " " << point_2->absolute_x().to_double() << " " << point_2->absolute_y().to_double() << std::endl;
+        double last_x = graphic_x_to_pixel_x(point_1->absolute_x().to_double(), to_return);
+        double last_y = graphic_y_to_pixel_y_inversed(point_1->absolute_y().to_double(), to_return);
+        double needed_x = graphic_x_to_pixel_x(point_2->absolute_x().to_double(), to_return);
+        double needed_y = graphic_y_to_pixel_y_inversed(point_2->absolute_y().to_double(), to_return);
         // Apply the proportion
         double needed_proportion = proportion;
         double needed_move_x = needed_x - last_x;double needed_move_x_minus = 0;
@@ -313,13 +314,18 @@ namespace pleos {
     std::shared_ptr<Form_2D> Graphic::new_line(std::string name, scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2){
         if(name == std::string()){name = std::string("line_") + std::to_string(__line_number);}
         std::shared_ptr<Form_2D>to_return=std::make_shared<Form_2D>(name);
-        //scls::Fraction needed_x = (x_2 + x_1) / 2;scls::Fraction needed_y = (y_2 + y_1) / 2;
-        //to_return.get()->set_x(needed_x);to_return.get()->set_y(needed_y);
-        //to_return.get()->new_point(x_1 - needed_x, y_1 - needed_y);
-        //to_return.get()->new_point(x_2 - needed_x, y_2 - needed_y);
-        to_return.get()->new_point(x_1, y_1);
-        to_return.get()->new_point(x_2, y_2);
+        scls::Fraction needed_height = (y_2 - y_1).abs();scls::Fraction needed_width = (x_2 - x_1).abs();
+        scls::Fraction needed_x = (x_2 + x_1) / 2;scls::Fraction needed_y = (y_2 + y_1) / 2;
+        to_return.get()->set_height(needed_height);to_return.get()->set_width(needed_width);
+        to_return.get()->set_x(needed_x);to_return.get()->set_y(needed_y);
+
+        // Add the points
+        x_1 -= needed_x;x_2 -= needed_x;
+        y_1 -= needed_y;y_2 -= needed_y;
+        to_return.get()->new_point(x_1 / needed_width, y_1 / needed_height);
+        to_return.get()->new_point(x_2 / needed_width, y_2 / needed_height);
         add_form(to_return);__line_number++;
+        std::cout << "U " << x_1.to_double() << " " << y_1.to_double() << " " << to_return.get()->points().at(0).get()->absolute_x().to_double() << " " << to_return.get()->points().at(0).get()->absolute_y().to_double() << std::endl;
         return to_return;
     }
 
@@ -816,7 +822,10 @@ namespace pleos {
                 if(physic_map().size() <= 0){load_physic_map(0, 0);}
                 std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = std::make_shared<pleos::Graphic::Graphic_Physic>(created_form, created_form.get()->attached_transform_shared_ptr());
                 physic.get()->set_use_gravity(use_gravity);physic.get()->set_static(use_physic == 1);add_physic_object(physic);
-                if(use_collision){physic.get()->add_collision(x_1, y_1, x_2, y_2);scls::Fraction current_width=(x_2-x_1).abs();if(current_width<=0){current_width=scls::Fraction(1, 100);} physic.get()->attached_transform()->set_position((x_2 - x_1) / 2, (y_2 - y_1) / 2);physic.get()->attached_transform()->set_scale(current_width, (y_2 - y_1).abs());}
+                if(use_collision){
+                    physic.get()->add_collision(x_1, y_1, x_2, y_2);
+                    //scls::Fraction current_width=(x_2-x_1).abs();if(current_width<=0){current_width=scls::Fraction(1, 100);} physic.get()->attached_transform()->set_position((x_2 - x_1) / 2, (y_2 - y_1) / 2);physic.get()->attached_transform()->set_scale(current_width, (y_2 - y_1).abs());
+                }
             }
         }
         else if(current_balise_name == "physic") {
@@ -978,6 +987,7 @@ namespace pleos {
         // Handle a lot of balises
         if(environment == 0){Text_Environment temp;__graphic_from_xml_balises(xml, temp, text_style, graphic_width_in_pixel, graphic_height_in_pixel);}
         else{__graphic_from_xml_balises(xml, *environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);}
+        std::cout << "Q " << form("line_1")->points().at(0).get()->absolute_x().to_double() << " " << form("line_1")->points().at(0).get()->absolute_y().to_double() << std::endl;
 
         // Set the datas
         graphic_width = width();
@@ -993,6 +1003,8 @@ namespace pleos {
             if(graphic_height_in_pixel_used&&!graphic_width_in_pixel_used){graphic_width_in_pixel = static_cast<double>(graphic_height_in_pixel) * (graphic_width.to_double() / graphic_height.to_double());}
             else if(!graphic_height_in_pixel_used&&graphic_width_in_pixel_used){graphic_height_in_pixel = static_cast<double>(graphic_width_in_pixel) * (graphic_height.to_double() / graphic_width.to_double());}
         }
+
+        std::cout << "R " << form("line_1")->points().at(0).get()->absolute_x().to_double() << " " << form("line_1")->points().at(0).get()->absolute_y().to_double() << std::endl;
     }
 
     //******************

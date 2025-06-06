@@ -153,6 +153,9 @@ namespace pleos {
         __Graphic_Object_Base(scls::Point_2D position):__Graphic_Object_Base(std::string(), position){};
         __Graphic_Object_Base():__Graphic_Object_Base(std::string(), scls::Point_2D(0, 0)){};
 
+        // Returns an introduction of the object
+        std::string introduction(scls::Textual_Math_Settings* settings) const;
+
         // Soft reset the object
         virtual void soft_reset(){a_transform.get()->soft_reset();};
         // Returns the needed XML text to generate this object
@@ -179,6 +182,8 @@ namespace pleos {
         inline scls::Fraction absolute_y() const {return a_transform.get()->absolute_y();};
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
+        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
+        inline std::shared_ptr<scls::GUI_Text> connected_object_shared_ptr()const{return a_connected_object.lock();};
         inline double drawing_proportion() const {return a_drawing_proportion;};
         inline scls::Fraction height() const {return a_transform.get()->scale_y();};
         inline int id() const {return a_id;};
@@ -190,6 +195,7 @@ namespace pleos {
         inline std::string name() const {return a_name;};
         inline double opacity() const {return a_opacity;};
         inline scls::Point_2D position() const {return a_transform.get()->position();};
+        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_drawing_proportion(double new_drawing_proportion) {a_drawing_proportion = new_drawing_proportion;};
         inline void set_height(scls::Fraction new_height){a_transform.get()->set_scale_y(new_height);};
         inline void set_index(int new_index){a_index=new_index;};
@@ -222,7 +228,9 @@ namespace pleos {
         inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
-        // Transformation in the circle
+        // Connected object to this object
+        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+        // Transformation in the object
         std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
 
         // Drawing proportion of the object
@@ -429,7 +437,6 @@ namespace pleos {
         inline scls::Color border_color()const{return a_border_color;};
         inline int border_radius()const{return a_border_radius;};
         inline scls::Color color()const{return a_color;};
-        inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::vector<std::shared_ptr<Point_2D>>& exclusion_points(){return a_exclusion_points;};
         inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
         inline Link& link(int position){return a_points_link[position];};
@@ -437,7 +444,6 @@ namespace pleos {
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
         inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
         inline void set_color(scls::Color new_color){a_color=new_color;};
-        inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
 
@@ -451,8 +457,6 @@ namespace pleos {
         int a_border_radius = 6;
         // Color of the inner form
         scls::Color a_color = scls::Color(0, 255, 0);
-        // Connected object to this vector
-        std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
 
         // Exclusions points in the circle
         std::vector<std::shared_ptr<Point_2D>> a_exclusion_points;
