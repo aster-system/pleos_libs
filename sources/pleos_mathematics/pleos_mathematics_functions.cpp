@@ -239,17 +239,17 @@ namespace pleos {
     // Returns the derivation of a function
     scls::Formula function_derivation_monomonial(scls::__Monomonial current_monomonial, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Do the calculation
-        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown("x");
+        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown(std::string("x"));
         scls::Formula result;
         if(needed_unknown != 0) {
             // Basic exponential form
             scls::Fraction new_exponent = needed_unknown->exponent().real() - 1;
-            if(new_exponent != 0) {result = scls::__Monomonial(needed_unknown->exponent() * current_monomonial.factor(), "x", new_exponent);} else {result = current_monomonial.factor().real();}
+            if(new_exponent != 0) {result = scls::__Monomonial(needed_unknown->exponent() * current_monomonial.factor(), std::string("x"), new_exponent);} else {result = current_monomonial.factor().real();}
         }
 
-        if(redaction == 0) {
+        if(redaction != 0) {
             // Write the redaction
-            (*redaction) += "La forme dérivée de la forme " + current_monomonial.to_std_string(settings) + " est " + result.to_std_string(settings) + ". ";
+            (*redaction) += std::string("La forme dérivée de la forme ") + current_monomonial.to_std_string(settings) + std::string(" est ") + result.to_std_string(settings) + std::string(". ");
         }
 
         return result;
@@ -304,7 +304,7 @@ namespace pleos {
         scls::Formula result;
         if(current_fraction->denominator() != 0) {
             // Calculate the denominator
-            if(redaction == 0) {
+            if(redaction != 0) {
                 (*redaction) += "En suite, étudions " + function_name + " tel que " + function_name + "(" + current_function->unknown() + ") = " + current_fraction->denominator()->to_std_string(settings) + ". ";
             }
             scls::Formula denominator_derivate = function_derivation_sum(current_fraction->denominator(), current_function, redaction, settings);
@@ -439,17 +439,17 @@ namespace pleos {
     // Returns the primitive of a function
     scls::Formula function_primitive_monomonial(scls::__Monomonial current_monomonial, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Do the calculation
-        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown("x");
+        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown(std::string("x"));
         scls::Formula result;
         if(needed_unknown != 0) {
             // Basic exponential form
             scls::Fraction new_exponent = needed_unknown->exponent().real() + 1;
-            if(new_exponent != 0) {result = scls::__Monomonial(current_monomonial.factor() / new_exponent, "x", new_exponent);}
-            else {result = scls::__Monomonial(current_monomonial.factor().real(), "x", 1);}
+            if(new_exponent != 0) {result = scls::__Monomonial(current_monomonial.factor() / new_exponent, std::string("x"), new_exponent);}
+            else {result = scls::__Monomonial(current_monomonial.factor().real(), std::string("x"), 1);}
         }
-        else {result = scls::__Monomonial(current_monomonial.factor().real(), "x", 1);}
+        else {result = scls::__Monomonial(current_monomonial.factor().real(), std::string("x"), 1);}
 
-        if(redaction == 0) {(*redaction) += "La forme primitive de la forme " + current_monomonial.to_std_string(settings) + " est " + result.to_std_string(settings) + ". ";}
+        if(redaction != 0) {(*redaction) += std::string("La forme primitive de la forme ") + current_monomonial.to_std_string(settings) + std::string(" est ") + result.to_std_string(settings) + std::string(". ");}
 
         return result;
     }

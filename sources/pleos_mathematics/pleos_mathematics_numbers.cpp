@@ -51,7 +51,7 @@ namespace pleos {
     // Update the list to a precise position
     void __update_numbers(long long position) {
         if(numbers.get() == 0){__first_numbers();}
-        if(numbers.get()->size() > position){return;}
+        if(static_cast<long long>(numbers.get()->size()) > position){return;}
         std::shared_ptr<std::vector<std::shared_ptr<Number>>>temp=numbers;
         numbers = std::make_shared<std::vector<std::shared_ptr<Number>>>(position + 1);
         if(temp.get() != 0) {for(int i = 0;i<static_cast<int>(temp.get()->size());i++){(*numbers.get())[i] = (*temp.get())[i];}}
@@ -62,7 +62,7 @@ namespace pleos {
         // Check
         if(prime_numbers.get() == 0){__first_numbers();}
         long long limit = tested_number / 2;long long i = 0;
-        while(i < prime_numbers.get()->size() && (*prime_numbers.get())[i].get()->number < limit) {
+        while(i < static_cast<long long>(prime_numbers.get()->size()) && (*prime_numbers.get())[i].get()->number < limit) {
             if(tested_number % (*prime_numbers.get())[i].get()->number == 0){return false;}
             i++;
         }
@@ -92,12 +92,12 @@ namespace pleos {
             i++;
 
             // Get the next prime number
-            if(prime_numbers.get()->size() <= i){__next_prime();}
+            if(static_cast<long long>(prime_numbers.get()->size()) <= i){__next_prime();}
         }
     }
 
     // Generates prime number until a certain number
-    void generate_prime_number(long long limit) {while(prime_numbers.get()->size() <= limit){__next_prime();}}
+    void generate_prime_number(long long limit) {while(static_cast<long long>(prime_numbers.get()->size()) <= limit){__next_prime();}}
     void generate_prime_number_until(long long limit) {while((*prime_numbers.get())[prime_numbers.get()->size() - 1].get()->number <= limit){__next_prime();}}
     // Returns an analysed number
     std::shared_ptr<Number> number_shared_ptr(long long position){
@@ -121,14 +121,14 @@ namespace pleos {
 
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
-    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number) {
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(image_width, image_width, scls::Color(255, 255, 255));
+    std::shared_ptr<scls::__Image_Base> division_circle(int image_width, int circle_radius, double modulo, int point_number) {
+        std::shared_ptr<scls::__Image_Base> to_return = std::make_shared<scls::__Image_Base>(image_width, image_width, scls::Color(255, 255, 255));
         to_return.get()->draw_circle(image_width / 2, image_width / 2, circle_radius, 0, 0, 0, 255, 10);
 
         // Draw the text
         scls::Text_Image_Generator generator;
         scls::Text_Style style; style.set_font_size(24);
-        std::shared_ptr<scls::Image> needed_text = generator.image_shared_ptr("Modulo : " + scls::format_number_to_text(modulo) + "</br>Points : " + std::to_string(point_number), style);
+        std::shared_ptr<scls::__Image_Base> needed_text = generator.image_shared_ptr("Modulo : " + scls::format_number_to_text(modulo) + "</br>Points : " + std::to_string(point_number), style);
 
         // Draw the lines
         scls::Color point_color(0, 0, 0);
@@ -141,8 +141,6 @@ namespace pleos {
             int final_x = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].x() * static_cast<double>(circle_radius * 2);
             int final_y = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].z() * static_cast<double>(circle_radius * 2);
 
-            double distance = std::sqrt(std::pow(final_x - current_x, 2) + std::pow(final_y - current_y, 2));
-            double ratio_distance = distance / static_cast<double>(circle_radius * 2);
             to_return.get()->fill_rect(current_x, current_y, 6, 6, point_color);
             //scls::Color final_color = line_colors[static_cast<int>(round(ratio_distance * lines_colors_size))];
             //scls::Color final_color = scls::Color(255 * ratio_distance, 0, 255 * (1.0 - ratio_distance));
@@ -264,17 +262,15 @@ namespace pleos {
         std::vector<std::shared_ptr<Number>> needed_numbers;
         // Decompose the number
         std::shared_ptr<Number> needed_number = number_shared_ptr(number_value);
-        if(number != 0){
-            if(needed_number.get()->is_prime()) {decomposition.push_back(needed_number);}
-            else {
-                int current_divisor = 0;
-                while(number_value > 1) {
-                    if(number_value % prime_number(current_divisor)->number == 0) {
-                        decomposition.push_back(prime_number_shared_ptr(current_divisor));
-                        number_value /= prime_number(current_divisor)->number;
-                    }
-                    else{current_divisor++;}
+        if(needed_number.get()->is_prime()) {decomposition.push_back(needed_number);}
+        else {
+            int current_divisor = 0;
+            while(number_value > 1) {
+                if(number_value % prime_number(current_divisor)->number == 0) {
+                    decomposition.push_back(prime_number_shared_ptr(current_divisor));
+                    number_value /= prime_number(current_divisor)->number;
                 }
+                else{current_divisor++;}
             }
         }
 
@@ -290,7 +286,7 @@ namespace pleos {
     }
 
     // Returns an erathostene sieve
-    std::shared_ptr<scls::Image> erathostene_sieve(int image_width, int start_number, int end_number) {
+    std::shared_ptr<scls::__Image_Base> erathostene_sieve(int image_width, int start_number, int end_number) {
         // Create a table
         int line_width = 5;int line_number = 1 + (end_number - start_number) / line_width;
         std::shared_ptr<Table> sieve = std::make_shared<Table>();
@@ -299,7 +295,7 @@ namespace pleos {
         int current_number = start_number;
         int current_x = 0;int current_y = 0;
         for(int i = 0;i<line_number;i++) {
-            for(current_x;current_x<line_width;current_x++) {
+            for(;current_x<line_width;current_x++) {
                 Table::Table_Case* current_case = sieve.get()->case_at(current_x, current_y);
                 if(number(current_number)->is_prime()) {
                     current_case->set_background_color(scls::Color(255, 200, 200));

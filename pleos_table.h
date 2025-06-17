@@ -48,7 +48,7 @@ namespace pleos {
         Illustrator(){};
 
         // Handle the title
-        std::shared_ptr<scls::Image> title_image(scls::Text_Image_Generator* tig);
+        std::shared_ptr<scls::__Image_Base> title_image(scls::Text_Image_Generator* tig);
 
         // Title of the illustrator
         inline void set_title(std::string new_title){a_title = new_title;};
@@ -67,7 +67,7 @@ namespace pleos {
         // Cases in the table
         struct Table_Case {
             // Image in the case
-            std::shared_ptr<std::shared_ptr<scls::Image>> image;
+            std::shared_ptr<std::shared_ptr<scls::__Image_Base>> image;
             // Margin of the case
             int margin = 20;
             // If the case is merged or not
@@ -87,7 +87,7 @@ namespace pleos {
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
-            inline void set_image(std::shared_ptr<scls::Image> new_image){(*image.get()) = new_image;};
+            inline void set_image(std::shared_ptr<scls::__Image_Base> new_image){(*image.get()) = new_image;};
         };
 
         // Table constructor
@@ -95,7 +95,7 @@ namespace pleos {
 
         // Returns the case at a certain position
         Table_Case* case_at(int x, int y);
-        inline std::shared_ptr<scls::Image>& image_at(int x, int y){return *(case_at(x, y)->image.get());};
+        inline std::shared_ptr<scls::__Image_Base>& image_at(int x, int y){return *(case_at(x, y)->image.get());};
         // Checks the merge of the case
         void check_merge();
         // Returns the number of column in the table
@@ -129,7 +129,7 @@ namespace pleos {
         void set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
 
         // Returns the table to an image
-        std::shared_ptr<scls::Image> to_image();
+        std::shared_ptr<scls::__Image_Base> to_image();
 
         // Getters and setters
         inline int column_separation() const {return a_column_separation;};

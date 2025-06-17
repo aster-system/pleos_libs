@@ -37,7 +37,7 @@ namespace pleos {
 	//*********
 
 	// Handle the title
-    std::shared_ptr<scls::Image> Illustrator::title_image(scls::Text_Image_Generator* tig){if(a_title == std::string()){return std::shared_ptr<scls::Image>();}return tig->image_shared_ptr(a_title, *title_style());};
+    std::shared_ptr<scls::__Image_Base> Illustrator::title_image(scls::Text_Image_Generator* tig){if(a_title == std::string()){return std::shared_ptr<scls::__Image_Base>();}return tig->image_shared_ptr(a_title, *title_style());};
 
     // Checks the merge of the case
     void Table::check_merge() {
@@ -52,7 +52,6 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
             for(int j = 0;j<static_cast<int>(a_cases.at(i).size());j++) {
                 Table::Table_Case* current_case = case_at(i, j);
-                scls::Image* current_image = current_case->image.get()->get();
                 if(current_case->merged != Table::Table_Case::Merge_State::MS_Merged){
                     // Check the merged cases
                     const int temp_i = i;const int temp_j = j;
@@ -79,7 +78,7 @@ namespace pleos {
 
     // Returns the width of a column
     int Table::column_width(int column) const{
-        if(column >= a_cases.size()){return 0;}
+        if(column >= static_cast<int>(a_cases.size())){return 0;}
 
         int to_return = 0;
         for(int i = 0;i<static_cast<int>(a_cases.at(column).size());i++){
@@ -98,7 +97,7 @@ namespace pleos {
     int Table::line_height(int line) const {
         int to_return = 0;
         for(int i = 0;i<static_cast<int>(a_cases.size());i++){
-            if(a_cases.at(i).size() > line && a_cases.at(i)[line].get() != 0){
+            if(static_cast<int>(a_cases.at(i).size()) > line && a_cases.at(i)[line].get() != 0){
                 if(a_cases.at(i).at(line).get()->height() > to_return && a_cases.at(i).at(line).get()->merged == Table::Table_Case::Merge_State::MS_No){
                     to_return = a_cases.at(i).at(line).get()->height();
                 }
@@ -108,7 +107,7 @@ namespace pleos {
         if(to_return == 0) {
             // Only merged case avaible
             for(int i = 0;i<static_cast<int>(a_cases.size());i++){
-                if(a_cases.at(i).size() > line && a_cases.at(i)[line].get() != 0){
+                if(static_cast<int>(a_cases.at(i).size()) > line && a_cases.at(i)[line].get() != 0){
                     if(a_cases.at(i).at(line).get()->height() > to_return){
                         to_return = a_cases.at(i).at(line).get()->height();
                     }
@@ -123,7 +122,7 @@ namespace pleos {
     int Table::line_number() const {
         int to_return = 0;
         for(int i = 0;i<static_cast<int>(a_cases.size());i++){
-            if(a_cases.at(i).size() > to_return){
+            if(static_cast<int>(a_cases.at(i).size()) > to_return){
                 to_return = a_cases.at(i).size();
             }
         }
@@ -132,19 +131,19 @@ namespace pleos {
 
     // Returns the case at a certain position
     Table::Table_Case* Table::case_at(int x, int y){
-        while(a_cases.size() <= x){a_cases.push_back(std::vector<std::shared_ptr<Table::Table_Case>>());}
-        while(a_cases[x].size() <= y){a_cases[x].push_back(std::shared_ptr<Table::Table_Case>());}
+        while(static_cast<int>(a_cases.size()) <= x){a_cases.push_back(std::vector<std::shared_ptr<Table::Table_Case>>());}
+        while(static_cast<int>(a_cases[x].size()) <= y){a_cases[x].push_back(std::shared_ptr<Table::Table_Case>());}
         if(a_cases[x][y].get()==0){
             // Create the case
             a_cases[x][y] = std::make_shared<Table::Table_Case>();
-            a_cases[x][y].get()->image = std::make_shared<std::shared_ptr<scls::Image>>();
+            a_cases[x][y].get()->image = std::make_shared<std::shared_ptr<scls::__Image_Base>>();
         }
         return a_cases[x][y].get();
     };
 
     // Set the value of an std::string case
     void Table::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig) {
-        std::shared_ptr<scls::Image> img = tig->image_shared_ptr(value, *needed_style);
+        std::shared_ptr<scls::__Image_Base> img = tig->image_shared_ptr(value, *needed_style);
         (*case_at(x, y)->image.get()) = img;
         for(int i = 0;i<width;i++) {
             for(int j = 0;j<height;j++) {
@@ -156,7 +155,7 @@ namespace pleos {
     }
 
 	// Returns the table to an image
-    std::shared_ptr<scls::Image> Table::to_image() {
+    std::shared_ptr<scls::__Image_Base> Table::to_image() {
         // Get the needed datas
         int bottom_border = 2;
         int left_border = 2;
@@ -168,7 +167,7 @@ namespace pleos {
 
         // Handle illustrator
         scls::Text_Image_Generator tig;
-        std::shared_ptr<scls::Image> needed_title_image = title_image(&tig);
+        std::shared_ptr<scls::__Image_Base> needed_title_image = title_image(&tig);
 
         // Create the image
         check_merge();
@@ -178,14 +177,14 @@ namespace pleos {
         int final_total_width = needed_total_width;
         if(needed_title_image.get() != 0){needed_total_height += needed_title_image.get()->height();}
         if(needed_title_image.get() != 0 && needed_title_image.get()->width() > final_total_width){final_total_width = needed_title_image.get()->width();if(final_total_width-needed_total_width%2==1){final_total_width++;}}
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(final_total_width, needed_total_height, background_color);
+        std::shared_ptr<scls::__Image_Base> to_return = std::make_shared<scls::__Image_Base>(final_total_width, needed_total_height, background_color);
 
         // Get the datas for the drawing
         // X datas
         std::vector<int> needed_width = std::vector<int>(needed_columns, 0);
         int x_start = left_border;if(needed_title_image.get() != 0 && needed_title_image.get()->width() == final_total_width){x_start = (final_total_width - needed_total_width) / 2 + left_border;}
         std::vector<int> needed_x = std::vector<int>(needed_columns, x_start);
-        for(int i = 0;i<a_cases.size();i++){needed_width[i] = column_width(i);if(i > 0){needed_x[i] = needed_x[i - 1] + needed_width[i - 1] + column_separation();}}
+        for(int i = 0;i<static_cast<int>(a_cases.size());i++){needed_width[i] = column_width(i);if(i > 0){needed_x[i] = needed_x[i - 1] + needed_width[i - 1] + column_separation();}}
         // Y datas
         std::vector<int> needed_height = std::vector<int>(needed_lines, 0);
         int y_start = top_border;if(needed_title_image.get() != 0){y_start += needed_title_image.get()->height();}
@@ -205,7 +204,7 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
             for(int j = 0;j<static_cast<int>(a_cases.at(i).size());j++) {
                 Table::Table_Case* current_case = case_at(i, j);
-                scls::Image* current_image = current_case->image.get()->get();
+                scls::__Image_Base* current_image = current_case->image.get()->get();
                 if(current_case->merged != Table::Table_Case::Merge_State::MS_Merged){
                     // Handle merging
                     int current_width = column_width(i, current_case->merged_width);
@@ -231,7 +230,7 @@ namespace pleos {
 
             // Missing cases
             for(int j = a_cases.at(i).size();j<static_cast<int>(needed_lines);j++) {
-                Table::Table_Case* current_case = case_at(i, j);
+                case_at(i, j);
 
                 // Draw the separation
                 scls::Color separation_color = scls::Color(0, 0, 0);

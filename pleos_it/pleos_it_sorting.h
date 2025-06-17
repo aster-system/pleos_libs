@@ -83,8 +83,8 @@ namespace pleos {
     std::shared_ptr<Sort_Datas> algorithms_sort_creation(int value_number);
 
     // Returns an image with the sort in it
-    std::shared_ptr<scls::Image> algorithms_sort_image(std::shared_ptr<scls::Image> base_image, Sort_Datas* datas, int x, int y, int width, int height);
-    std::shared_ptr<scls::Image> algorithms_sort_image(Sort_Datas* datas, int image_width);
+    std::shared_ptr<scls::__Image_Base> algorithms_sort_image(std::shared_ptr<scls::__Image_Base> base_image, Sort_Datas* datas, int x, int y, int width, int height);
+    std::shared_ptr<scls::__Image_Base> algorithms_sort_image(Sort_Datas* datas, int image_width);
 }
 
 #endif // PLEOS_IT_SORTING

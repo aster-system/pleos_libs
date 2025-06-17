@@ -34,232 +34,202 @@ namespace pleos {
     // The Probability_Universe_Event class
     //******************
 
-    // Checks the opposed event probability for an event and returns if the probability was found
-    bool __check_opposed_probability(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition, std::string& redaction, scls::Textual_Math_Settings* settings) {
-        std::string needed_name = needed_event.get()->complete_name();
-        if(condition.get() == 0) {
-            // No condition is needed
-            std::shared_ptr<Probability_Universe_Event> opposed_event;
-            if(needed_event.get()->is_opposed()) {opposed_event = needed_event.get()->opposed_event_as_opposed();} else {opposed_event = needed_event.get()->opposed_event();}
-            if(opposed_event.get() != 0 && opposed_event.get()->probability() != -1) {
-                needed_event.get()->set_probability(scls::Fraction(1) - opposed_event.get()->probability());
-                redaction += "Pour réaliser l'arbre, nous avons besoin de la probabilité de " + needed_name + ". ";
-                redaction += "Or, l'évènement opposé à " + needed_name + ", qui est ";
-                if(needed_name.size() > 0 && needed_name[0] == '!') redaction += needed_name.substr(1, needed_name.size() - 1);
-                else {redaction += std::string("!") + needed_name;}
-                redaction += ", a une probabilité de " + opposed_event.get()->probability().to_std_string(settings) + ". ";
-                redaction += "Donc, la probabilité de " + needed_name + " est de 1 - " + opposed_event.get()->probability().to_std_string(settings) + ", soit " + needed_event.get()->probability().to_std_string(settings) + ". ";
-                return true;
+    // Probability_Condition constructor
+    Probability_Universe_Event::Probability_Condition::Probability_Condition(std::shared_ptr<Probability_Universe_Event>event):events(std::vector<std::shared_ptr<Probability_Universe_Event>>(1,event)){};
+    Probability_Universe_Event::Probability_Condition::Probability_Condition(){};
+
+    // Returns if 2 conditions are equals or not
+    bool Probability_Universe_Event::Probability_Condition::is_equal(Probability_Condition other) const {
+        if(events.size() != other.events.size()){return false;}
+
+        std::vector<std::shared_ptr<Probability_Universe_Event>> events_copy = events;
+        for(int i = 0;i<static_cast<int>(events_copy.size());i++) {
+            bool good = false;
+            for(int j = 0;j<static_cast<int>(other.events.size());j++) {
+                if(events_copy.at(i).get() == other.events.at(j).get()){other.events.erase(other.events.begin() + j);good = true;break;}
             }
+            if(!good){return false;}
+            events_copy.erase(events_copy.begin() + i);i--;
         }
-        else {
-            // Condition is needed
-            std::string condition_name = condition.get()->name();
-            std::shared_ptr<Probability_Universe_Event> opposed_event;
-            if(needed_event.get()->is_opposed()) {opposed_event = needed_event.get()->opposed_event_as_opposed();} else {opposed_event = needed_event.get()->opposed_event();}
-            std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> current_condition = needed_event.get()->condition_used(condition);
-            std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> opposed_condition = opposed_event.get()->condition_used(condition);
-            if(opposed_condition.get()->probability != -1) {
-                current_condition.get()->probability = scls::Fraction(1) - opposed_condition.get()->probability;
-                redaction += "Pour réaliser l'arbre, nous avons besoin de la probabilité de " + needed_name + " sachant " + condition_name + ". ";
-                redaction += "Or, l'évènement opposé à " + needed_name + " sachant " + condition_name + ", qui est ";
-                if(needed_name.size() > 0 && needed_name[0] == '!') redaction += needed_name.substr(1, needed_name.size() - 1);
-                else {redaction += std::string("!") + needed_name;}
-                redaction += " sachant " + condition_name + ", a une probabilité de " + opposed_condition.get()->probability.to_std_string(settings) + ". ";
-                redaction += "Donc, la probabilité de " + needed_name + " sachant " + condition_name + " est de 1 - " + opposed_condition.get()->probability.to_std_string(settings) + ", soit " + current_condition.get()->probability.to_std_string(settings) + ". ";
-                return true;
-            }
-        } return false;
+        return true;
     }
 
-    // Opposite of the event
-    std::shared_ptr<Probability_Universe_Event> Probability_Universe_Event::opposed_event() {
-        if(a_opposed_event_as_opposed.lock().get() != 0) {return std::shared_ptr<Probability_Universe_Event>();};
-        if(a_opposed_event.get() == 0) {
-            a_opposed_event = std::make_shared<Probability_Universe_Event>(a_name, a_partition_parent);
-            a_opposed_event.get()->a_opposed_event_as_opposed = a_this_event;
-            a_opposed_event.get()->a_this_event = a_opposed_event;
-        } return a_opposed_event;
+    // Returns the parent condition of this one
+    Probability_Universe_Event::Probability_Condition Probability_Universe_Event::Probability_Condition::parent_condition(){
+        Probability_Condition parent = Probability_Condition();
+        parent.events=events;
+        if(parent.events.size()>0){parent.events.pop_back();}
+        return parent;
     };
 
-    //******************
-    // The Probability_Universe_Tree class
-    //******************
-
-    // Create a case of the tree
-    std::shared_ptr<scls::Image> Probability_Universe::Probability_Universe_Tree::create_case(std::shared_ptr<Probability_Universe_Event> needed_event, std::shared_ptr<Probability_Universe_Event> condition) {
-        // Create the neeeded datas
-        scls::Fraction needed_probability = needed_event.get()->probability();
-        scls::Textual_Math_Settings* settings = 0;
-        if(condition.get() == 0) {
-            // Calculate the probability if needed without condition
-            needed_probability = needed_event.get()->probability();
-        } else {
-            // Calculate the probability if needed with condition
-            std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> needed_condition = needed_event.get()->condition_used(condition);
-            needed_probability = needed_condition.get()->probability;
-            needed_probability = needed_condition.get()->probability;
-        }
-
-        // Create the event
-        std::string needed_text = needed_event.get()->complete_name() + std::string(" -> ");
-        needed_text += scls::format_number_to_text(needed_probability.to_double());
-        std::shared_ptr<scls::Image> image = a_generator.image_shared_ptr(needed_text, style);
-        a_cases.push_back(image);
-
-        // Add the possible others events
-        for(int i = 0;i<static_cast<int>(needed_event.get()->conditions_from_this_one().size());i++) {
-            bool contains = false;
-            std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> current = needed_event.get()->conditions_from_this_one()[i].get()->condition_used(needed_event);
-            for(int j = 0;j<static_cast<int>(a_other_layer_conditions.size());j++) {if(a_other_layer_conditions[j].get()==current.get()){contains=true;break;}}
-            if(!contains) {
-                // Add condition to study
-                a_other_layer_conditions.push_back(current);
-            }
-        } return image;
+    // Returns an even by its name
+    std::shared_ptr<Probability_Universe_Event> Probability_Universe_Event::Probability_Universe_Partition::event(std::string name) {
+        for(int i = 0;i<static_cast<int>(events.size());i++) {if(events[i].get()->name() == name) {return events[i];}}
+        return std::shared_ptr<Probability_Universe_Event>();
     };
 
-    // Create the first layer of the tree
-    void Probability_Universe::Probability_Universe_Tree::create_first_layer(std::shared_ptr<Probability_Universe_Event> condition) {
-        // Add the missing events
-        a_first_layer_height = 100;
-        if(a_used_events.size() == 1) {a_used_events.push_back(a_used_events[0].get()->opposed_event());}
-
-        // Create the needed images for the first layer
-        a_first_layer_max_width = 0;
-        std::shared_ptr<scls::Image> last_case;
-        a_differences_y = std::vector<int>(a_used_events.size(), -1);
-        for(int i = 0;i<static_cast<int>(a_used_events.size());i++) {
-            std::shared_ptr<scls::Image> current_case = create_case(a_used_events[i], condition);
-            if(current_case.get()->width() > a_first_layer_max_width) {a_first_layer_max_width = current_case.get()->width();}
-
-            // Create the needed y
-            if(i <= 0) {a_differences_y[i] = 0;}
-            else {a_differences_y[i] = last_case.get()->height();}
-            last_case = current_case;
-        }
+    // Missing probabilities in the partition
+    std::vector<std::shared_ptr<Probability_Universe_Event>> Probability_Universe_Event::Probability_Universe_Partition::missing_probabilities(Probability_Condition* condition) {
+        std::vector<std::shared_ptr<Probability_Universe_Event>> missing_probabilities;
+        for(int i = 0;i<static_cast<int>(events.size());i++){if(events.at(i).get()->probability(condition)==-1){missing_probabilities.push_back(events.at(i));}}
+        return missing_probabilities;
     }
 
-    // Create the other layers of the tree
-    void Probability_Universe::Probability_Universe_Tree::create_other_layers() {}
+    // Name of the probability
+    std::string Probability_Universe_Event::name(Probability_Condition* condition) const {
+        std::string final_name = name();
+        for(int i = 0;i<static_cast<int>(condition->events.size());i++){final_name = condition->events.at(i).get()->name() + std::string(" inter ") + final_name;}
 
-    // Draw the tree
-    std::shared_ptr<scls::Image> Probability_Universe::Probability_Universe_Tree::image() {
-        // Create and return the image
-        int final_height = a_other_layers_height;
-        if(a_first_layer_height > final_height) final_height = a_first_layer_height;
-        int first_layer_y_separation = 0;
-        int first_lines_width = 100;
-        std::shared_ptr<scls::Image> to_return = std::make_shared<scls::Image>(1000, final_height, scls::Color(255, 255, 255));
+        return final_name;
+    }
 
-        // Draw the second layer
-        int current_x = first_lines_width + a_first_layer_max_width;
-        int current_y = 0;
-        int last_layer_height = 0;
-        std::vector<int> needed_y = std::vector<int>(a_used_events.size(), 0);
-        for(int i = 0;i<static_cast<int>(a_other_layers.size());i++) {
-            // Paste the tree
-            to_return.get()->paste(a_other_layers[i].get(), current_x, current_y);
-            // Add the needed y
-            int position = 0; for(int j = 0;j<static_cast<int>(a_used_events.size());j++){if(a_used_events[j].get()==a_other_layer_conditions[i].get()->event_parent.lock().get()){position=j;break;}}
-            if(i <= 0) {needed_y[position] = a_other_layers[i].get()->height() / 2;}
-            else {needed_y[position] = a_other_layers[i].get()->height() / 2 + last_layer_height / 2;}
-            current_y += a_other_layers[i].get()->height() + first_layer_y_separation;
-            last_layer_height = a_other_layers[i].get()->height();
-            a_other_layers[i].reset();
+    // Sets the probability of an event
+    scls::Fraction Probability_Universe_Event::probability(Probability_Condition condition) const{return probability(&condition);}
+    scls::Fraction Probability_Universe_Event::probability(Probability_Universe_Event* condition) const {
+        if(condition == 0){return probability();};
+        for(int i = 0;i<static_cast<int>(a_probabilities_condition.size());i++) {if(a_probabilities_condition.at(i).events.size() == 1 && a_probabilities_condition.at(i).events.at(0).get() == condition){return a_probabilities.at(i);}}
+        return -1;
+    }
+    scls::Fraction Probability_Universe_Event::probability(Probability_Condition* condition) const {
+        if(condition == 0 || condition->events.size() == 0){return probability();};
+        for(int i = 0;i<static_cast<int>(a_probabilities_condition.size());i++) {if(a_probabilities_condition.at(i).is_equal(*condition)){return a_probabilities.at(i);}}
+        return -1;
+    }
+    void Probability_Universe_Event::set_probability(std::shared_ptr<Probability_Universe_Event> condition, scls::Fraction new_probability) {Probability_Condition needed_condition=Probability_Condition(condition);set_probability(&needed_condition, new_probability);};
+    void Probability_Universe_Event::set_probability(Probability_Condition* condition, scls::Fraction new_probability) {
+        int index = -1;
+        for(int i = 0;i<static_cast<int>(a_probabilities_condition.size());i++) {if(a_probabilities_condition.at(i).is_equal(*condition)){index = i;break;}}
+
+        if(index == -1) {
+            a_probabilities_condition.push_back(*condition);
+            a_probabilities.push_back(new_probability);
         }
+        else {a_probabilities[index] = new_probability;}
+    }
 
-        // Filter the needed Y
-        if(a_cases.size() > 0 && needed_y.size() > 0 && needed_y[0] <= 0) {needed_y[0] = a_cases[0].get()->height() / 2;}
-        for(int i = 1;i<static_cast<int>(needed_y.size());i++) {
-            if(needed_y[i] < a_differences_y[i]) {
-                needed_y[i] = a_differences_y[i];
+    // Directly solve the partition
+    scls::Fraction __probabilities_sum(std::vector<std::shared_ptr<Probability_Universe_Event>>& probabilities, Probability_Universe_Event::Probability_Condition* condition){scls::Fraction probability = 0;for(int i = 0;i<static_cast<int>(probabilities.size());i++){if(probabilities.at(i).get()->probability(condition) != -1){probability+=probabilities.at(i).get()->probability(condition);}}return probability;}
+    int Probability_Universe_Event::Probability_Universe_Partition::solve(std::string* redaction, Probability_Universe_Partition* other_partition) {int total=0;for(int i = 0;i<static_cast<int>(other_partition->events.size());i++){total+=solve(redaction, Probability_Universe_Event::Probability_Condition(other_partition->events.at(i)));}return total;}
+    int Probability_Universe_Event::Probability_Universe_Partition::solve(std::string* redaction, Probability_Condition condition){return solve(redaction, &condition);}
+    int Probability_Universe_Event::Probability_Universe_Partition::solve(std::string* redaction, Probability_Condition* condition) {
+        // Assert
+        std::vector<std::shared_ptr<Probability_Universe_Event>> current_missing_probabilities = missing_probabilities(condition);
+        if(static_cast<int>(current_missing_probabilities.size()) <= 0){return 0;}
+
+        if(static_cast<int>(current_missing_probabilities.size()) == 1) {
+            // Only one probability is missing
+            scls::Fraction probability = __probabilities_sum(events, condition);
+            Probability_Universe_Event* missing_probability = current_missing_probabilities.at(0).get();
+            missing_probability->set_probability(condition, 1 - probability);
+
+            // Redaction
+            if(redaction != 0) {
+                (*redaction) += std::string("L'évènement \"") + missing_probability->probability_name(condition) + std::string("\" a une probabilité inconnue.");
+                (*redaction) += std::string(" Or, tous les éléments constituant l'évènement opposé à \"") + missing_probability->name() + std::string("\" ont une probabilité de ") + probability.to_std_string(0) + std::string(".");
+                (*redaction) += std::string(" Donc, cet élément a une probabilité de 1 - ") + probability.to_std_string(0) + std::string(", soit ") + (1 - probability).to_std_string(0) + std::string(".");
+            }
+        }
+        else if(static_cast<int>(current_missing_probabilities.size()) == static_cast<int>(events.size())) {
+            // All the probabilities are missing
+            Probability_Condition parent_condition = condition->parent_condition();
+            if(!condition->is_equal(parent_condition)) {
+                for(int i = 0;i<static_cast<int>(events.size());i++) {
+                    scls::Fraction total_probability = events.at(i).get()->probability(parent_condition);
+                    std::vector<std::shared_ptr<Probability_Universe_Event>>& parent_probabilities = condition->last_event()->partition_parent()->events;
+                    scls::Fraction other_probabilities = 0;int missing_probabilities_number = 0;
+                    for(int j = 0;j<static_cast<int>(parent_probabilities.size());j++){
+                        if(parent_probabilities.at(j).get() != condition->last_event()){
+                            Probability_Condition current_condition = parent_condition;
+                            current_condition.events.push_back(parent_probabilities.at(j));
+                            if(events.at(i).get()->probability(current_condition) == -1){missing_probabilities_number++;}
+                            else{other_probabilities += events.at(i).get()->probability(current_condition) * parent_probabilities.at(j).get()->probability(parent_condition);}
+                        }
+                    }
+
+                    // If the conditions are good
+                    if(missing_probabilities_number == 0) {
+                        scls::Fraction final_probability = (1 - other_probabilities / total_probability) * total_probability;
+                        events.at(i).get()->set_probability(condition, final_probability / condition->last_event()->probability(parent_condition));
+                        // Sets the other object too
+                        Probability_Condition other_condition = parent_condition;
+                        other_condition.events.push_back(events.at(i));
+                        if(condition->last_event()->probability(&other_condition) == -1){
+                            condition->last_event()->set_probability(&other_condition, final_probability / events.at(i).get()->probability(parent_condition));
+                        }
+
+                        // Redaction
+                        if(redaction != 0) {
+                            (*redaction) += std::string("L'évènement \"") + events.at(i).get()->probability_name(condition) + std::string("\" a une probabilité inconnue.");
+                            (*redaction) += std::string(" Or, tous les éléments constituant l'évènement \"") + events.at(i).get()->name(&parent_condition) + std::string("\" ont une probabilité de ") + total_probability.to_std_string(0) + std::string(" dans l'univers.");
+                            (*redaction) += std::string(" De plus, tous les éléments constituant l'évènement \"") + events.at(i).get()->name() + std::string("\" n'étant pas ") + events.at(i).get()->probability_name(condition) + std::string(" ont une probabilité de ") + (other_probabilities / total_probability).to_std_string(0) + std::string(" en sachant ") + events.at(i).get()->name(&parent_condition) + std::string(".");
+                            (*redaction) += std::string(" Donc, la probabilité de ") + events.at(i).get()->probability_name(condition) + std::string(" sachant ") + events.at(i).get()->name(&parent_condition) + std::string(" est 1 - ") + (other_probabilities / total_probability).to_std_string(0) + std::string(" = ") + (1 - other_probabilities / total_probability).to_std_string(0) + std::string(".");
+                            (*redaction) += std::string(" En ne sachant pas ") + events.at(i).get()->name(&parent_condition) + std::string(", la probabilité de ") + events.at(i).get()->probability_name(condition) + std::string(" devient ") + final_probability.to_std_string(0) + std::string(".");
+                            (*redaction) += std::string(" En sachant ") + events.at(i).get()->name(&parent_condition) + std::string(", la probabilité devient ") + final_probability.to_std_string(0) + std::string(" / ") + condition->last_event()->probability(parent_condition).to_std_string(0) + std::string(" = ") + (final_probability / condition->last_event()->probability(parent_condition)).to_std_string(0) + std::string(".");
+                        }
+                    }
+                    else{return -1;}
+                }
             }
         }
 
-        // Draw the first layer
-        current_x = 0;
-        current_y = 0;
-        std::vector<int> final_y = std::vector<int>(needed_y.size(), 0);
-        for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
-            current_y += needed_y[i]; final_y[i] = current_y;
-            to_return.get()->paste(a_cases[i].get(), first_lines_width, current_y - a_cases[i].get()->height() / 2);
-            a_cases[i].reset();
-        }
-
-        // Create the lines
-        current_x = first_lines_width;
-        current_y = final_height / 2;
-        for(int i = 0;i<static_cast<int>(needed_y.size());i++) {
-            to_return.get()->draw_line(0, current_y, current_x, final_y[i], scls::Color(0, 0, 0), 2);
-        } return to_return;
+        return static_cast<int>(current_missing_probabilities.size());
     }
 
     //******************
     // The Probability_Universe class
     //******************
 
+    // Probability_Universe constructor
+    Probability_Universe::Probability_Universe():Probability_Universe_Event(){}
+
     // Add an event to the universe
+    void Probability_Universe::add_event(std::string name, scls::Fraction probability) {add_event(name, probability, partitions().size());};
     void Probability_Universe::add_event(std::string name, scls::Fraction probability, int universe_partition) {
         // Create the partition if needed
-        if(universe_partition == 0 && a_partitions.size() <= 0) {a_partitions.push_back(Probability_Universe_Partition());}
-        Probability_Universe_Partition& used_partition = a_partitions[universe_partition];
+        while(static_cast<int>(partitions().size()) <= universe_partition) {partitions().push_back(std::make_shared<Probability_Universe_Partition>());}
+        Probability_Universe_Partition* used_partition = partitions().at(universe_partition).get();
 
         // Create the event
         bool opposed = false;
-        if(name[0] == '!'){name = name.substr(1, name.size() - 1);opposed=true;}
+        if(name.at(0) == '!'){name = name.substr(1, name.size() - 1);opposed=true;}
         std::shared_ptr<Probability_Universe_Event> event = std::make_shared<Probability_Universe_Event>(name, universe_partition);
+        event.get()->set_partition_parent(partitions().at(universe_partition));
+        event.get()->set_probability(probability);
         event.get()->set_this_event(event);
-        if(opposed) {event.get()->opposed_event().get()->set_probability(probability);}
-        else {event.get()->set_probability(probability);}
-        used_partition.events.push_back(event);
+        used_partition->events.push_back(event);
+        // Create the opposite event
+        if(opposed){name = name.substr(1, name.size() - 1);}else{name = std::string("!") + name;}
+        event = std::make_shared<Probability_Universe_Event>(name, universe_partition);
+        event.get()->set_partition_parent(partitions().at(universe_partition));
+        event.get()->set_this_event(event);
+        used_partition->events.push_back(event);
     };
 
     // Add an event conditionally to the universe
-    void Probability_Universe::add_event_conditionally(std::string name, scls::Fraction probability, std::shared_ptr<Probability_Universe_Event> condition) {
+    void Probability_Universe::add_event_conditionally(std::string condition_name, std::string name, scls::Fraction probability){std::shared_ptr<Probability_Universe_Event> needed_event = event_shared_ptr(condition_name);if(needed_event.get() != 0) {add_event_conditionally(needed_event, name, probability);}};
+    void Probability_Universe::add_event_conditionally(std::shared_ptr<Probability_Universe_Event> condition, std::string name, scls::Fraction probability) {
         // Create the partition if needed
-        if(a_partitions.size() <= 1) {a_partitions.push_back(Probability_Universe_Partition());}
-        Probability_Universe_Partition& used_partition = a_partitions[a_partitions.size() - 1];
-
-        // Create the condition
-        std::shared_ptr<Probability_Universe_Event> event = used_partition.event(name);
-        if(event.get() == 0) {
-            // Create the event
-            bool opposed = false;
-            if(name[0] == '!'){name = name.substr(1, name.size() - 1);opposed=true;}
-            event = std::make_shared<Probability_Universe_Event>(name, 1);
-            event.get()->set_this_event(event);
-            if(opposed){event = event.get()->opposed_event();}
-            // Add the event
-            used_partition.events.push_back(event);
-        }
-
-        // The event already exists
-        std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> event_condition = event->condition_used(condition);
-        event_condition.get()->probability = probability;
-        // Add the information to the parent
-        condition.get()->add_condition_from_this_one(event);
+        std::shared_ptr<Probability_Universe_Event> final_event = event_shared_ptr(name);
+        final_event.get()->set_probability(condition, probability / condition.get()->probability());
+        // Create the countrary event
+        Probability_Condition other_condition = final_event;
+        condition.get()->set_probability(&other_condition, probability / final_event->probability());
     }
 
-    // Returns a condition, stores according to which other it is
-    std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> Probability_Universe_Event::condition_used(std::shared_ptr<Probability_Universe_Event> condition) {
-        for(int i=0;i<static_cast<int>(a_conditions_used.size());i++){
-            if(a_conditions_used.at(i).get()->event_parent.lock().get()==condition.get()){
-                return a_conditions_used.at(i);
-            }
+    // Returns an event by its name
+    std::shared_ptr<Probability_Universe_Event> Probability_Universe::event_shared_ptr(std::string name){
+        for(int i = 0;i<static_cast<int>(partitions().size());i++){
+            std::shared_ptr<Probability_Universe_Event>current_event=partitions().at(i).get()->event(name);
+            if(current_event.get()!=0){return current_event;}
         }
-        std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition> to_add = std::make_shared<Probability_Universe_Event::Probability_Universe_Event_Condition>();
-        to_add.get()->event = a_this_event;
-        to_add.get()->event_parent = condition;
-        a_conditions_used.push_back(to_add);
-        return to_add;
+        return std::shared_ptr<Probability_Universe_Event>();
     };
 
     // Returns a redacted description of this universe
     std::string Probability_Universe::description() {
         std::string to_return = "";
         to_return += "Nous avons un univers U. ";
-        int partition_size = static_cast<int>(a_partitions.size());
+        int partition_size = static_cast<int>(partitions().size());
         if(partition_size > 1) {
             to_return += "Cette univers compte " + std::to_string(partition_size) + " partitions.";
         } else {to_return += "Cette univers compte 1 partition.";}
@@ -267,11 +237,11 @@ namespace pleos {
         // Redact each partitions
         for(int i = 0;i<partition_size;i++) {
             // Redact the current partition
-            Probability_Universe_Partition& used_partition = a_partitions[i];
-            int element_size = static_cast<int>(used_partition.events.size());
+            Probability_Universe_Partition* used_partition = partitions().at(i).get();
+            int element_size = static_cast<int>(used_partition->events.size());
             to_return += " La partition " + std::to_string(i + 1) + " est constituée de " + std::to_string(element_size) + " éléments : ";
             for(int j = 0;j<element_size;j++) {
-                to_return += used_partition.events[j].get()->name();
+                to_return += used_partition->events[j].get()->name();
                 if(j < element_size - 1) to_return += ", ";
             } to_return += ".";
         }
@@ -279,36 +249,71 @@ namespace pleos {
         return to_return;
     }
 
-    // Create a tree of probability
-    std::shared_ptr<scls::Image> Probability_Universe::__tree(int universe_partition, std::shared_ptr<Probability_Universe_Event> condition, std::string& redaction) {
-        // Get the good partition
-        Probability_Universe_Partition& used_partition = a_partitions[universe_partition];
-        std::shared_ptr<Probability_Universe_Tree> final_tree = std::make_shared<Probability_Universe_Tree>(redaction);
-        std::vector<std::shared_ptr<Probability_Universe_Event>>& used_events = final_tree.get()->used_events();
-        used_events = used_partition.events;
-
-        // Create the first layer
-        final_tree.get()->create_first_layer(condition);
-        // Create the other layers
-        //final_tree.get()->create_other_layers();
-        std::vector<std::shared_ptr<scls::Image>> first_layer = final_tree.get()->cases();
-        std::vector<std::shared_ptr<Probability_Universe_Event::Probability_Universe_Event_Condition>>& other_layer_conditions = final_tree.get()->other_layer_conditions();
-        std::vector<std::shared_ptr<scls::Image>>& other_layers = final_tree.get()->other_layers();
-        int other_layers_height = 0;
-        for(int j = 0;j<static_cast<int>(other_layer_conditions.size());j++) {
-            std::shared_ptr<Probability_Universe_Event> current = other_layer_conditions[j].get()->event.lock();
-            std::shared_ptr<scls::Image> current_image = __tree(current.get()->partition_parent(), other_layer_conditions[j].get()->event_parent.lock(), redaction);
-            other_layers.push_back(current_image); other_layers_height += current_image.get()->height();
+    // Solve the universe
+    void Probability_Universe::solve(std::string* redaction) {
+        // Solve every universe alone
+        int total = 0;int total_current = 0;
+        for(int i = 0;i<static_cast<int>(partitions().size());i++){
+            int current = partitions().at(i).get()->solve(redaction, Probability_Universe_Event::Probability_Condition());
+            if(current > 0){(*redaction) += std::string("</br>");total_current+=current;}
         }
+        total += total_current;
 
-        // Create and return the image
-        final_tree.get()->set_other_layers_height(other_layers_height);
-        return final_tree.get()->image();
+        // Solve every universe conditionnaly
+        if(total_current > 0){(*redaction) += std::string("</br>");}total_current=0;
+        for(int i = 0;i<static_cast<int>(partitions().size());i++){
+            for(int j = 0;j<static_cast<int>(partitions().size());j++){
+                if(i != j){
+                    int current = partitions().at(i).get()->solve(redaction, partitions().at(j).get());
+                    if(current > 0){(*redaction) += std::string("</br>");total+=current;}
+                }
+            }
+        }
+        total += total_current;
+
+        // Return the result
+        if(total > 0){(*redaction) += std::string("</br>");}
     }
-    std::shared_ptr<scls::Image> Probability_Universe::tree(int universe_partition, std::shared_ptr<Probability_Universe_Event> condition, std::string& redaction) {
+
+    // Create a tree of probability
+    std::vector<std::shared_ptr<Tree<std::string>>> Probability_Universe::__tree(Probability_Condition* condition, std::shared_ptr<Tree<std::string>> used_tree, int universe_partition, std::string& redaction) {
+        // Get the good partition
+        Probability_Universe_Partition* used_partition = partitions().at(universe_partition).get();
+        used_tree.get()->set_direction(scls::Point_2D(1, 0));
+
+        // Create the layers
+        std::vector<std::shared_ptr<Tree<std::string>>> to_return;
+        for(int i = 0;i<static_cast<int>(used_partition->events.size());i++) {
+            scls::Fraction needed_probability = used_partition->events.at(i).get()->probability(condition);
+            if(needed_probability == -1) {used_tree.get()->add_node(used_partition->events.at(i).get()->name() + std::string(" - ?"));}
+            else{used_tree.get()->add_node(used_partition->events.at(i).get()->name() + std::string(" - ") + needed_probability.to_std_string(0));}
+            to_return.push_back(used_tree.get()->children().at(used_tree.get()->children().size() - 1));
+        }
+        return to_return;
+    }
+    std::shared_ptr<Tree<std::string>> Probability_Universe::tree(std::string& redaction){return tree(0, redaction);}
+    std::shared_ptr<Tree<std::string>> Probability_Universe::tree(int universe_partition_1, int universe_partition_2, std::string& redaction) {
+        // Start the redaction
+        redaction += "Créeons un arbre pondéré avec cet univers. ";
+        redaction += "Cet arbre partira de la partition " + std::to_string(universe_partition_1) + " de l'univers. ";
+        std::shared_ptr<Tree<std::string>> probability_tree = std::make_shared<Tree<std::string>>();
+        Probability_Universe_Partition* used_partition = partitions().at(universe_partition_1).get();
+        Probability_Condition condition;
+        std::vector<std::shared_ptr<Tree<std::string>>> sub_trees = __tree(&condition, probability_tree, universe_partition_1, redaction);
+        for(int i = 0;i<static_cast<int>(sub_trees.size());i++) {condition.events.push_back(used_partition->events.at(i));__tree(&condition, sub_trees.at(i), universe_partition_2, redaction);condition.events.pop_back();}
+        probability_tree.get()->place_nodes();
+        return probability_tree;
+    }
+    std::shared_ptr<Tree<std::string>> Probability_Universe::tree(int universe_partition, std::string& redaction) {
         // Start the redaction
         redaction += "Créeons un arbre pondéré avec cet univers. ";
         redaction += "Cet arbre partira de la partition " + std::to_string(universe_partition) + " de l'univers. ";
-        return __tree(universe_partition, condition, redaction);
+        std::shared_ptr<Tree<std::string>> probability_tree = std::make_shared<Tree<std::string>>();
+        Probability_Universe_Partition* used_partition = partitions().at(universe_partition).get();
+        Probability_Condition condition;
+        std::vector<std::shared_ptr<Tree<std::string>>> sub_trees = __tree(&condition, probability_tree, universe_partition, redaction);
+        for(int i = 0;i<static_cast<int>(sub_trees.size());i++) {condition.events.push_back(used_partition->events.at(i));__tree(&condition, sub_trees.at(i), universe_partition + 1, redaction);condition.events.pop_back();}
+        probability_tree.get()->place_nodes();
+        return probability_tree;
     }
 }

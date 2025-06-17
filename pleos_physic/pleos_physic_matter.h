@@ -80,7 +80,7 @@ namespace pleos {
 
         // Returns the number of electrons in a layer
         int electrons_by_layer(int l);
-        static int electrons_max_by_layer(int l){if(l == 0){return 2;}else if(l == 1){return 8;}else if(l == 2){return 8;}};
+        static int electrons_max_by_layer(int l){if(l == 0){return 2;}else if(l == 1){return 8;}else if(l == 2){return 8;}return 18;};
         // Number of layers in the model
         static int layer(int needed_electron_number) {if(needed_electron_number <= 1){return 0;}else if(needed_electron_number <= 9){return 1;}else if(needed_electron_number <= 17){return 2;}return 4;};
         inline int layer() const {return layer(a_electron_number);};

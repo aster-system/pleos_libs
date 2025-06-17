@@ -50,19 +50,19 @@ namespace pleos {
     };
 
 	// Creates and returns a graphic from an std::string
-	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();to_return.get()->graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
-	std::shared_ptr<scls::Image> graphic_image_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style){
-	    int graphic_width_in_pixel = 0;int graphic_height_in_pixel = 0;
-	    std::shared_ptr<scls::Image> to_return = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel).get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);
+	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();to_return.get()->graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
+	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){
+	    int graphic_width_in_pixel = 200;int graphic_height_in_pixel = 200;
+	    std::shared_ptr<scls::__Image_Base> to_return = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel).get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);
         return to_return;
 	}
 
 	// Creates and returns a linked-list from an std::string
-	std::shared_ptr<Linked_List<std::string>> linked_list_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style) {
-	    std::shared_ptr<Linked_List<std::string>> to_return;
+	std::shared_ptr<Linked_List> linked_list_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style) {
+	    std::shared_ptr<Linked_List> to_return;
 
 	    // Handle a lot of balises
-	    std::shared_ptr<Linked_List<std::string>> current_list;
+	    std::shared_ptr<Linked_List> current_list;
         for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
             std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
             std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
@@ -77,7 +77,7 @@ namespace pleos {
                     else if(attributes[i].name == std::string("x")){x = scls::Fraction::from_std_string(attributes[i].value);x_used=true;}
                     else if(attributes[i].name == std::string("y")){y = scls::Fraction::from_std_string(attributes[i].value);y_used=true;}
                 }
-                if(to_return.get() == 0) {to_return = std::make_shared<Linked_List<std::string>>();to_return.get()->set_value(content);current_list = to_return;}
+                if(to_return.get() == 0) {to_return = std::make_shared<Linked_List>();to_return.get()->set_image(content);current_list = to_return;}
                 else{current_list = current_list.get()->add_child(content);}
                 // Configurate the node
                 current_list.get()->set_ignore_for_placement(ignore_for_placement);
@@ -91,7 +91,7 @@ namespace pleos {
 	}
 
 	// Creates and returns a table from an std::string
-	std::shared_ptr<Table> table_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style) {
+	std::shared_ptr<Table> table_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style) {
 	    std::shared_ptr<Table> to_return = std::make_shared<Table>();
 	    scls::Text_Image_Generator tig;
 
@@ -140,19 +140,9 @@ namespace pleos {
         return to_return;
 	}
 
-	//Add a node to the graph
-	void __graph_add_node(std::shared_ptr<scls::XML_Text> current_text, scls::Text_Style needed_style, Graph<std::string>* graph) {
-        // Handle the attributes
-        std::string to_add = std::string();
-        scls::Fraction x = 0; scls::Fraction y = 0;
-        for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
-            if(current_text.get()->xml_attributes()[i].name == std::string("name")){to_add = current_text.get()->xml_attributes()[i].value;}
-            else if(current_text.get()->xml_attributes()[i].name == std::string("x")){x = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
-            else if(current_text.get()->xml_attributes()[i].name == std::string("y")){y = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
-        }
-        int needed_node = graph->add_node(to_add, x, y);
-
-        // Handle a lot of balises
+	// Add a node to the graph
+	void __graph_add_node_late_balises(int needed_node, std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Graph<std::string>* graph){
+	    // Handle the other balises
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
@@ -174,6 +164,44 @@ namespace pleos {
                     graph->set_link_ponderation(needed_node, needed_id, needed_ponderation, needed_style);
                 }
             }
+        }
+	}
+	void __graph_add_node(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Graph<std::string>* graph) {
+        // Handle the attributes
+        std::string to_add = std::string();
+        scls::Fraction x = 0; scls::Fraction y = 0;
+        for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
+            if(current_text.get()->xml_attributes()[i].name == std::string("name")){to_add = current_text.get()->xml_attributes()[i].value;}
+            else if(current_text.get()->xml_attributes()[i].name == std::string("x")){x = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
+            else if(current_text.get()->xml_attributes()[i].name == std::string("y")){y = scls::Fraction::from_std_string(current_text.get()->xml_attributes()[i].value);}
+        }
+
+        // Handle a lot of balises
+        // Handle the content
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            //std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "content"){to_add = current_text->sub_texts()[i].get()->text();}
+        }
+
+        // Creates the node
+        //int needed_node =
+        graph->add_node(to_add, x, y);
+	}
+	void __graph_add_datas(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Graph<std::string>* graph){
+        // Handle a lot of balises
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            //std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            if(current_balise_name == "node"){__graph_add_node(current_text->sub_texts()[i], needed_style, graph);}
+        }
+
+        // Handle a lot of late balises
+       int current_node = 0;
+        for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
+            std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
+            if(current_balise_name == "node"){__graph_add_node_late_balises(current_node, current_text->sub_texts()[i], needed_style, graph);current_node++;}
         }
 	}
 	// Add datas to a tree
@@ -232,7 +260,7 @@ namespace pleos {
 	    std::shared_ptr<std::vector<int>> denominator = std::make_shared<std::vector<int>>(1, 1);std::shared_ptr<std::vector<int>> numerator = std::make_shared<std::vector<int>>(1, 1);
 	    __tree_stern_brocot(depht, numerator, denominator, std::make_shared<std::vector<Tree<std::string>*>>(1, tree));
     };
-	void __tree_add_datas(std::shared_ptr<scls::XML_Text> current_text, scls::Text_Style needed_style, Tree<std::string>* tree){
+	void __tree_add_datas(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Tree<std::string>* tree){
         // Handle the attributes
         std::string to_add = std::string();std::string to_load = std::string();
         for(int i = 0;i<static_cast<int>(current_text.get()->xml_attributes().size());i++) {
@@ -258,56 +286,52 @@ namespace pleos {
         else {
             // Set the name
             tree->root()->set_style(needed_style);
-            tree->set_value(to_add);
+            tree->set_image(to_add);
 
             // Handle a lot of balises
             for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
                 std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
-                std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
-                if(current_balise_name == "tree" || current_balise_name == "trees"){
-                    // Add the node
-                    __tree_add_datas(current_text->sub_texts()[i], needed_style, tree->add_node(std::string()));
-                }
-                else if(current_balise_name == "node"){
-                    // Add the node
-                    __graph_add_node(current_text->sub_texts()[i], needed_style, tree->graph());
-                }
+                //std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+                if(current_balise_name == "tree" || current_balise_name == "trees"){__tree_add_datas(current_text->sub_texts()[i], needed_style, tree->add_node(std::string()));}
+                else if(current_balise_name == "node"){__graph_add_node(current_text->sub_texts()[i], needed_style, tree->graph());}
             }
         }
 	}
-	// Creates and returns a tree from an std::string
-	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
+	// Creates and returns a graph / tree from an std::string
+	std::shared_ptr<Graph<std::string>> graph_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Graph<std::string>> graph = std::make_shared<Graph<std::string>>();__graph_add_datas(xml, needed_style, graph.get());return graph;}
+	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word
-	std::shared_ptr<scls::Image> generate_text_image(std::shared_ptr<scls::XML_Text> current_text, std::shared_ptr<scls::Text_Style> needed_style){
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style){
 	    std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
-        std::shared_ptr<scls::Image> to_return;
+        std::shared_ptr<scls::__Image_Base> to_return;
 
         // Handle style balises
         needed_style = needed_style.get()->new_child();
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
-            std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
+            //std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "border") {scls::border_from_xml(current_text->sub_texts()[i], needed_style.get());}
             else if(current_balise_name == "padding") {scls::padding_from_xml(current_text->sub_texts()[i], needed_style.get());}
         }
 
         // Create the image
-        if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, *needed_style.get());}
+        if(current_balise_name == "graph") {to_return = graph_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        else if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, *needed_style.get());}
         else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}
         else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
 
         return to_return;
 	}
-    void __Text_Line::generate_word(std::shared_ptr<scls::XML_Text> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
+    void __Text_Line::generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
-        if(current_balise_name == "graphic" || current_balise_name == "linked_list" || current_balise_name == "table" || current_balise_name == "tree") {
+        if(current_balise_name == "graph" || current_balise_name == "graphic" || current_balise_name == "linked_list" || current_balise_name == "table" || current_balise_name == "tree") {
             // Get the image
-            std::shared_ptr<scls::Image> src_img = generate_text_image(current_text, needed_style);
+            std::shared_ptr<scls::__Image_Base> src_img = generate_text_image(current_text, needed_style);
 
             // Change the image
             int height = -1; int width = -1;
@@ -331,6 +355,9 @@ namespace pleos {
         std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("case_plus", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("content", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("function", current_balise);
@@ -372,6 +399,9 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("table", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("text", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("tree", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
@@ -380,6 +410,10 @@ namespace pleos {
 
     // Loads the needed balises
     void Text::load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {load_balises_pleos(defined_balises);}
+
+    //*********
+    // GUI Handling
+    //*********
 
     // Creates a text block from a block of text
     std::shared_ptr<scls::__GUI_Text_Metadatas::__GUI_Text_Block> GUI_Text::__create_text_block_object(scls::Text_Image_Block* block_to_apply) {

@@ -147,11 +147,19 @@ namespace pleos {
         };
 
         // __Graphic_Object_Base constructor
+        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::__Point_2D_Formula position);
+        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::Point_2D position);
+        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent);
         __Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position);
         __Graphic_Object_Base(std::string name, scls::Point_2D position);
         __Graphic_Object_Base(std::string name):__Graphic_Object_Base(name,scls::Point_2D(0, 0)){};
         __Graphic_Object_Base(scls::Point_2D position):__Graphic_Object_Base(std::string(), position){};
         __Graphic_Object_Base():__Graphic_Object_Base(std::string(), scls::Point_2D(0, 0)){};
+
+        // Returns if the object contains a specific tag
+        bool contains_tag(std::string tag);
+        // Loads the tags
+        void load_tags(std::string new_tags);
 
         // Returns an introduction of the object
         std::string introduction(scls::Textual_Math_Settings* settings) const;
@@ -159,12 +167,13 @@ namespace pleos {
         // Soft reset the object
         virtual void soft_reset(){a_transform.get()->soft_reset();};
         // Returns the needed XML text to generate this object
-        virtual std::string to_xml_text(){return std::string();};
+        virtual std::string to_xml_text();
+        virtual std::string to_xml_text_object_name();
         std::string to_xml_text_color(std::string attribute_name, scls::Color color);
         std::string to_xml_text_height(std::string attribute_name);
         std::string to_xml_text_height();
         std::string to_xml_text_name();
-        std::string to_xml_text_object_name();
+        std::string to_xml_text_tags();
         std::string to_xml_text_x();
         std::string to_xml_text_y();
         std::string to_xml_text_width(std::string attribute_name);
@@ -178,6 +187,7 @@ namespace pleos {
         inline void move_y(scls::Fraction movement){attached_transform()->move_y(movement);};
 
         // Getters and setters
+        inline scls::Fraction absolute_rotation() const {return a_transform.get()->absolute_rotation();};
         inline scls::Fraction absolute_x() const {return a_transform.get()->absolute_x();};
         inline scls::Fraction absolute_y() const {return a_transform.get()->absolute_y();};
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
@@ -195,6 +205,9 @@ namespace pleos {
         inline std::string name() const {return a_name;};
         inline double opacity() const {return a_opacity;};
         inline scls::Point_2D position() const {return a_transform.get()->position();};
+        inline scls::Fraction rotation() const {return a_transform.get()->rotation();}
+        inline scls::__Formula_Base::Formula rotation_formula() const {return a_transform.get()->rotation_formula();};
+        inline bool save_to_xml_text() const {return a_save_to_xml_text;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_drawing_proportion(double new_drawing_proportion) {a_drawing_proportion = new_drawing_proportion;};
         inline void set_height(scls::Fraction new_height){a_transform.get()->set_scale_y(new_height);};
@@ -202,15 +215,28 @@ namespace pleos {
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
         inline void set_position(scls::Point_2D new_position){attached_transform()->set_position(new_position);};
         inline void set_name(std::string new_name) {a_name = new_name;};
+        inline void set_rotation(scls::__Fraction_Base new_rotation){a_transform.get()->set_rotation(new_rotation);};
+        inline void set_rotation(scls::Fraction new_rotation){a_transform.get()->set_rotation(new_rotation);};
+        inline void set_rotation(scls::__Formula_Base::Formula new_rotation){a_transform.get()->set_rotation(new_rotation);};
+        inline void set_save_to_xml_text(bool new_save_to_xml_text) {a_save_to_xml_text = new_save_to_xml_text;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;};
         inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
         inline bool should_delete() const {return a_should_delete;};
         inline void set_width(scls::Fraction new_width){a_transform.get()->set_scale_x(new_width);};
+        inline void set_x(int new_x){a_transform.get()->set_x(new_x);};
         inline void set_x(scls::Fraction new_x){a_transform.get()->set_x(new_x);};
+        inline void set_x(scls::__Fraction_Base new_x){a_transform.get()->set_x(new_x);};
+        inline void set_x(scls::__Formula_Base::Formula new_x){a_transform.get()->set_x(new_x);};
+        inline void set_y(int new_y){a_transform.get()->set_y(new_y);};
         inline void set_y(scls::Fraction new_y){a_transform.get()->set_y(new_y);};
+        inline void set_y(scls::__Fraction_Base new_y){a_transform.get()->set_y(new_y);};
+        inline void set_y(scls::__Formula_Base::Formula new_y){a_transform.get()->set_y(new_y);};
+        inline std::vector<std::string>& tags() {return a_tags;};
         inline scls::Fraction width() const {return a_transform.get()->scale_x();};
         inline scls::Fraction x() const {return a_transform.get()->x();};
+        inline scls::__Formula_Base::Formula x_formula() const {return a_transform.get()->x_formula();};
         inline scls::Fraction y() const {return a_transform.get()->y();};
+        inline scls::__Formula_Base::Formula y_formula() const {return a_transform.get()->y_formula();};
 
         //******************
         // Hierarchy functions
@@ -218,6 +244,8 @@ namespace pleos {
 
         // Convert a collision to a collision circle
         static Graphic_Collision::Collision_Circle* collision_circle(Graphic_Collision::Collision* collision){if(collision == 0 || collision->type != Graphic_Collision_Type::GCT_Circle){return 0;} return reinterpret_cast<Graphic_Collision::Collision_Circle*>(collision);};
+        // Draws the object on an image
+        void draw_on_image(std::shared_ptr<scls::__Image_Base>){};
 
         // Function called when a collision occurs
         virtual void when_collision(Graphic_Collision::Collision* collision){};
@@ -243,8 +271,12 @@ namespace pleos {
         std::string a_name = std::string();
         // Opacity of the object
         double a_opacity = 1.0;
+        // If the object should be save in XML
+        bool a_save_to_xml_text = true;
         // If the object should be delete
         bool a_should_delete = false;
+        // Tags of the object
+        std::vector<std::string> a_tags;
         // Unknowns in the object
         std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
     };
@@ -414,6 +446,7 @@ namespace pleos {
         struct Link {double drawing_proportion = 1;};
 
         // Form_2D constructor
+        Form_2D(std::string name, __Graphic_Object_Base* parent):__Graphic_Object_Base(name, parent){};
         Form_2D(std::string name):__Graphic_Object_Base(name){};
 
         // Adds an exclusion point to the form
@@ -476,19 +509,22 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):__Graphic_Object_Base(name, center){set_radius_x(radius_x);set_radius_y(radius_y);};
+        Circle(std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):__Graphic_Object_Base(name, parent, center){set_radius_x(radius_x);set_radius_y(radius_y);};
+        Circle(std::string name, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):Circle(name, 0, center, radius_x, radius_y){};
+        Circle(std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius):Circle(name, parent, center, radius, radius){};
         Circle(std::string name, scls::Point_2D center, scls::__Formula_Base radius):Circle(name, center, radius, radius){};
 
         // Returns the radius of the circle
-        virtual scls::Fraction radius_x(){return attached_transform()->scale_x() / 2;};
+        virtual scls::Fraction radius_x(){return attached_transform()->absolute_scale_x() / 2;};
         virtual std::shared_ptr<scls::__Formula_Base> radius_x_formula_shared_ptr(){return ((*attached_transform()->scale_x_formula_shared_ptr().get()) / 2).formula_copy();};
-        virtual scls::Fraction radius_y(){return attached_transform()->scale_y() / 2;};
+        virtual scls::Fraction radius_y(){return attached_transform()->absolute_scale_y() / 2;};
         virtual std::shared_ptr<scls::__Formula_Base> radius_y_formula_shared_ptr(){return ((*attached_transform()->scale_y_formula_shared_ptr().get()) / 2).formula_copy();};
 
         // Returns the needed XML text to generate this object
         virtual std::string to_xml_text();
         std::string to_xml_text_angle_end();
         std::string to_xml_text_angle_start();
+        std::string to_xml_text_radius();
         std::string to_xml_text_radius_x();
         std::string to_xml_text_radius_y();
         virtual std::string to_xml_text_object_name();
@@ -498,7 +534,7 @@ namespace pleos {
         inline scls::Formula angle_start() const {return a_angle_start;};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
-        inline scls::Point_2D center() const {return attached_transform()->position();};
+        inline scls::Point_2D center() const {return attached_transform()->absolute_position();};
         inline scls::Color color() const {return a_color;};
         inline void set_angle_end(scls::Formula new_angle_end){a_angle_end = new_angle_end;};
         inline void set_angle_start(scls::Formula new_angle_start){a_angle_start = new_angle_start;};

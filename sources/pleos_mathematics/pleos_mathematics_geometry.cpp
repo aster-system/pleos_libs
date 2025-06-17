@@ -38,20 +38,31 @@ namespace pleos {
 
     // __Graphic_Object_Base constructor
     int __current_id = 0;
-    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
-    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::Point_2D position):a_id(__current_id),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::__Point_2D_Formula position):a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_id(__current_id),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);if(parent!=0){a_transform.get()->set_parent(parent->attached_transform_shared_ptr());}};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::Point_2D position):a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_id(__current_id),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);if(parent!=0){a_transform.get()->set_parent(parent->attached_transform_shared_ptr());}};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent):__Graphic_Object_Base(name,parent,scls::__Point_2D_Formula(0,0)){}
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position):__Graphic_Object_Base(name, 0, position){}
+    __Graphic_Object_Base::__Graphic_Object_Base(std::string name, scls::Point_2D position):__Graphic_Object_Base(name, 0, position){}
+
+    // Returns if the object contains a specific tag
+    bool __Graphic_Object_Base::contains_tag(std::string tag){for(int i=0;i<static_cast<int>(a_tags.size());i++){if(a_tags.at(i)==tag){return true;}}return false;}
 
     // Returns an introduction of the object
     std::string __Graphic_Object_Base::introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons l'object \"") + name() + std::string("\".");};
 
+    // Loads the tags
+    void __Graphic_Object_Base::load_tags(std::string new_tags){a_tags = scls::cut_string(new_tags, std::string(";"));}
+
     // Returns the needed XML text to generate this object
+    std::string __Graphic_Object_Base::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(">");}
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
     std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
     std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
-    std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + x().to_std_string(0);}
-    std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + y().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_tags(){if(static_cast<int>(a_tags.size())==0){return std::string();}std::string to_return=std::string();for(int i=0;i<static_cast<int>(a_tags.size());i++){to_return+=a_tags.at(i);if(i<static_cast<int>(a_tags.size())-1){to_return+=std::string(";");}}return std::string(" tags=\"") + to_return + std::string("\"");}
+    std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + scls::remove_space(x_formula().to_std_string(0));}
+    std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + scls::remove_space(y_formula().to_std_string(0));}
     std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + width().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_width(){return to_xml_text_width(std::string("width"));}
 
@@ -76,17 +87,43 @@ namespace pleos {
         // Basic datas
         std::string content = std::string();
 
-        // The form is a line
+        // Check the common forms
         if(a_points.size() == 2) {
+            // The form is a line
+
             // Needed coordinates
             scls::Fraction x_1 = a_points.at(0).get()->absolute_x();
             scls::Fraction x_2 = a_points.at(1).get()->absolute_x();
             scls::Fraction y_1 = a_points.at(0).get()->absolute_y();
             scls::Fraction y_2 = a_points.at(1).get()->absolute_y();
-            std::cout << "A " << x_1.to_double() << " " << y_1.to_double() << std::endl;
 
             // Add the form
-            content += std::string("<line") + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x_1=") + x_1.to_std_string(0) + std::string(" y_1=") + y_1.to_std_string(0) + std::string(" x_2=") + x_2.to_std_string(0) + std::string(" y_2=") + y_2.to_std_string(0) + std::string(">");
+            content += std::string("<line") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + std::string(" x_1=") + x_1.to_std_string(0) + std::string(" y_1=") + y_1.to_std_string(0) + std::string(" x_2=") + x_2.to_std_string(0) + std::string(" y_2=") + y_2.to_std_string(0) + std::string(" physic=1 collision=line>");
+            return content;
+        }
+        else if(a_points.size() == 4) {
+            // The form is a rect
+
+            // Needed coordinates
+            scls::Fraction x_1 = a_points.at(0).get()->absolute_x();
+            scls::Fraction x_2 = a_points.at(1).get()->absolute_x();
+            scls::Fraction x_3 = a_points.at(2).get()->absolute_x();
+            scls::Fraction x_4 = a_points.at(3).get()->absolute_x();
+            scls::Fraction y_1 = a_points.at(0).get()->absolute_y();
+            scls::Fraction y_2 = a_points.at(1).get()->absolute_y();
+            scls::Fraction y_3 = a_points.at(2).get()->absolute_y();
+            scls::Fraction y_4 = a_points.at(3).get()->absolute_y();
+
+            // Assert (TO ADD)
+
+            // Get the good datas
+            scls::Fraction x = std::min(std::min(std::min(x_1, x_2), x_3), x_4);
+            scls::Fraction y = std::min(std::min(std::min(y_1, y_2), y_3), y_4);
+            scls::Fraction height = std::max(std::max(std::max(y_1, y_2), y_3), y_4) - y;
+            scls::Fraction width = std::max(std::max(std::max(x_1, x_2), x_3), x_4) - x;
+
+            // Add the form
+            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + x.to_std_string(0) + std::string(" y=") + y.to_std_string(0) + std::string(" width=") + width.to_std_string(0) + std::string(" height=") + height.to_std_string(0) + std::string(" physic=1 collision=rect>");
             return content;
         }
 
@@ -103,7 +140,7 @@ namespace pleos {
         if(point_names.at(point_names.size() - 1) == ';'){point_names = point_names.substr(0, point_names.size() - 1);}
 
         // Add the form
-        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
+        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
         return content;
 
     }
@@ -145,8 +182,9 @@ namespace pleos {
     // Returns the needed XML text to generate this object
     std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end().to_std_string(0));}
     std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start().to_std_string(0));}
-    std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
-    std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
+    std::string Circle::to_xml_text_radius(){if(radius_x() != radius_y()){return std::string();}return std::string(" radius=") + radius_x().to_std_string(0);}
+    std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
+    std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
     std::string Circle::to_xml_text_object_name(){return std::string("circle");}
-    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
+    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
 }

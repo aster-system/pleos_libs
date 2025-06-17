@@ -64,7 +64,7 @@ namespace pleos {
 
     // Returns a division circle
     // This function is inspired by this (french) video from Mickael Launay : https://youtu.be/-X49VQgi86E?si=wvdvNiM0ZBgUUii4.
-    std::shared_ptr<scls::Image> division_circle(int image_width, int circle_radius, double modulo, int point_number);
+    std::shared_ptr<scls::__Image_Base> division_circle(int image_width, int circle_radius, double modulo, int point_number);
 
     // Calculate the GCD of two numbers
     long long arithmetic_gcd(Arithmetic_Object* object, std::string* redaction);
@@ -74,7 +74,7 @@ namespace pleos {
     void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction);
 
     // Returns an erathostene sieve
-    std::shared_ptr<scls::Image> erathostene_sieve(int image_width, int start_number, int end_number);
+    std::shared_ptr<scls::__Image_Base> erathostene_sieve(int image_width, int start_number, int end_number);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS
