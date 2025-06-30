@@ -68,6 +68,7 @@ namespace pleos {
         algorithms_comparaison_fusion_division(sort_2.get());
     }
 
+    // Merges two parts of the datas
     void __algorithms_comparaison_fusion(Sort_Datas* datas) {
         // Sub sorts
         if(datas->sub_sorts.size() < 1){return;}
@@ -214,7 +215,7 @@ namespace pleos {
         double value_number = values.size();
         std::vector<long long> needed_width = scls::partition_number(width, value_number);
         for(int i = 0;i<static_cast<int>(values.size());i++) {
-            double proportion = (values[i] / value_number);
+            double proportion = (values[i] / value_number) * 2;if(proportion > 1){proportion = 1.0 + (1.0 - proportion);}
             //proportion *= 2.0;proportion -= 1;
             //proportion = std::sqrt(1 - proportion * proportion);
             int needed_height = round(proportion * maximum_height);

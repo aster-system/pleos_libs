@@ -70,6 +70,7 @@ namespace pleos {
             std::shared_ptr<std::shared_ptr<scls::__Image_Base>> image;
             // Margin of the case
             int margin = 20;
+            int margin_bottom = 5;int margin_top = 5;
             // If the case is merged or not
             enum Merge_State {MS_No, MS_Merged, MS_Merged_Main};
             Merge_State merged = MS_No;
@@ -80,7 +81,7 @@ namespace pleos {
             scls::Text_Style style;
 
             // Height of the case
-            inline int height() const {if(image.get() == 0 || image.get()->get() == 0){return 0;} return image.get()->get()->height();};
+            inline int height() const {if(image.get() == 0 || image.get()->get() == 0){return 0;} return image.get()->get()->height() + margin_bottom + margin_top;};
             // Width of the case
             inline int width() const {if(image.get() == 0 || image.get()->get() == 0){return 0;}return image.get()->get()->width() + margin * 2;};
 

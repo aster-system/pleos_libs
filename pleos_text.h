@@ -70,7 +70,11 @@ namespace pleos {
 	inline std::shared_ptr<Tree<std::string>> tree_from_xml(std::string xml, std::shared_ptr<scls::__Balise_Container> balise){return tree_from_xml(scls::xml(balise, xml), scls::Text_Style());};
 
 	// Creates an image for a PLEOS text
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style);
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<Text_Environment> possible_environment);
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment);
+
+	// Returns if a balise is a special PLEOS balise
+	bool is_special_pleos_balise(std::string name);
 
 	class __Text_Line : public scls::Text_Image_Line {
         // Class representating a more complete text handler for PLEOS

@@ -36,19 +36,6 @@ namespace pleos {
 	//
 	//*********
 
-	// Returns a Point_2D value
-    scls::Point_2D Text_Environment::value_point_2d(std::string base)const{
-        // Format the text
-        while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
-        while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
-
-        // Get the point
-        base = scls::replace(base, std::string(";"), std::string(","));
-        std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
-        if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
-        return scls::Point_2D(value_number(cutted.at(0)), value_number(cutted.at(1)));
-    };
-
 	// Creates and returns a graphic from an std::string
 	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();to_return.get()->graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
 	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){
@@ -302,7 +289,9 @@ namespace pleos {
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style){
+	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("linked_list") || name == std::string("table") || name == std::string("tree");}
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
 	    std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
         std::shared_ptr<scls::__Image_Base> to_return;
@@ -323,15 +312,35 @@ namespace pleos {
         else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}
         else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        // Format text
+        else if(current_balise_name == "definition") {
+            // Handle the attributes
+            std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+            std::string definition_name = std::string();
+            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                if(attributes[i].name == std::string("name")){definition_name = attributes[i].value;}
+            }
+
+            // Get the definition
+            Text_Environment::Definition* needed_definition = possible_environment.get()->definition_by_name(definition_name);
+            if(needed_definition == 0) {scls::print("PLEOS Text", std::string("Unexisting definition for \"") + definition_name + std::string("\"."));}
+            else{
+                // Check capitalisation
+                bool capitalise = true;
+                scls::__XML_Text_Base* balise = current_text.get()->first_balise_at_left();
+                if(balise->only_text()){std::string needed_text = balise->text();if(!(needed_text.at(needed_text.size() - 1) == '.' || (needed_text.at(needed_text.size() - 2) == '.'))){capitalise=false;}}
+                current_text.get()->set_text(needed_definition->content(capitalise));
+            }
+        }
 
         return to_return;
 	}
     void __Text_Line::generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
-        if(current_balise_name == "graph" || current_balise_name == "graphic" || current_balise_name == "linked_list" || current_balise_name == "table" || current_balise_name == "tree") {
+        if(is_special_pleos_balise(current_balise_name)) {
             // Get the image
-            std::shared_ptr<scls::__Image_Base> src_img = generate_text_image(current_text, needed_style);
+            std::shared_ptr<scls::__Image_Base> src_img = generate_text_image(current_text, needed_style, std::shared_ptr<Text_Environment>());
 
             // Change the image
             int height = -1; int width = -1;
@@ -348,64 +357,6 @@ namespace pleos {
             __generate_image(word_to_add, src_img, current_position_in_plain_text, a_current_width, height, width);
         }
         else{scls::Text_Image_Line::generate_word(current_text, current_position_in_plain_text, needed_style, word_to_add);}
-    }
-
-    // Loads the PLEOS balises
-    void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {
-        std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("case_plus", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("content", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("function", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("graph", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        current_balise.get()->style.get()->set_border_width(1);
-        current_balise.get()->style.get()->set_margin_bottom(16);
-        defined_balises.get()->set_defined_balise("graphic", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("histogram", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = false;
-        defined_balises.get()->set_defined_balise("link", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("linked_list", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("node", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("nodes", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("point_cloud", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("point_cloud_linked", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("repeat", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        current_balise.get()->style.get()->set_margin_bottom(16);
-        defined_balises.get()->set_defined_balise("table", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("text", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("tree", current_balise);
-        current_balise = std::make_shared<scls::Balise_Style_Datas>();
-        current_balise.get()->has_content = true;
-        defined_balises.get()->set_defined_balise("trees", current_balise);
     }
 
     // Loads the needed balises

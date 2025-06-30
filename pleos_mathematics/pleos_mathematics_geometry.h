@@ -28,7 +28,7 @@
 #define PLEOS_MATHEMATICS_GEOMETRY
 
 // Include SCLS Graphic Benoit
-#include "../../../scls-graphic-benoit/scls_graphic.h"
+#include "../pleos_environment.h"
 
 // ID of each types of geometrical objects
 #define PLEOS_MATHEMATICS_GEOMETRY_VECTOR 0
@@ -44,9 +44,75 @@ namespace pleos {
     //
     //******************
 
+    // Base of the graphic
+    struct __Graphic_Base {
+        int a_function_number = 0;
+
+        scls::__Formula_Base::Formula a_height = -1;scls::__Formula_Base::Formula a_width = -1;
+        int a_height_in_pixel = -1;int a_width_in_pixel = -1;
+        bool a_height_used = false;bool a_width_used = false;
+
+        scls::Fraction a_middle_x =  0;
+        scls::Fraction a_middle_y = 0;
+        double a_pixel_by_case_x = 100;
+        double a_pixel_by_case_y = 100;
+
+        // Environment in the graphic
+        std::shared_ptr<pleos::Text_Environment> a_environment;
+        // Time in the graphic
+        scls::Fraction a_time = 0;
+    };
+
     class __Graphic_Object_Base {
         // Class representating a base object to display in a graphic
     public:
+
+        //******************
+        // Action handling
+        //******************
+
+        // Action than the robot can do
+        struct Action {
+            #define ACTION_MOVE 0
+
+            // Action constructor
+            Action(short action_type):type(action_type){};
+
+            // Step of the action
+            unsigned short step = 0;
+            // Type of the action
+            const short type = -1;
+        };
+
+        // Possible actions
+        // Move action
+        struct Action_Move : public Action {
+            // Action_Move constructor
+            Action_Move():Action(ACTION_MOVE){};
+
+            // Coordinates to go
+            scls::Fraction x_end = 0;scls::Fraction y_end = 0;
+            inline scls::Point_2D position_end(){return scls::Point_2D(x_end, y_end);};
+        };
+
+        // Adds a move action
+        void add_action_move(scls::Fraction x_end, scls::Fraction y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;a_actions.push_back(action);};
+        void add_action_move(scls::Point_2D position){add_action_move(position.x(), position.y());};
+
+        // Clears the actions
+        void clear_actions(){a_actions.clear();};
+        // Deletes the last action
+        void delete_last_action(){a_actions.erase(a_actions.begin());};
+        // Returns a last action
+        Action* last_action() const {if(a_actions.size() <= 0){return 0;}return a_actions.at(0).get();};
+        Action_Move* last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<Action_Move*>(last_action());};
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<Action>>& actions() {return a_actions;};
+
+        //******************
+        // Collision handling
+        //******************
 
         // Collision in a graphic object
         enum Graphic_Collision_Type {GCT_Circle, GCT_Line, GCT_Rect};
@@ -146,15 +212,22 @@ namespace pleos {
             scls::Fraction a_x_2 = 0;scls::Fraction a_y_2 = 0;
         };
 
+        // Getters and setters
+        inline std::vector<Graphic_Collision::Collision*>& collisions_this_frame() {return a_collisions_this_frame;};
+
+        //******************
+        // The base of graphic objects
+        //******************
+
         // __Graphic_Object_Base constructor
-        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::__Point_2D_Formula position);
-        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent, scls::Point_2D position);
-        __Graphic_Object_Base(std::string name, __Graphic_Object_Base* parent);
-        __Graphic_Object_Base(std::string name, scls::__Point_2D_Formula position);
-        __Graphic_Object_Base(std::string name, scls::Point_2D position);
-        __Graphic_Object_Base(std::string name):__Graphic_Object_Base(name,scls::Point_2D(0, 0)){};
-        __Graphic_Object_Base(scls::Point_2D position):__Graphic_Object_Base(std::string(), position){};
-        __Graphic_Object_Base():__Graphic_Object_Base(std::string(), scls::Point_2D(0, 0)){};
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent, scls::__Point_2D_Formula position);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent, scls::Point_2D position);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula position);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position);
+        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base);
 
         // Returns if the object contains a specific tag
         bool contains_tag(std::string tag);
@@ -164,10 +237,24 @@ namespace pleos {
         // Returns an introduction of the object
         std::string introduction(scls::Textual_Math_Settings* settings) const;
 
+        // Annoying functions to draw the image
+        int graphic_x_to_pixel_x(double x);
+        int graphic_x_to_pixel_x(scls::Fraction x);
+        int graphic_y_to_pixel_y(double y);
+        int graphic_y_to_pixel_y(scls::Fraction y);
+        int graphic_y_to_pixel_y_inversed(double y);
+        int graphic_y_to_pixel_y_inversed(scls::Fraction y);
+        double pixel_by_case_x() const;
+        double pixel_by_case_y() const;
+        scls::Fraction pixel_x_to_graphic_x(int x);
+        scls::Fraction pixel_y_to_graphic_y(int y);
+
         // Soft reset the object
-        virtual void soft_reset(){a_transform.get()->soft_reset();};
+        virtual void soft_reset(){a_collisions_this_frame.clear();a_transform.get()->soft_reset();};
+
         // Returns the needed XML text to generate this object
         virtual std::string to_xml_text();
+        virtual std::string to_xml_text_base();
         virtual std::string to_xml_text_object_name();
         std::string to_xml_text_color(std::string attribute_name, scls::Color color);
         std::string to_xml_text_height(std::string attribute_name);
@@ -186,6 +273,9 @@ namespace pleos {
         inline void move_x(scls::Fraction movement){attached_transform()->move_x(movement);};
         inline void move_y(scls::Fraction movement){attached_transform()->move_y(movement);};
 
+        // Returns the point in a point 3D
+        inline scls::Point_3D to_point_3d_absolute() {return scls::Point_3D(absolute_x().to_double(), 0, absolute_y().to_double());};
+
         // Getters and setters
         inline scls::Fraction absolute_rotation() const {return a_transform.get()->absolute_rotation();};
         inline scls::Fraction absolute_x() const {return a_transform.get()->absolute_x();};
@@ -195,6 +285,8 @@ namespace pleos {
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline std::shared_ptr<scls::GUI_Text> connected_object_shared_ptr()const{return a_connected_object.lock();};
         inline double drawing_proportion() const {return a_drawing_proportion;};
+        inline __Graphic_Base* graphic_base() const {return a_graphic_base.lock().get();};
+        inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base.lock();};
         inline scls::Fraction height() const {return a_transform.get()->scale_y();};
         inline int id() const {return a_id;};
         inline int index() const {return a_index;};
@@ -245,10 +337,10 @@ namespace pleos {
         // Convert a collision to a collision circle
         static Graphic_Collision::Collision_Circle* collision_circle(Graphic_Collision::Collision* collision){if(collision == 0 || collision->type != Graphic_Collision_Type::GCT_Circle){return 0;} return reinterpret_cast<Graphic_Collision::Collision_Circle*>(collision);};
         // Draws the object on an image
-        void draw_on_image(std::shared_ptr<scls::__Image_Base>){};
+        virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>){};
 
         // Function called when a collision occurs
-        virtual void when_collision(Graphic_Collision::Collision* collision){};
+        virtual void when_collision(Graphic_Collision::Collision* collision){a_collisions_this_frame.push_back(collision);};
 
     protected:
 
@@ -256,8 +348,21 @@ namespace pleos {
         inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
+        //******************
+        // Action handling
+        //******************
+
+        // Actions to do
+        std::vector<std::shared_ptr<Action>> a_actions;
+
+        //******************
+        // Main attributes
+        //******************
+
         // Connected object to this object
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
+        // Graphic base
+        std::weak_ptr<__Graphic_Base> a_graphic_base;
         // Transformation in the object
         std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
 
@@ -279,6 +384,9 @@ namespace pleos {
         std::vector<std::string> a_tags;
         // Unknowns in the object
         std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
+
+        // Collisions this frame
+        std::vector<Graphic_Collision::Collision*> a_collisions_this_frame = std::vector<Graphic_Collision::Collision*>();
     };
     typedef __Graphic_Object_Base::Graphic_Collision Graphic_Collision;
     typedef __Graphic_Object_Base::Graphic_Collision::Collision Collision;
@@ -401,18 +509,16 @@ namespace pleos {
     public:
 
         // Point_2D constructor
-        Point_2D(std::string name, scls::__Point_2D_Formula point):__Graphic_Object_Base(name, point){};
-        Point_2D(std::string name, scls::Point_2D point):__Graphic_Object_Base(name, point){};
-        Point_2D(scls::Point_2D point):Point_2D(std::string(), point){};
-        Point_2D(std::string name, scls::Formula x, scls::Formula y):Point_2D(name, scls::__Point_2D_Formula(x, y)){};
-        Point_2D(scls::Formula x, scls::Formula y):Point_2D(std::string(), x, y){};
-        Point_2D(std::string name):Point_2D(name, 0, 0){};
-        Point_2D():Point_2D(std::string(), scls::Point_2D(0, 0)){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula point):__Graphic_Object_Base(graphic_base, name, point){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D point):__Graphic_Object_Base(graphic_base, name, point){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D point):Point_2D(graphic_base, std::string(), point){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Formula x, scls::Formula y):Point_2D(graphic_base, name, scls::__Point_2D_Formula(x, y)){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Formula x, scls::Formula y):Point_2D(graphic_base, std::string(), x, y){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):Point_2D(graphic_base, name, 0, 0){};
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base):Point_2D(graphic_base, std::string(), scls::Point_2D(0, 0)){};
 
         // Returns a vector 3D from a point
-        static std::shared_ptr<Point_2D> from_point(scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
-        // Returns the point in a point 3D
-        inline scls::Point_3D to_point_3d() {return scls::Point_3D(absolute_x().to_double(), 0, absolute_y().to_double());};
+        static std::shared_ptr<Point_2D> from_point(std::shared_ptr<__Graphic_Base> graphic_base, scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(graphic_base, std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
 
         // Handle the vector
         void set_x_end(scls::Fraction new_x_end) {attached_transform()->set_scale_x(new_x_end);};
@@ -446,13 +552,16 @@ namespace pleos {
         struct Link {double drawing_proportion = 1;};
 
         // Form_2D constructor
-        Form_2D(std::string name, __Graphic_Object_Base* parent):__Graphic_Object_Base(name, parent){};
-        Form_2D(std::string name):__Graphic_Object_Base(name){};
+        Form_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent):__Graphic_Object_Base(graphic_base, name, parent){};
+        Form_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base, name){};
+
+        // Draws the circle on an image
+        virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
         // Adds an exclusion point to the form
         inline void add_exclusion_point(std::shared_ptr<Point_2D> point){a_exclusion_points.push_back(point);};
         // Adds a point to the form
-        inline void add_point_external(std::shared_ptr<Point_2D> point){a_points.push_back(point);a_points_link.push_back(Link());};
+        inline void add_point_external(std::shared_ptr<__Graphic_Object_Base> point){a_points.push_back(point);a_points_link.push_back(Link());};
         inline void add_point(std::shared_ptr<Point_2D> point){point.get()->attached_transform()->set_parent(attached_transform());add_point_external(point);};
         // Creates a new point to the form
         std::shared_ptr<Point_2D> new_point(scls::Fraction x, scls::Fraction y);
@@ -470,10 +579,10 @@ namespace pleos {
         inline scls::Color border_color()const{return a_border_color;};
         inline int border_radius()const{return a_border_radius;};
         inline scls::Color color()const{return a_color;};
-        inline std::vector<std::shared_ptr<Point_2D>>& exclusion_points(){return a_exclusion_points;};
+        inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& exclusion_points(){return a_exclusion_points;};
         inline Link& last_link(){return a_points_link[a_points_link.size() - 1];};
         inline Link& link(int position){return a_points_link[position];};
-        inline std::vector<std::shared_ptr<Point_2D>>& points(){return a_points;};
+        inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& points(){return a_points;};
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
         inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
         inline void set_color(scls::Color new_color){a_color=new_color;};
@@ -492,9 +601,9 @@ namespace pleos {
         scls::Color a_color = scls::Color(0, 255, 0);
 
         // Exclusions points in the circle
-        std::vector<std::shared_ptr<Point_2D>> a_exclusion_points;
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> a_exclusion_points;
         // Points in the form
-        std::vector<std::shared_ptr<Point_2D>> a_points;
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> a_points;
         // Links for the point
         std::vector<Link> a_points_link;
     };
@@ -509,10 +618,13 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):__Graphic_Object_Base(name, parent, center){set_radius_x(radius_x);set_radius_y(radius_y);};
-        Circle(std::string name, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y):Circle(name, 0, center, radius_x, radius_y){};
-        Circle(std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius):Circle(name, parent, center, radius, radius){};
-        Circle(std::string name, scls::Point_2D center, scls::__Formula_Base radius):Circle(name, center, radius, radius){};
+        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y);
+        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D center, scls::__Formula_Base radius_x, scls::__Formula_Base radius_y);
+        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, __Graphic_Object_Base* parent, scls::Point_2D center, scls::__Formula_Base radius);
+        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D center, scls::__Formula_Base radius);
+
+        // Draws the circle on an image
+        virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
         // Returns the radius of the circle
         virtual scls::Fraction radius_x(){return attached_transform()->absolute_scale_x() / 2;};
