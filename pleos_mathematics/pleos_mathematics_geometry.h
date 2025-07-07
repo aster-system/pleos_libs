@@ -260,6 +260,7 @@ namespace pleos {
         std::string to_xml_text_height(std::string attribute_name);
         std::string to_xml_text_height();
         std::string to_xml_text_name();
+        std::string to_xml_text_rotation();
         std::string to_xml_text_tags();
         std::string to_xml_text_x();
         std::string to_xml_text_y();
@@ -297,6 +298,7 @@ namespace pleos {
         inline std::string name() const {return a_name;};
         inline double opacity() const {return a_opacity;};
         inline scls::Point_2D position() const {return a_transform.get()->position();};
+        inline void rotate(scls::Fraction needed_rotation) const {a_transform.get()->rotate(needed_rotation);}
         inline scls::Fraction rotation() const {return a_transform.get()->rotation();}
         inline scls::__Formula_Base::Formula rotation_formula() const {return a_transform.get()->rotation_formula();};
         inline bool save_to_xml_text() const {return a_save_to_xml_text;};

@@ -431,6 +431,8 @@ namespace pleos {
         if(to_return.get() != 0){return to_return;}
         to_return = form_shared_ptr(name);
         if(to_return.get() != 0){return to_return;}
+        to_return = texture_object_by_name(name);
+        if(to_return.get() != 0){return to_return;}
         return std::shared_ptr<__Graphic_Object_Base>();
     }
 
@@ -962,6 +964,18 @@ namespace pleos {
             if(current_balise_name == "point"){add_point(Point_2D(graphic_base_shared_ptr(), needed_name, needed_x, needed_y));}
             else if(current_balise_name == "vec" || current_balise_name == "vector"){add_vector(Point_2D(graphic_base_shared_ptr(), needed_name, needed_x, needed_y));}
         }
+        else if(current_balise_name == "real_line" || current_balise_name == "number_line"){
+            // Get the needed datas
+            std::shared_ptr<__Graphic_Object_Base> created_object = std::make_shared<__Graphic_Object_Base>(a_graphic_base);
+            created_object.get()->set_width(10);
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "length") {created_object.get()->set_width(environment.value_number(attributes[j].value));}
+                else if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_object, environment, text_style)){}
+            }
+
+            // Create the line
+            number_line(created_object.get()->x(), created_object.get()->y(), created_object.get()->width());
+        }
         else if(current_balise_name == "rect") {
             // Get the datas about a rectangle in the graphic
             scls::Color border_color = scls::Color(0, 0, 0);scls::Fraction border_radius=5;
@@ -1477,6 +1491,25 @@ namespace pleos {
         if((-a_physic_map_start_y) + y < 0 || (-a_physic_map_start_y) + y >= static_cast<int>(a_physic_map[(-a_physic_map_start_x) + x].size())){return 0;}
         return a_physic_map[(-a_physic_map_start_x) + x][(-a_physic_map_start_y) + y].get();
     };
+
+    //******************
+    //
+    // Built-in features
+    //
+    //******************
+
+    // Creates a number line
+    void Graphic::number_line(scls::Fraction x, scls::Fraction y, scls::Fraction length) {
+        // Create the text
+        std::shared_ptr<scls::Text_Style> current_style = std::make_shared<scls::Text_Style>();
+        new_text(std::string("..."), x - length / 2, y, current_style);
+        new_text(std::string("..."), x + length / 2, y, current_style);
+
+        // Create the line
+        length *= scls::Fraction(4, 5);
+        std::shared_ptr<Form_2D> line = new_line(std::string("number_line"), x - length / 2, y, x + length / 2, y);
+        line.get()->set_border_color(scls::Color(0, 0, 0));
+    }
 
     //******************
     //

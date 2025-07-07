@@ -510,6 +510,7 @@ namespace pleos {
 
             // Getters and setters
             inline __Graphic_Object_Base* attached_object()const{return a_attached_object.lock().get();};
+            inline std::shared_ptr<__Graphic_Object_Base> attached_object_shared_ptr()const{return a_attached_object.lock();};
             inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
@@ -614,6 +615,15 @@ namespace pleos {
         virtual void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int graphic_width_in_pixel, int graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
+
+        //******************
+        //
+        // Built-in features
+        //
+        //******************
+
+        // Creates a number line
+        void number_line(scls::Fraction x, scls::Fraction y, scls::Fraction length);
 
     protected:
 
@@ -878,6 +888,9 @@ namespace pleos {
         inline Graphic::Physic_Case* physic_case(int x, int y){return a_datas.get()->physic_case(x, y);};
         // Updates the physic
         int update_physic(double multiplier);
+
+        // Getters and setters
+        inline std::vector<std::shared_ptr<Graphic::Graphic_Physic>>& physic_objects(){return a_datas.get()->physic_objects();};
 
     private:
 
