@@ -67,7 +67,7 @@ namespace pleos {
         // Cases in the table
         struct Table_Case {
             // Image in the case
-            std::shared_ptr<std::shared_ptr<scls::__Image_Base>> image;
+            std::shared_ptr<scls::Image> image;
             // Margin of the case
             int margin = 20;
             int margin_bottom = 5;int margin_top = 5;
@@ -80,15 +80,14 @@ namespace pleos {
             // Style of the case
             scls::Text_Style style;
 
-            // Height of the case
-            inline int height() const {if(image.get() == 0 || image.get()->get() == 0){return 0;} return image.get()->get()->height() + margin_bottom + margin_top;};
-            // Width of the case
-            inline int width() const {if(image.get() == 0 || image.get()->get() == 0){return 0;}return image.get()->get()->width() + margin * 2;};
+            // Height / width of the case
+            int height() const;
+            int width() const;
 
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
-            inline void set_image(std::shared_ptr<scls::__Image_Base> new_image){(*image.get()) = new_image;};
+            inline void set_image(scls::Image new_image){(*image.get()) = new_image;};
         };
 
         // Table constructor
@@ -96,7 +95,7 @@ namespace pleos {
 
         // Returns the case at a certain position
         Table_Case* case_at(int x, int y);
-        inline std::shared_ptr<scls::__Image_Base>& image_at(int x, int y){return *(case_at(x, y)->image.get());};
+        inline scls::Image& image_at(int x, int y){return *(case_at(x, y)->image.get());};
         // Checks the merge of the case
         void check_merge();
         // Returns the number of column in the table
@@ -109,28 +108,18 @@ namespace pleos {
         // Returns the height of a line
         int line_height(int line) const;
         // Returns the total height / width of the image
-        inline int total_height() const {int to_return = 0;int needed_width = line_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += line_height(i);};return to_return;};
-        inline int total_width() const {int to_return = 0;int needed_width = column_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += column_width(i);};return to_return;};
+        inline int total_height_in_pixel() const {int to_return = 0;int needed_width = line_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += line_height(i);};return to_return;};
+        inline int total_width_in_pixel() const {int to_return = 0;int needed_width = column_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += column_width(i);};return to_return;};
 
         // Merges cases
-        void merge_cases(int x, int y, int width, int height){
-            case_at(x, y)->merged_height = height;case_at(x, y)->merged_width = width;
-            for(int i = 0;i<static_cast<int>(width);i++){
-                for(int j = 0;j<static_cast<int>(height);j++){
-                    if(!(i == 0 && j == 0)){
-                        case_at(x + i, y + j);
-                        a_cases[x + i][y + j].get()->image = a_cases[x][y].get()->image;
-                    }
-                }
-            }
-        };
+        void merge_cases(int x, int y, int width, int height);
 
         // Set the value of an std::string case
-        void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = tig->image_shared_ptr(value, *needed_style);};
+        void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
         void set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
 
         // Returns the table to an image
-        std::shared_ptr<scls::__Image_Base> to_image();
+        scls::Image to_image();
 
         // Getters and setters
         inline int column_separation() const {return a_column_separation;};

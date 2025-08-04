@@ -80,12 +80,14 @@ namespace pleos {
         scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const;
         std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const;
 
+        // Returns a color value
+        scls::Color value_color(std::string base)const;
         // Returns a formula value
         scls::__Formula_Base::Formula value_formula(std::string base)const;
         // Returns a number value
         scls::Fraction value_number(std::string base)const;
-        // Returns a Point_2D value
-        scls::Point_2D value_point_2d(std::string base)const;
+        // Returns a Point_2D_Formula value
+        scls::Point_2D_Formula value_point_2d(std::string base)const;
 
         // Getters and setters
         inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
@@ -97,21 +99,41 @@ namespace pleos {
 
         // Class containing a definition
         class Definition {
+
         public:
+            // Content of the definitions
+            struct __Content{__Content(std::string needed_content);__Content(std::string needed_name,std::string needed_content);std::string content = std::string();std::string name = std::string();};;
+
             // Definition constructor
             Definition(std::string name):a_name(name){};
 
-            // Add a content to the definition
+            // Adds a content to the definition
             void add_content(std::string content);
+            void add_content(std::string content_name, std::string content);
+            // Gets one content of the definition
             std::string content(bool capitalise_first_letter)const;
+            std::string content(std::string content_name, bool capitalise_first_letter)const;
+            __Content* content_full_by_name(std::string content_name) const;
+            std::shared_ptr<__Content> content_full_by_name_shared_ptr(std::string content_name) const;
+
+            // Adds a theorem to the definition
+            void add_theorem(std::string theorem);
+            void add_theorem(std::string theorem_name, std::string theorem);
+            // Gets one theorem of the definition
+            std::string theorem(bool capitalise_first_letter)const;
+            std::string theorem(std::string theorem_name, bool capitalise_first_letter)const;
+            __Content* theorem_full_by_name(std::string content_name) const;
+            std::shared_ptr<__Content> theorem_full_by_name_shared_ptr(std::string content_name) const;
 
             // Getters and setters
             inline std::string name() const {return a_name;};
         private:
-            // Content of the definitions
-            std::vector<std::string> a_contents;
+            // Contents of the definition
+            std::vector<std::shared_ptr<__Content>> a_contents;
             // Name of the definition
             std::string a_name = std::string();
+            // Theorems of the definition
+            std::vector<std::shared_ptr<__Content>> a_theorems;
         };
 
         // Returns a definition by its name

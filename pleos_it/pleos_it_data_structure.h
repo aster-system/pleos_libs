@@ -194,9 +194,6 @@ namespace pleos {
             Link* link_by_object(__Node_Base* node);
             Link* link_by_object(std::shared_ptr<__Node_Base> node);
 
-            // Returns the value into an image
-            //template <typename X = E> std::enable_if<!std::is_base_of<X,std::string>::value,std::shared_ptr<scls::__Image_Base>>::type image_value() {std::shared_ptr<scls::__Image_Base> to_return = scls::to_image(a_value.get());return to_return;};
-            //template <typename X = E> std::enable_if<std::is_base_of<X,std::string>::value,std::shared_ptr<scls::__Image_Base>>::type image_value() {style().set_alignment_horizontal(scls::H_Center);std::shared_ptr<scls::__Image_Base> to_return = scls::to_image(a_value.get(), style());return to_return;};
             // Returns a node to an std::string
             virtual std::string to_xml_text(std::string node_object_name, std::string node_content);
             std::string to_xml_text_x();
@@ -389,12 +386,12 @@ namespace pleos {
 
             // Get the needed datas
             scls::Point_2D direction = a_direction.normalized();
-            scls::Point_2D director = direction.rotated(90);
+            scls::Point_2D director = direction.rotated(-90);
             scls::Fraction distance_child_child = 1;
             //scls::Fraction distance_child_parent = 1;
             scls::Fraction needed_width = total_width(distance_child_child);
             if(a_children.size() > 0){needed_width -= a_children.at(0).get()->total_width(distance_child_child);}
-            scls::Fraction start_x = (a_root_x + direction.x()) - (needed_width * direction.y()) / 2;
+            scls::Fraction start_x = (a_root_x + direction.x()) - (needed_width * director.x()) / 2;
             scls::Fraction start_y = (a_root_y + direction.y()) + (needed_width * direction.x()) / 2;
 
             // Place the children
@@ -405,8 +402,8 @@ namespace pleos {
                 a_children[i].get()->a_root_x = current_x;
                 a_children[i].get()->a_root_y = current_y;
                 a_children[i].get()->place_nodes();
-                current_x += director.x() * child_width;
-                current_y += director.y() * child_width;
+                current_x += scls::Fraction::from_double(director.x()) * child_width;
+                current_y += scls::Fraction::from_double(director.y()) * child_width;
             }
         };
         // Returns a sub-tree in the tree

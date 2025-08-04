@@ -36,6 +36,10 @@ namespace pleos {
 	//
 	//*********
 
+	// Height / width of the case
+    int Table::Table_Case::height() const {if(image.get() == 0){return 0;} return image.get()->height() + margin_bottom + margin_top;};
+    int Table::Table_Case::width() const {if(image.get() == 0){return 0;}return image.get()->width() + margin * 2;};
+
 	// Handle the title
     std::shared_ptr<scls::__Image_Base> Illustrator::title_image(scls::Text_Image_Generator* tig){if(a_title == std::string()){return std::shared_ptr<scls::__Image_Base>();}return tig->image_shared_ptr(a_title, *title_style());};
 
@@ -59,13 +63,15 @@ namespace pleos {
                     while(i < static_cast<int>(a_cases.size())) {
                         j = temp_j;if(i == temp_i){j++;}
                         while(j < static_cast<int>(a_cases.at(i).size())) {
-                            Table::Table_Case* analysed_case = case_at(i, j);
-                            if(current_case->image.get() == analysed_case->image.get()){
-                                analysed_case->merged = Table::Table_Case::Merge_State::MS_Merged;
-                                current_case->merged = Table::Table_Case::Merge_State::MS_Merged_Main;
-                                case_width++;
+                            if(!(i == temp_i && j == temp_j)) {
+                                Table::Table_Case* analysed_case = case_at(i, j);
+                                if(current_case->image.get() == analysed_case->image.get()){
+                                    analysed_case->merged = Table::Table_Case::Merge_State::MS_Merged;
+                                    current_case->merged = Table::Table_Case::Merge_State::MS_Merged_Main;
+                                    case_width++;
+                                }
+                                else{if(j <= temp_j){stop = true;}break;}
                             }
-                            else{if(j < temp_j + 1 && i >= temp_i + 1){stop = true;}break;}
                             j++;
                         }
                         if(stop){break;}i++;
@@ -136,26 +142,34 @@ namespace pleos {
         if(a_cases[x][y].get()==0){
             // Create the case
             a_cases[x][y] = std::make_shared<Table::Table_Case>();
-            a_cases[x][y].get()->image = std::make_shared<std::shared_ptr<scls::__Image_Base>>();
+            a_cases[x][y].get()->image = std::make_shared<scls::Image>();
         }
         return a_cases[x][y].get();
     };
 
-    // Set the value of an std::string case
-    void Table::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig) {
-        std::shared_ptr<scls::__Image_Base> img = tig->image_shared_ptr(value, *needed_style);
-        (*case_at(x, y)->image.get()) = img;
-        for(int i = 0;i<width;i++) {
-            for(int j = 0;j<height;j++) {
-                if(!(i == 0 && j == 0)) {
-                    (*case_at(x + i, y + j)->image.get()) = img.get()->copy_image();
+    // Merges cases
+    void Table::merge_cases(int x, int y, int width, int height){
+        case_at(x, y)->merged_height = height;case_at(x, y)->merged_width = width;
+        for(int i = 0;i<static_cast<int>(width);i++){
+            for(int j = 0;j<static_cast<int>(height);j++){
+                if(!(i == 0 && j == 0)){
+                    case_at(x + i, y + j);
+                    a_cases[x + i][y + j].get()->image = a_cases[x][y].get()->image;
                 }
             }
         }
     }
 
+    // Set the value of an std::string case
+    void Table::set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = tig->image_shared_ptr(value, *needed_style);};
+    void Table::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig) {
+        std::shared_ptr<scls::__Image_Base> img = tig->image_shared_ptr(value, *needed_style);
+        (*case_at(x, y)->image.get()) = img;
+        merge_cases(x, y, width, height);
+    }
+
 	// Returns the table to an image
-    std::shared_ptr<scls::__Image_Base> Table::to_image() {
+    scls::Image Table::to_image() {
         // Get the needed datas
         int bottom_border = 2;
         int left_border = 2;
@@ -172,12 +186,12 @@ namespace pleos {
         // Create the image
         check_merge();
         scls::Color background_color = scls::Color(255, 255, 255);
-        int needed_total_height = total_height() + (line_separation * (needed_lines - 1)) + top_border + bottom_border;
-        int needed_total_width = total_width() + (column_separation() * (needed_columns - 1)) + left_border + right_border;
+        int needed_total_height = total_height_in_pixel() + (line_separation * (needed_lines - 1)) + top_border + bottom_border;
+        int needed_total_width = total_width_in_pixel() + (column_separation() * (needed_columns - 1)) + left_border + right_border;
         int final_total_width = needed_total_width;
         if(needed_title_image.get() != 0){needed_total_height += needed_title_image.get()->height();}
         if(needed_title_image.get() != 0 && needed_title_image.get()->width() > final_total_width){final_total_width = needed_title_image.get()->width();if(final_total_width-needed_total_width%2==1){final_total_width++;}}
-        std::shared_ptr<scls::__Image_Base> to_return = std::make_shared<scls::__Image_Base>(final_total_width, needed_total_height, background_color);
+        scls::Image to_return = scls::Image(final_total_width, needed_total_height, background_color);
 
         // Get the datas for the drawing
         // X datas
@@ -195,36 +209,37 @@ namespace pleos {
         scls::Color border_color = scls::Color(0, 0, 0);
         if(needed_title_image.get() != 0 && needed_title_image.get()->width() == final_total_width){x_start = (final_total_width - needed_total_width) / 2 + left_border;}else{x_start = 0;}
         if(needed_title_image.get() != 0){y_start = needed_title_image.get()->height();}else{y_start = 0;}
-        to_return.get()->fill_rect(x_start, y_start, left_border, to_return.get()->height(), border_color);
-        to_return.get()->fill_rect(x_start, to_return.get()->height() - bottom_border, needed_total_width, bottom_border, border_color);
-        to_return.get()->fill_rect((x_start + needed_total_width) - right_border, y_start, right_border, to_return.get()->height(), border_color);
-        to_return.get()->fill_rect(x_start, y_start, needed_total_width, top_border, border_color);
+        to_return.fill_rect(x_start, y_start, left_border, to_return.height(), border_color);
+        to_return.fill_rect(x_start, to_return.height() - bottom_border, needed_total_width, bottom_border, border_color);
+        to_return.fill_rect((x_start + needed_total_width) - right_border, y_start, right_border, to_return.height(), border_color);
+        to_return.fill_rect(x_start, y_start, needed_total_width, top_border, border_color);
 
         // Draw each columns
         for(int i = 0;i<static_cast<int>(a_cases.size());i++) {
             for(int j = 0;j<static_cast<int>(a_cases.at(i).size());j++) {
                 Table::Table_Case* current_case = case_at(i, j);
-                scls::__Image_Base* current_image = current_case->image.get()->get();
+                scls::Image* current_image = current_case->image.get();
                 if(current_case->merged != Table::Table_Case::Merge_State::MS_Merged){
                     // Handle merging
                     int current_width = column_width(i, current_case->merged_width);
+                    int width_in_pixel = current_image->width();
 
                     // Set the background color
                     if(current_case->background_color() != background_color){
-                        to_return.get()->fill_rect(needed_x[i], needed_y[j], current_width, needed_height[j], current_case->background_color());
+                        to_return.fill_rect(needed_x[i], needed_y[j], current_width, needed_height[j], current_case->background_color());
                     }
 
                     // Paste the image
-                    if(current_image != 0){
-                        int current_x = needed_x[i] + (current_width / 2 - current_image->width() / 2);
+                    if(current_image != 0 && current_image->image() != 0){
+                        int current_x = needed_x[i] + (current_width / 2 - width_in_pixel / 2);
                         int current_y = needed_y[j] + (needed_height[j] / 2 - current_image->height() / 2);
-                        to_return.get()->paste(current_image, current_x, current_y);
+                        to_return.paste(current_image, current_x, current_y);
                     }
 
                     // Draw the separation
                     scls::Color separation_color = scls::Color(0, 0, 0);
-                    if(i > 0 && case_at(i - 1, j)->right_border){to_return.get()->fill_rect(needed_x[i] - column_separation(), needed_y[j], column_separation(), needed_height[j] + line_separation, separation_color);}
-                    if(j > 0){to_return.get()->fill_rect(needed_x[i], needed_y[j] - line_separation, current_width + column_separation(), line_separation, separation_color);}
+                    if(i > 0 && case_at(i - 1, j)->right_border){to_return.fill_rect(needed_x[i] - column_separation(), needed_y[j], column_separation(), needed_height[j] + line_separation, separation_color);}
+                    if(j > 0){to_return.fill_rect(needed_x[i], needed_y[j] - line_separation, current_width + column_separation(), line_separation, separation_color);}
                 }
             }
 
@@ -234,13 +249,13 @@ namespace pleos {
 
                 // Draw the separation
                 scls::Color separation_color = scls::Color(0, 0, 0);
-                if(i > 0){to_return.get()->fill_rect(needed_x[i] - column_separation(), needed_y[j], column_separation(), needed_height[j] + line_separation, separation_color);}
-                if(j > 0){to_return.get()->fill_rect(needed_x[i], needed_y[j] - line_separation, needed_width[i] + column_separation(), line_separation, separation_color);}
+                if(i > 0){to_return.fill_rect(needed_x[i] - column_separation(), needed_y[j], column_separation(), needed_height[j] + line_separation, separation_color);}
+                if(j > 0){to_return.fill_rect(needed_x[i], needed_y[j] - line_separation, needed_width[i] + column_separation(), line_separation, separation_color);}
             }
         }
 
         // Paste the title
-        if(needed_title_image.get() != 0){to_return.get()->paste(needed_title_image.get(), to_return.get()->width() / 2 - needed_title_image.get()->width() / 2, 0);}
+        if(needed_title_image.get() != 0){to_return.paste(needed_title_image.get(), to_return.width() / 2 - needed_title_image.get()->width() / 2, 0);}
 
         // Return the result
         return to_return;

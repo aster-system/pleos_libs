@@ -38,6 +38,9 @@ namespace pleos {
 
 	// Loads the PLEOS balises
     void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {
+        // Loads basic balises
+        defined_balises.get()->_load_built_in_balises();
+
         std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("case_plus", current_balise);
@@ -97,12 +100,18 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("trees", current_balise);
     }
 
+    // __Content constructor
+    Text_Environment::Definition::__Content::__Content(std::string needed_content):content(needed_content){}
+    Text_Environment::Definition::__Content::__Content(std::string needed_name,std::string needed_content):content(needed_content),name(needed_name){}
+
+    // Returns a color value
+    scls::Color Text_Environment::value_color(std::string base)const{return scls::Color::from_std_string(base);}
 	// Returns a formula value
     scls::__Formula_Base::Formula Text_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());}
     // Returns a number value
     scls::Fraction Text_Environment::value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();}
     // Returns a Point_2D value
-    scls::Point_2D Text_Environment::value_point_2d(std::string base)const{
+    scls::Point_2D_Formula Text_Environment::value_point_2d(std::string base)const{
         // Format the text
         while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
         while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
@@ -111,7 +120,7 @@ namespace pleos {
         base = scls::replace(base, std::string(";"), std::string(","));
         std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
         if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
-        return scls::Point_2D(value_number(cutted.at(0)), value_number(cutted.at(1)));
+        return scls::Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
     };
 
     // Handle unknowns
@@ -128,13 +137,44 @@ namespace pleos {
     // Definition system
     //*********
 
-    void Text_Environment::Definition::add_content(std::string content){if(a_contents.size() <= 0){a_contents.push_back(content);}else{a_contents[0]=content;}};
+    // Adds a content to the definition
+    void Text_Environment::Definition::add_content(std::string content){if(a_contents.size() <= 0){a_contents.push_back(std::make_shared<Text_Environment::Definition::__Content>(content));}else{a_contents.at(0).get()->content=content;}};
+    void Text_Environment::Definition::add_content(std::string content_name, std::string content){Text_Environment::Definition::__Content* definition = content_full_by_name(content_name);if(definition==0){a_contents.push_back(std::make_shared<Text_Environment::Definition::__Content>(content_name, content));}else{definition->content=content;}}
+
+    // Gets the content of a definition
     std::string Text_Environment::Definition::content(bool capitalise_first_letter)const{
         std::string to_return = std::string();
-        if(a_contents.size()>0){to_return = a_contents.at(0);}
+        if(a_contents.size()>0){to_return = a_contents.at(0).get()->content;}
         if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
         return to_return;
     };
+    std::string Text_Environment::Definition::content(std::string content_name, bool capitalise_first_letter)const{
+        std::string to_return = std::string();__Content* needed_content = content_full_by_name(content_name);
+        if(needed_content!=0){to_return = needed_content->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
+        return to_return;
+    }
+    Text_Environment::Definition::__Content* Text_Environment::Definition::content_full_by_name(std::string content_name) const{return content_full_by_name_shared_ptr(content_name).get();}
+    std::shared_ptr<Text_Environment::Definition::__Content> Text_Environment::Definition::content_full_by_name_shared_ptr(std::string content_name) const{for(int i = 0;i<static_cast<int>(a_contents.size());i++){if(a_contents.at(i).get()->name == content_name){return a_contents.at(i);}}return std::shared_ptr<Text_Environment::Definition::__Content>();}
+
+    // Adds a theorem to the definition
+    void Text_Environment::Definition::add_theorem(std::string theorem){if(a_theorems.size() <= 0){a_theorems.push_back(std::make_shared<Text_Environment::Definition::__Content>(theorem));}else{a_theorems.at(0).get()->content=theorem;}};
+    void Text_Environment::Definition::add_theorem(std::string theorem_name, std::string theorem){Text_Environment::Definition::__Content* definition = theorem_full_by_name(theorem_name);if(definition==0){a_theorems.push_back(std::make_shared<Text_Environment::Definition::__Content>(theorem_name, theorem));}else{definition->content=theorem;}}
+
+    // Gets one theorem of the definition
+    std::string Text_Environment::Definition::theorem(bool capitalise_first_letter)const{
+        std::string to_return = std::string();
+        if(a_theorems.size()>0){to_return = a_theorems.at(0).get()->content;}
+        if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
+        return to_return;
+    }
+    std::string Text_Environment::Definition::theorem(std::string theorem_name, bool capitalise_first_letter)const{
+        std::string to_return = std::string();__Content* needed_content = theorem_full_by_name(theorem_name);
+        if(a_theorems.size()>0){to_return = needed_content->content;}
+        if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
+        return to_return;
+    }
+    Text_Environment::Definition::__Content* Text_Environment::Definition::theorem_full_by_name(std::string theorem_name) const{return theorem_full_by_name_shared_ptr(theorem_name).get();}
+    std::shared_ptr<Text_Environment::Definition::__Content> Text_Environment::Definition::theorem_full_by_name_shared_ptr(std::string content_name) const{for(int i = 0;i<static_cast<int>(a_theorems.size());i++){if(a_theorems.at(i).get()->name == content_name){return a_theorems.at(i);}}return std::shared_ptr<Text_Environment::Definition::__Content>();}
 
     // Returns a definition by its name
     Text_Environment::Definition* Text_Environment::definition_by_name(std::string definition_name){return definition_by_name_shared_ptr(definition_name).get();}
@@ -154,9 +194,17 @@ namespace pleos {
             std::shared_ptr<Definition> created_definition = new_definition(definition_name);
             for(int i = 0;i<static_cast<int>(current_text.get()->sub_texts().size());i++) {
                 if(current_text.get()->sub_texts().at(i).get()->xml_balise_name() == std::string("content")){
+                    // Get the balises
+                    std::vector<scls::XML_Attribute>& attributes = current_text.get()->sub_texts().at(i).get()->xml_balise_attributes();
+                    std::string type = std::string();
+                    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                        if(attributes[i].name == std::string("type")){type = attributes[i].value;}
+                    }
+
                     // Add a content for the definition
                     std::string needed_content = current_text.get()->sub_texts().at(i).get()->text();
-                    created_definition.get()->add_content(needed_content);
+                    if(type == std::string("theorem")){created_definition.get()->add_theorem(needed_content);}
+                    else{created_definition.get()->add_content(needed_content);}
                 }
             }
         }

@@ -286,7 +286,7 @@ namespace pleos {
     }
 
     // Returns an erathostene sieve
-    std::shared_ptr<scls::__Image_Base> erathostene_sieve(int image_width, int start_number, int end_number) {
+    scls::Image erathostene_sieve(int image_width, int start_number, int end_number) {
         // Create a table
         int line_width = 5;int line_number = 1 + (end_number - start_number) / line_width;
         std::shared_ptr<Table> sieve = std::make_shared<Table>();

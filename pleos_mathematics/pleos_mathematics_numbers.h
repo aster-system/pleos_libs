@@ -74,7 +74,7 @@ namespace pleos {
     void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction);
 
     // Returns an erathostene sieve
-    std::shared_ptr<scls::__Image_Base> erathostene_sieve(int image_width, int start_number, int end_number);
+    scls::Image erathostene_sieve(int image_width, int start_number, int end_number);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS

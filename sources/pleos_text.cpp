@@ -40,7 +40,8 @@ namespace pleos {
 	std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel) {std::shared_ptr<Graphic> to_return = Graphic::new_graphic();to_return.get()->graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);return to_return;}
 	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){
 	    int graphic_width_in_pixel = 200;int graphic_height_in_pixel = 200;
-	    std::shared_ptr<scls::__Image_Base> to_return = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel).get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);
+        std::shared_ptr<Graphic> needed_graphic = graphic_from_xml(xml, needed_style, graphic_width_in_pixel, graphic_height_in_pixel);
+        std::shared_ptr<scls::__Image_Base> to_return = needed_graphic.get()->to_image(graphic_width_in_pixel, graphic_height_in_pixel);
         return to_return;
 	}
 
@@ -289,7 +290,7 @@ namespace pleos {
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word
-	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("linked_list") || name == std::string("table") || name == std::string("tree");}
+	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("linked_list") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");}
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
 	    std::string balise_content = current_text.get()->xml_balise();
@@ -310,26 +311,39 @@ namespace pleos {
         if(current_balise_name == "graph") {to_return = graph_from_xml(current_text, *needed_style.get()).get()->to_image();}
         else if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, *needed_style.get());}
         else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}
-        else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image().image_shared_ptr();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
         // Format text
-        else if(current_balise_name == "definition") {
+        else if(current_balise_name == "definition" || current_balise_name == "theorem") {
             // Handle the attributes
             std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
-            std::string definition_name = std::string();
+            std::string definition_name = std::string();std::string definition_content_name = std::string();
             for(int i = 0;i<static_cast<int>(attributes.size());i++) {
                 if(attributes[i].name == std::string("name")){definition_name = attributes[i].value;}
             }
 
             // Get the definition
+            std::vector<std::string> cutted = scls::cut_string(definition_name, std::string("-"));
+            if(cutted.size() > 0){definition_name = cutted.at(0);if(cutted.size() > 1){definition_content_name = cutted.at(1);}}
             Text_Environment::Definition* needed_definition = possible_environment.get()->definition_by_name(definition_name);
             if(needed_definition == 0) {scls::print("PLEOS Text", std::string("Unexisting definition for \"") + definition_name + std::string("\"."));}
             else{
                 // Check capitalisation
                 bool capitalise = true;
                 scls::__XML_Text_Base* balise = current_text.get()->first_balise_at_left();
-                if(balise->only_text()){std::string needed_text = balise->text();if(!(needed_text.at(needed_text.size() - 1) == '.' || (needed_text.at(needed_text.size() - 2) == '.'))){capitalise=false;}}
-                current_text.get()->set_text(needed_definition->content(capitalise));
+                if(balise != 0 && balise->only_text()){
+                    std::string needed_text = balise->text();
+                    if(needed_text.size() > 2 && !(needed_text.at(needed_text.size() - 1) == '.' || (needed_text.at(needed_text.size() - 2) == '.'))){
+                        capitalise=false;
+                    }
+                }
+
+                // Add the good object
+                std::string needed_content = std::string();
+                if(current_balise_name == "definition") {needed_content = needed_definition->content(definition_content_name, capitalise);if(needed_content == std::string()){scls::print("PLEOS Text Environment", std::string("This text environment has no definitions loaded for \"") + definition_name + std::string("\"."));}}
+                else if(current_balise_name == "theorem") {needed_content = needed_definition->theorem(definition_content_name, capitalise);if(needed_content == std::string()){scls::print("PLEOS Text Environment", std::string("This text environment has no theorems loaded for \"") + definition_name + std::string("\"."));}}
+                current_text.get()->set_xml_balise_name("span");current_text.get()->set_text(needed_content);
+                utf_8_symbol_xml(current_text, true); // A RE REFLECHIR
             }
         }
 
