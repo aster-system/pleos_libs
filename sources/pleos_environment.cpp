@@ -196,15 +196,16 @@ namespace pleos {
                 if(current_text.get()->sub_texts().at(i).get()->xml_balise_name() == std::string("content")){
                     // Get the balises
                     std::vector<scls::XML_Attribute>& attributes = current_text.get()->sub_texts().at(i).get()->xml_balise_attributes();
-                    std::string type = std::string();
+                    std::string name = std::string();std::string type = std::string();
                     for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                        if(attributes[i].name == std::string("type")){type = attributes[i].value;}
+                        if(attributes[i].name == std::string("name")){name = attributes[i].value;}
+                        else if(attributes[i].name == std::string("type")){type = attributes[i].value;}
                     }
 
                     // Add a content for the definition
                     std::string needed_content = current_text.get()->sub_texts().at(i).get()->text();
-                    if(type == std::string("theorem")){created_definition.get()->add_theorem(needed_content);}
-                    else{created_definition.get()->add_content(needed_content);}
+                    if(type == std::string("theorem")){created_definition.get()->add_theorem(name, needed_content);}
+                    else{created_definition.get()->add_content(name, needed_content);}
                 }
             }
         }
