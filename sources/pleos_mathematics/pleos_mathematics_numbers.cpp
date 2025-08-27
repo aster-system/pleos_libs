@@ -289,14 +289,14 @@ namespace pleos {
     scls::Image erathostene_sieve(int image_width, int start_number, int end_number) {
         // Create a table
         int line_width = 5;int line_number = 1 + (end_number - start_number) / line_width;
-        std::shared_ptr<Table> sieve = std::make_shared<Table>();
+        std::shared_ptr<__Table_Case> sieve = __Table_Case::new_table();
         scls::Text_Image_Generator tig;scls::Text_Style needed_style;
 
         int current_number = start_number;
         int current_x = 0;int current_y = 0;
         for(int i = 0;i<line_number;i++) {
             for(;current_x<line_width;current_x++) {
-                Table::Table_Case* current_case = sieve.get()->case_at(current_x, current_y);
+                __Table_Case::Table_Case* current_case = sieve.get()->case_at(current_x, current_y);
                 if(number(current_number)->is_prime()) {
                     current_case->set_background_color(scls::Color(255, 200, 200));
                     needed_style.set_background_color(scls::Color(255, 200, 200));

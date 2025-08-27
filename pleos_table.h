@@ -60,7 +60,7 @@ namespace pleos {
         std::shared_ptr<scls::Text_Style> a_title_style = std::make_shared<scls::Text_Style>();
 	};
 
-	class Table : public Illustrator {
+	class __Table_Case : public Illustrator {
         // Class representating a more table handler for PLEOS
     public:
 
@@ -86,12 +86,17 @@ namespace pleos {
 
             // Getters and setters
             inline scls::Color background_color() const {return style.background_color();};
+            inline int font_size() const {return style.font_size();};
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
             inline void set_image(scls::Image new_image){(*image.get()) = new_image;};
+
+            // Parent table
+            __Table_Case* parent_table()const{return parent_table_weak_ptr.lock().get();};
+            std::weak_ptr<__Table_Case> parent_table_weak_ptr;
         };
 
         // Table constructor
-        Table():Illustrator(){};
+        template <typename T = __Table_Case> static std::shared_ptr<T> new_table(){{std::shared_ptr<T> to_return = std::shared_ptr<T>(new T());to_return.get()->a_this_object = to_return;return to_return;}};
 
         // Returns the case at a certain position
         Table_Case* case_at(int x, int y);
@@ -115,25 +120,43 @@ namespace pleos {
         void merge_cases(int x, int y, int width, int height);
 
         // Set the value of an std::string case
-        void set_case_value(int x, int y, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
-        void set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style* needed_style, scls::Text_Image_Generator* tig);
+        virtual std::shared_ptr<scls::__Image_Base> case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig);
+        void set_case_value(int x, int y, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig);
+        void set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig);
 
         // Returns the table to an image
         scls::Image to_image();
 
         // Getters and setters
         inline int column_separation() const {return a_column_separation;};
+        inline std::string loaded() const {return a_loaded;};
         inline int minimum_case_width() const {return a_minimum_case_width;};
+        inline void set_loaded(std::string new_loaded){a_loaded = new_loaded;};
         inline void set_minimum_case_width(int new_minimum_case_width) {a_minimum_case_width = new_minimum_case_width;};
+
+    protected:
+
+        // Table constructor
+        __Table_Case():Illustrator(){};
+
     private:
+
         // Cases in the table ([x][y])
         std::vector<std::vector<std::shared_ptr<Table_Case>>> a_cases;
 
         // Separation between two columns
         int a_column_separation = 2;
+        // If the table has been load
+        std::string a_loaded = std::string();
         // Minimum width of a case
         int a_minimum_case_width = 0;
+        // Weak ptr to this table
+        std::weak_ptr<__Table_Case> a_this_object;
     };
+
+    // Creates and returns a table from an std::string
+	std::shared_ptr<__Table_Case> table_from_xml(std::shared_ptr<__Table_Case> table, std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style);
+	template <typename T = __Table_Case> std::shared_ptr<T> table_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<T> to_return = __Table_Case::new_table<T>();table_from_xml(to_return, xml, needed_style);return to_return;}
 }
 
 #endif //PLEOS_TABLE

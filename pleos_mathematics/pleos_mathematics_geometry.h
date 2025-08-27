@@ -75,17 +75,28 @@ namespace pleos {
 
         // Action than the robot can do
         struct Action {
-            #define ACTION_MOVE 0
-            #define ACTION_SET_PARAMETER 1
-            #define ACTION_WAIT 2
+            #define ACTION_CONTAINER -1
+            #define ACTION_DELETE 0
+            #define ACTION_LOOP 1
+            #define ACTION_MOVE 2
+            #define ACTION_ROTATE 3
+            #define ACTION_SET_PARAMETER 4
+            #define ACTION_STOP 5
+            #define ACTION_STRUCTURE 6
+            #define ACTION_WAIT 7
+            #define ACTION_WAIT_UNTIL 8
 
             // Action constructor
             Action(short action_type):type(action_type){};
+
+            // Soft-resets the ction
+            virtual void soft_reset(){};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
             std::string to_xml_text_object(std::string object_name);
+            std::string to_xml_text_time() const;
 
             // Duration of the action
             double duration = 0;
@@ -100,14 +111,30 @@ namespace pleos {
         };
 
         // Possible actions
+        // Delete action
+        struct Action_Delete : public Action {
+            #define ACTION_DELETE_OBJECT 0
+            #define ACTION_DELETE_PHYSIC 1
+
+            // Action_Delete constructor
+            Action_Delete():Action(ACTION_DELETE){};
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+            // To delete
+            char to_delete = ACTION_DELETE_OBJECT;
+        };
         // Move action
         struct Action_Move : public Action {
             // Action_Move constructor
             Action_Move():Action(ACTION_MOVE){};
+            Action_Move(double needed_x, double needed_y, double needed_speed):Action_Move(){speed=needed_speed;x_end=needed_x;y_end=needed_y;};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
+            std::string to_xml_text_speed();
             std::string to_xml_text_x();
             std::string to_xml_text_y();
 
@@ -115,57 +142,188 @@ namespace pleos {
             double speed = 1.0;double x_end = 0;double y_end = 0;
             inline scls::Point_2D position_end(){return scls::Point_2D(x_end, y_end);};
         };
-        // Set parameter action
-        struct Action_Set_Parameter : public Action {
-            // Action_Set_Parameter constructor
-            Action_Set_Parameter():Action(ACTION_SET_PARAMETER){};
+        // Rotate action
+        struct Action_Rotate : public Action {
+            // Action_Rotate constructor
+            Action_Rotate():Action(ACTION_ROTATE){};
+            Action_Rotate(double needed_rotation, double needed_speed):Action_Rotate(){rotation_end=needed_rotation;speed=needed_speed;};
+
+            // Soft-resets the ction
+            virtual void soft_reset(){Action::soft_reset();__rotated=0;};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
+            std::string to_xml_text_rotation();
+
+            // Coordinates to go
+            double speed = 1.0;
+            double __rotated = 0;double rotation_end = 0;double rotation_start = 0;
+        };
+        // Set parameter action
+        struct Action_Set_Parameter : public Action {
+            // Action_Set_Parameter constructor
+            Action_Set_Parameter():Action(ACTION_SET_PARAMETER){};
+            Action_Set_Parameter(std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;duration = needed_duration;};
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text(std::string object_name);
+            virtual std::string to_xml_text_name();
+            std::string to_xml_text_parameter() const;
+            std::string to_xml_text_value() const;
 
             // Parameter datas
             std::string parameter_name = std::string();
             std::string parameter_value = std::string();
+            // Start parameter
+            std::string parameter_start = std::string();
+        };
+        // Stop action
+        struct Action_Stop : public Action {
+            // Action_Stop constructor
+            Action_Stop():Action(ACTION_STOP){};
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
         };
         // Wait action
         struct Action_Wait : public Action {
             // Action_Wait constructor
             Action_Wait():Action(ACTION_WAIT){};
+            Action_Wait(double time):Action_Wait(){duration = time;};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
             std::string to_xml_text_duration();
+        };
+        struct Action_Wait_Until : public Action {
+            // Action_Wait_Until constructor
+            Action_Wait_Until():Action(ACTION_WAIT_UNTIL){};
+            Action_Wait_Until(double time):Action_Wait_Until(){duration = time;};
 
-            // Coordinates to go
-            double total_time = 0;double waited_time = 0;
+            // Returns the action to a XML text
+            virtual std::string to_xml_text(std::string object_name);
+            virtual std::string to_xml_text_name();
+            std::string to_xml_text_duration();
         };
 
-        // Adds a move action
-        void add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;a_actions.push_back(action);};
-        void add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;a_actions.push_back(action);};
-        void add_action_move(scls::Point_2D position, double needed_speed){add_action_move(position.x(), position.y(), needed_speed);};
-        void add_action_move(scls::Point_2D position){add_action_move(position.x(), position.y());};
-        // Adds a set_parameter action
-        void add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;a_actions.push_back(action);};
-        void add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
-        void add_action_set_parameter(std::string parameter_name, std::string parameter_value){add_action_set_parameter(parameter_name, parameter_value, 0);};
-        // Adds a wait action
-        void add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->total_time=time_in_second;a_actions.push_back(action);};
+        // Structure action
+        struct Action_Structure : public Action {
+            // Action structure
+
+            // Action_Structure constructor
+            Action_Structure(short action_type):Action(action_type){};
+
+            // Adds an action
+            std::shared_ptr<Action> add_action(std::shared_ptr<Action> needed_action);
+            // Clears the actions
+            void clear_actions();
+            // Deletes the last action
+            void delete_last_action();
+
+            // Go to the first / next action
+            void go_to_first_action();
+            void go_to_next_action();
+            // If the current action is the end action
+            bool is_end_action() const;
+            // Returns a last action
+            Action* last_action() const;
+            short last_action_type() const;
+            // Returns the next action
+            Action* next_action() const;
+            short next_action_type() const;
+
+            // Returns the action to a XML text
+            std::string to_xml_text_content();
+            virtual std::string to_xml_text(std::string object_name);
+
+            // Getters and setters
+            inline std::vector<std::shared_ptr<Action>>& actions(){return a_actions;};
+            inline int current_action() const {return a_current_action;};
+        private:
+            // Needed actions
+            std::vector<std::shared_ptr<Action>> a_actions;
+            // Current action
+            int a_current_action = 0;
+        };
+
+        // Loop action
+        struct Action_Loop : public Action_Structure {
+            // Action loop
+
+            // Action_Loop constructor
+            Action_Loop():Action_Structure(ACTION_LOOP){};
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+            // Getters and setters
+            inline int repetition() const {return a_repetition;};
+            inline void set_repetition(int new_repetition){a_repetition = new_repetition;};
+        private:
+            // Needed repetition
+            int a_repetition = 1;
+        };
+
+        // Container of actions
+        struct Action_Container : public Action_Structure {
+            // Action container
+
+            // Action_Container constructor
+            Action_Container():Action_Structure(ACTION_CONTAINER){};
+
+            // Adds a delete action
+            void add_action_delete(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();actions().push_back(action);};
+            void add_action_delete_physic(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();action.get()->to_delete=ACTION_DELETE_PHYSIC;actions().push_back(action);};
+            // Adds a move action
+            void add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);};
+            void add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);};
+            void add_action_move(scls::Point_2D position, double needed_speed){add_action_move(position.x(), position.y(), needed_speed);};
+            void add_action_move(scls::Point_2D position){add_action_move(position.x(), position.y());};
+            // Adds a set_parameter action
+            void add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;actions().push_back(action);};
+            void add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
+            void add_action_set_parameter(std::string parameter_name, double parameter_value){add_action_set_parameter(parameter_name, std::to_string(parameter_value), 0);};
+            void add_action_set_parameter(std::string parameter_name, std::string parameter_value){add_action_set_parameter(parameter_name, parameter_value, 0);};
+            // Adds a stop action
+            void add_action_stop(){std::shared_ptr<Action_Stop> action = std::make_shared<Action_Stop>();actions().push_back(action);};
+            // Adds a structure action
+            void add_action_structure(std::shared_ptr<Action_Structure> loop){actions().push_back(loop);};
+            // Adds a wait action
+            void add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->duration=time_in_second;actions().push_back(action);};
+
+            // Returns a last action
+            Action_Delete* last_action_delete() const;
+            Action_Loop* last_action_loop() const;
+            Action_Move* last_action_move() const;
+            Action_Set_Parameter* last_action_set_parameter() const;
+            Action_Stop* last_action_stop() const;
+            Action_Wait* last_action_wait() const;
+        };
 
         // Clears the actions
         void clear_actions();
         // Deletes the last action
         void delete_last_action();
+
         // Returns a last action
         Action* last_action() const;
+        Action_Delete* last_action_delete() const;
+        Action_Loop* last_action_loop() const;
         Action_Move* last_action_move() const;
         Action_Set_Parameter* last_action_set_parameter() const;
+        Action_Stop* last_action_stop() const;
+        short last_action_type() const;
         Action_Wait* last_action_wait() const;
 
+        // Returns the next action
+        Action* next_action() const;
+        short next_action_type() const;
+
         // Getters and setters
-        inline std::vector<std::shared_ptr<Action>>& actions() {return a_actions;};
+        inline Action_Container* actions() {return a_actions.get();};
+        inline std::vector<std::shared_ptr<Action>>& actions_list(){return a_actions.get()->actions();};
 
         //******************
         // Collision handling
@@ -179,24 +337,40 @@ namespace pleos {
 
             // Base of a collision
             struct Collision {
+                // Collision constructor
+                Collision(std::weak_ptr<Graphic_Collision> collision_parent):a_collision_parent(collision_parent){}
+
+                // This object
+                Graphic_Collision* collision_parent() const {return a_collision_parent.lock().get();};
+                std::weak_ptr<Graphic_Collision> collision_parent_weak_ptr() const {return a_collision_parent;};
+                __Graphic_Object_Base* object() const {return collision_parent()->attached_object();};
+
                 // If the collision happens or not
                 bool happens = false;
 
                 // Other collided object
-                std::shared_ptr<Collision> other_collision;
+                Collision* other_collision(){return a_other_collision.lock().get();};
                 std::weak_ptr<__Graphic_Object_Base> __other_object;
                 template <typename T = __Graphic_Object_Base> T* other_object() const {return reinterpret_cast<T*>(__other_object.lock().get());};
+                void set_other_collision(std::weak_ptr<Collision> new_other_collision){a_other_collision = new_other_collision;};
 
                 // Acceleration generated by the force
                 scls::Point_2D acceleration;
                 // Type of the collision
                 Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
+
+            private:
+                // Parent collision of this object
+                std::weak_ptr<Graphic_Collision> a_collision_parent;
+
+                // Other collision object
+                std::weak_ptr<Collision> a_other_collision;
             };
 
             // Datas for a circle collision
             struct Collision_Circle : public Collision {
                 // Collision_Circle constructor
-                Collision_Circle(){type = Graphic_Collision_Type::GCT_Circle;};
+                Collision_Circle(std::weak_ptr<Graphic_Collision> collision_parent):Collision(collision_parent){type = Graphic_Collision_Type::GCT_Circle;};
 
                 // Angle of the collision
                 double angle;
@@ -209,6 +383,9 @@ namespace pleos {
                 #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
                 #define PLEOS_PHYSIC_RECT_COLLISION_RIGHT 4
                 #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
+
+                // Collision_Rect_Rect constructor
+                Collision_Rect_Rect(std::weak_ptr<Graphic_Collision> collision_parent):Collision(collision_parent){type = Graphic_Collision_Type::GCT_Rect;};
 
                 // Distance between the colliding side
                 double distance;
@@ -224,6 +401,7 @@ namespace pleos {
 
             // Getters and setters
             scls::Fraction absolute_height() const;
+            scls::Point_2D absolute_scale() const;
             scls::Fraction absolute_width() const;
             double absolute_x() const;
             double absolute_y() const;
@@ -309,12 +487,15 @@ namespace pleos {
         scls::Fraction pixel_x_to_graphic_x(int x);
         scls::Fraction pixel_y_to_graphic_y(int y);
 
+        // Returns a parameter by its name
+        virtual std::string parameter(std::string parameter);
         // Sets a parameter by its name
-        virtual void set_parameter(std::string parameter, std::string value, double proportion);
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
 
         // Sets the parent of the object
         void __delete_children(__Graphic_Object_Base* object_to_delete);
         void set_parent(std::weak_ptr<__Graphic_Object_Base> new_parent);
+        void set_parent(__Graphic_Object_Base* new_parent);
 
         // Soft reset the object
         virtual void soft_reset(){a_collisions_this_frame.clear();a_transform.get()->soft_reset();};
@@ -328,6 +509,7 @@ namespace pleos {
         std::string to_xml_text_height(std::string attribute_name);
         std::string to_xml_text_height();
         std::string to_xml_text_name();
+        std::string to_xml_text_opacity();
         std::string to_xml_text_parent();
         std::string to_xml_text_rotation();
         std::string to_xml_text_tags();
@@ -410,12 +592,14 @@ namespace pleos {
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;if(should_delete()){when_should_delete();}};
         inline void set_this_object(std::weak_ptr<__Graphic_Object_Base> new_this_object){a_this_object=new_this_object;};
         inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
+        inline void set_velocity(scls::Point_2D new_velocity){a_transform.get()->set_velocity(new_velocity);};
         inline bool should_delete() const {return a_should_delete || (a_deadline != -1 && a_live_time >= a_deadline);};
         inline void set_width(scls::__Formula_Base::Formula new_width){a_transform.get()->set_scale_x(new_width);};
         inline void set_x(scls::__Formula_Base::Formula new_x){a_transform.get()->set_x(new_x);};
         inline void set_y(scls::__Formula_Base::Formula new_y){a_transform.get()->set_y(new_y);};
         inline std::vector<std::string>& tags() {return a_tags;};
         inline std::shared_ptr<__Graphic_Object_Base> this_object_shared_ptr() const {return a_this_object.lock();};
+        inline scls::Point_2D velocity() const {return a_transform.get()->velocity();};
         inline double width() const {return a_transform.get()->scale_x();};
         inline scls::__Formula_Base::Formula width_formula() const {return a_transform.get()->scale_x_formula();};
         inline double x() const {return a_transform.get()->x();};
@@ -443,7 +627,11 @@ namespace pleos {
 
         // Updates the object
         virtual int update(double used_delta_time){return 1;};
+        // Updates the actions of the object
+        virtual bool update_action(double used_delta_time, Action* action, int& deleted_objects);
 
+        // Function called during an interaction
+        virtual void interaction(__Graphic_Object_Base* sender, std::string current_interaction){};
         // Function called when a collision occurs
         virtual void when_collision(Graphic_Collision::Collision* collision){a_collisions_this_frame.push_back(collision);};
         // Function called when a new children is added
@@ -462,7 +650,7 @@ namespace pleos {
         //******************
 
         // Actions to do
-        std::vector<std::shared_ptr<Action>> a_actions;
+        std::shared_ptr<Action_Container> a_actions = std::make_shared<Action_Container>();
 
         //******************
         // Main attributes
@@ -694,10 +882,13 @@ namespace pleos {
         std::shared_ptr<Point_2D> new_point(scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y);
         std::shared_ptr<Point_2D> new_point(scls::Point_2D point);
 
+        // Returns a parameter by its name
+        virtual std::string parameter(std::string parameter_name);
         // Sets a parameter by its name
-        virtual void set_parameter(std::string parameter_name, std::string parameter_value, double proportion);
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_name, double proportion);
 
         // Returns a list of the points triangulated
+        void triangulate_points_external();
         std::vector<std::shared_ptr<Point_2D>> triangulated_points_external();
 
         // Returns the introduction of the form 2D
@@ -725,6 +916,7 @@ namespace pleos {
         virtual std::string to_displayed_text();
         virtual std::string to_xml_text();
         virtual std::string to_xml_text_object_name();
+        std::string to_xml_text_border_radius();
 
         //******************
         // Hierarchy functions
@@ -766,9 +958,9 @@ namespace pleos {
         virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
         // Returns the radius of the circle
-        virtual scls::Fraction radius_x(){return attached_transform()->absolute_scale_x() / 2;};
+        virtual scls::Fraction radius_x(){return attached_transform()->scale_x() / 2;};
         virtual scls::__Formula_Base::Formula radius_x_formula(){return attached_transform()->scale_x_formula() / 2;};
-        virtual scls::Fraction radius_y(){return attached_transform()->absolute_scale_y() / 2;};
+        virtual scls::Fraction radius_y(){return attached_transform()->scale_y() / 2;};
         virtual scls::__Formula_Base::Formula radius_y_formula(){return attached_transform()->scale_y_formula() / 2;};
 
         // Returns the needed XML text to generate this object

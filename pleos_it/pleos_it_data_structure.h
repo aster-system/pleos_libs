@@ -247,7 +247,7 @@ namespace pleos {
         std::vector<std::shared_ptr<__Node_Base>>& nodes();
 
         // Returns the tree in an image
-        std::shared_ptr<scls::__Image_Base> to_image(std::shared_ptr<scls::Text_Style> needed_style);
+        std::shared_ptr<scls::__Image_Base> to_image(scls::Text_Style needed_style);
         std::shared_ptr<scls::__Image_Base> to_image();
         // Returns the graph to an XML text
         virtual std::string to_xml_text(){return to_xml_text(std::string("graph"));};
@@ -320,7 +320,7 @@ namespace pleos {
         void place_child_directly();
 
         // Return the image of the graph attached to the linked-list
-        std::shared_ptr<scls::__Image_Base> to_image(std::shared_ptr<scls::Text_Style> needed_style);
+        std::shared_ptr<scls::__Image_Base> to_image(scls::Text_Style needed_style);
         std::shared_ptr<scls::__Image_Base> to_image();
 
         // Getters and setters

@@ -72,8 +72,8 @@ namespace pleos {
     void __Graph_Base::set_link_ponderation(int id_1, int id_2, std::string needed_ponderation, scls::Text_Style style){set_link_ponderation(id_1, id_2, scls::to_image(&needed_ponderation, style));};
 
     // Returns the tree in an image
-    std::shared_ptr<scls::__Image_Base> __Graph_Base::to_image(){return to_image(std::shared_ptr<scls::Text_Style>());};
-    std::shared_ptr<scls::__Image_Base> __Graph_Base::to_image(std::shared_ptr<scls::Text_Style> needed_style) {
+    std::shared_ptr<scls::__Image_Base> __Graph_Base::to_image(){return to_image(scls::Text_Style());};
+    std::shared_ptr<scls::__Image_Base> __Graph_Base::to_image(scls::Text_Style needed_style) {
         std::shared_ptr<scls::__Image_Base> to_return;
         if(static_cast<int>(a_nodes.size()) > 0) {
             // Get the needed children images
@@ -122,16 +122,13 @@ namespace pleos {
 
             // Prepare the creation of the image
             int x_offset = 0;int y_offset = 0;int height_to_add = 0;int width_to_add = 0;
-            if(needed_style.get() != 0){
-                x_offset = needed_style.get()->border_left_width() + needed_style.get()->padding_left();y_offset = needed_style.get()->border_top_width() + needed_style.get()->padding_top();
-                height_to_add = y_offset + needed_style.get()->border_right_width() + needed_style.get()->padding_right();width_to_add = x_offset + needed_style.get()->border_bottom_width() + needed_style.get()->padding_bottom();
-            }
+            x_offset = needed_style.border_left_width() + needed_style.padding_left();y_offset = needed_style.border_top_width() + needed_style.padding_top();
+            height_to_add = y_offset + needed_style.border_right_width() + needed_style.padding_right();width_to_add = x_offset + needed_style.border_bottom_width() + needed_style.padding_bottom();
+
             // Draw the final image
             to_return = std::make_shared<scls::__Image_Base>(total_width.to_double() + width_to_add, total_height.to_double() + height_to_add, scls::Color(255, 255, 255));
-            if(needed_style.get() != 0) {
-                // Draw the border
-                to_return.get()->draw_border(needed_style.get()->border_left_width(), needed_style.get()->border_top_width(), needed_style.get()->border_bottom_width(), needed_style.get()->border_right_width(), needed_style.get()->border_color);
-            }
+            // Draw the border
+            to_return.get()->draw_border(needed_style.border_left_width(), needed_style.border_top_width(), needed_style.border_bottom_width(), needed_style.border_right_width(), needed_style.border_color());
 
             // Draw the links
             for(int i = 0;i<static_cast<int>(a_nodes.size());i++) {
@@ -248,8 +245,8 @@ namespace pleos {
     void Linked_List::place_child_directly() {if(a_child.get() == 0){return;}else if(ignore_for_placement()){if(parent()!=0){parent()->__place_child_directly(a_child.get());}return;}__place_child_directly(a_child.get());};
 
     // Return the image of the graph attached to the linked-list
-    std::shared_ptr<scls::__Image_Base> Linked_List::to_image(std::shared_ptr<scls::Text_Style> needed_style){place_child();return a_graph.get()->to_image(needed_style);};
-    std::shared_ptr<scls::__Image_Base> Linked_List::to_image(){return to_image(std::shared_ptr<scls::Text_Style>());};
+    std::shared_ptr<scls::__Image_Base> Linked_List::to_image(scls::Text_Style needed_style){place_child();return a_graph.get()->to_image(needed_style);};
+    std::shared_ptr<scls::__Image_Base> Linked_List::to_image(){return to_image(scls::Text_Style());};
 
     //******************
     // Tree

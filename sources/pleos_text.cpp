@@ -78,56 +78,6 @@ namespace pleos {
         return to_return;
 	}
 
-	// Creates and returns a table from an std::string
-	std::shared_ptr<Table> table_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style) {
-	    std::shared_ptr<Table> to_return = std::make_shared<Table>();
-	    scls::Text_Image_Generator tig;
-
-	    // Handle the attributes
-	    std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
-	    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-            if(attributes[i].name == std::string("font_size")){needed_style.set_font_size(std::stoi(attributes[i].value));}
-            else if(attributes[i].name == std::string("minimum_case_width")){to_return.get()->set_minimum_case_width(std::stoi(attributes[i].value));}
-            else if(attributes[i].name == std::string("title")){to_return.get()->set_title(attributes[i].value);}
-	    }
-
-	    // Handle a lot of balises
-        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
-            std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
-            std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
-            if(current_balise_name == "case" || current_balise_name == "case_plus"){
-                scls::Color background_color = scls::Color(255, 255, 255);std::string content = std::string();
-                scls::Text_Style case_style = needed_style;case_style.set_border_width(0);
-                int height = 1;int width = 1;bool right_border = true;int x = 0;int y = 0;
-                for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                    if(!scls::text_style_from_xml_attribute(&attributes[i], &case_style)) {
-                        if(attributes[i].name == std::string("background_color")){background_color = scls::Color::from_std_string(attributes[i].value);}
-                        else if(attributes[i].name == std::string("content")){content = attributes[i].value;}
-                        else if(attributes[i].name == std::string("height")){height = std::stoi(attributes[i].value);}
-                        else if(attributes[i].name == std::string("right_border")){if(attributes[i].value==std::string("0")||attributes[i].value==std::string("false")||attributes[i].value==std::string("no")){right_border=false;}}
-                        else if(attributes[i].name == std::string("width")){width = std::stoi(attributes[i].value);}
-                        else if(attributes[i].name == std::string("x")){x = std::stoi(attributes[i].value);}
-                        else if(attributes[i].name == std::string("y")){y = std::stoi(attributes[i].value);}
-                    }
-                }
-
-                // Create the result
-                if(current_balise_name == "case_plus"){
-                    content = xml->sub_texts()[i].get()->text();
-                    if(case_style.max_width == -1){case_style.max_width = to_return.get()->column_width(x, width);}
-                    (*to_return.get()->case_at(x, y)->image.get()) = tig.image_shared_ptr<Text>(content, case_style);
-                }
-                else{(*to_return.get()->case_at(x, y)->image.get()) = tig.image_shared_ptr(content, case_style);}
-                to_return.get()->case_at(x, y)->right_border = right_border;
-                to_return.get()->case_at(x, y)->set_background_color(background_color);
-                to_return.get()->merge_cases(x, y, width, height);
-            }
-        }
-
-        // Return the result
-        return to_return;
-	}
-
 	// Add a node to the graph
 	void __graph_add_node_late_balises(int needed_node, std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Graph<std::string>* graph){
 	    // Handle the other balises
@@ -291,28 +241,28 @@ namespace pleos {
 
 	// Generate a word
 	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("linked_list") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");}
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
 	    std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
         std::shared_ptr<scls::__Image_Base> to_return;
 
         // Handle style balises
-        needed_style = needed_style.get()->new_child();
+        needed_style = needed_style.new_child();
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
             //std::vector<scls::XML_Attribute>& attributes = current_text->sub_texts()[i].get()->xml_balise_attributes();
-            if(current_balise_name == "border") {scls::border_from_xml(current_text->sub_texts()[i], needed_style.get());}
-            else if(current_balise_name == "padding") {scls::padding_from_xml(current_text->sub_texts()[i], needed_style.get());}
+            if(current_balise_name == "border") {scls::border_from_xml(current_text->sub_texts()[i], needed_style);}
+            else if(current_balise_name == "padding") {scls::padding_from_xml(current_text->sub_texts()[i], needed_style);}
         }
 
         // Create the image
-        if(current_balise_name == "graph") {to_return = graph_from_xml(current_text, *needed_style.get()).get()->to_image();}
-        else if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, *needed_style.get());}
-        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, *needed_style.get()).get()->to_image(needed_style);}
-        else if(current_balise_name == "table") {to_return = table_from_xml(current_text, *needed_style.get()).get()->to_image().image_shared_ptr();}
-        else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, *needed_style.get()).get()->to_image();}
+        if(current_balise_name == "graph") {to_return = graph_from_xml(current_text, needed_style).get()->to_image();}
+        else if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, needed_style);}
+        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, needed_style).get()->to_image(needed_style);}
+        else if(current_balise_name == "table") {to_return = table_from_xml<Table>(current_text, needed_style).get()->to_image().image_shared_ptr();}
+        else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, needed_style).get()->to_image();}
         // Format text
         else if(current_balise_name == "definition" || current_balise_name == "theorem") {
             // Handle the attributes
@@ -349,7 +299,7 @@ namespace pleos {
 
         return to_return;
 	}
-    void __Text_Line::generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, std::shared_ptr<scls::Text_Style> needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
+    void __Text_Line::generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, scls::Text_Style needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
         std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
         if(is_special_pleos_balise(current_balise_name)) {
@@ -364,8 +314,8 @@ namespace pleos {
             } else if(height == -1 && width != -1) {
                 height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
             }
-            if(global_style()->max_width > 0 && width > global_style()->max_width) {
-                width = global_style()->max_width;
+            if(global_style().max_width() > 0 && width > global_style().max_width()) {
+                width = global_style().max_width();
                 height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
             }
             __generate_image(word_to_add, src_img, current_position_in_plain_text, a_current_width, height, width);
@@ -375,6 +325,9 @@ namespace pleos {
 
     // Loads the needed balises
     void Text::load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {load_balises_pleos(defined_balises);}
+
+    // Set the value of an std::string case
+    std::shared_ptr<scls::__Image_Base> Table::case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){return tig->image_shared_ptr<Text>(value, needed_style);}
 
     //*********
     // GUI Handling
@@ -389,8 +342,8 @@ namespace pleos {
     // Updates the texture of the block
     void GUI_Text::__GUI_Text_Block_Graphic::update_texture(scls::Text_Image_Block* block_to_apply, scls::Image_Generation_Type generation_type){
         int height=0;int width=0;
-        graphic()->set_style(*block_to_apply->global_style());
-        graphic()->graphic_from_xml(block_to_apply->datas()->content, *block_to_apply->global_style(), width, height);
+        graphic()->set_style(block_to_apply->global_style());
+        graphic()->graphic_from_xml(block_to_apply->datas()->content, block_to_apply->global_style(), width, height);
 
         // Update the size
         graphic_object()->set_height_in_pixel(height);

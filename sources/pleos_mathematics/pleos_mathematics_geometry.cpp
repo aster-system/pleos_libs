@@ -40,22 +40,43 @@ namespace pleos {
     // Action
     std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) +  std::string(">");}
     std::string __Graphic_Object_Base::Action::to_xml_text_name(){return std::string("action");}
-    std::string __Graphic_Object_Base::Action::to_xml_text_object(std::string object_name){return std::string(" object=\"") + object_name + std::string("\"");}
+    std::string __Graphic_Object_Base::Action::to_xml_text_object(std::string object_name){if(object_name == std::string()){return std::string();}return std::string(" object=\"") + object_name + std::string("\"");}
+    std::string __Graphic_Object_Base::Action::to_xml_text_time() const{if(duration == 0){return std::string();}return std::string(" time=") + scls::Fraction::from_double(duration).to_std_string(0);}
+    // Action delete
+    std::string __Graphic_Object_Base::Action_Delete::to_xml_text_name(){return std::string("action_delete");}
+    // Action loop
+    std::string __Graphic_Object_Base::Action_Loop::to_xml_text_name(){return std::string("action_loop");}
     // Action move
-    std::string __Graphic_Object_Base::Action_Move::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_x() + to_xml_text_y() +  std::string(">");}
+    std::string __Graphic_Object_Base::Action_Move::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_x() + to_xml_text_y() + to_xml_text_speed() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Move::to_xml_text_name(){return std::string("action_move");}
+    std::string __Graphic_Object_Base::Action_Move::to_xml_text_speed(){return std::string(" speed=") + scls::Fraction::from_double(speed).to_std_string(0);}
     std::string __Graphic_Object_Base::Action_Move::to_xml_text_x(){return std::string(" x=") + scls::Fraction::from_double(x_end).to_std_string(0);}
     std::string __Graphic_Object_Base::Action_Move::to_xml_text_y(){return std::string(" y=") + scls::Fraction::from_double(y_end).to_std_string(0);}
+    // Action rotate
+    std::string __Graphic_Object_Base::Action_Rotate::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_rotation() + std::string(">");}
+    std::string __Graphic_Object_Base::Action_Rotate::to_xml_text_name(){return std::string("action_rotate");}
+    std::string __Graphic_Object_Base::Action_Rotate::to_xml_text_rotation(){return std::string(" rotation=") + scls::Fraction::from_double(rotation_end).to_std_string(0);}
     // Action set parameter
-    std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) +  std::string(">");}
+    std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_parameter() + to_xml_text_value() + to_xml_text_time() + std::string(">");}
     std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text_name(){return std::string("action_set_parameter");}
+    std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text_parameter()const{return std::string(" parameter=") + parameter_name;}
+    std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text_value()const{return std::string(" value=") + parameter_value;}
+    // Action stop
+    std::string __Graphic_Object_Base::Action_Stop::to_xml_text_name(){return std::string("action_stop");}
+    // Action structure
+    std::string __Graphic_Object_Base::Action_Structure::to_xml_text_content(){std::string content = std::string();for(int i = 0;i<static_cast<int>(a_actions.size());i++){content += a_actions.at(i).get()->to_xml_text(std::string());if(i<static_cast<int>(a_actions.size())-1){content+=std::string("\n");}}return content;}
+    std::string __Graphic_Object_Base::Action_Structure::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + std::string(">\n") + to_xml_text_content() + std::string("\n</") + to_xml_text_name() + std::string(">");}
     // Action wait
     std::string __Graphic_Object_Base::Action_Wait::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_duration() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Wait::to_xml_text_duration(){return std::string(" duration=") + scls::Fraction::from_double(duration).to_std_string(0);}
     std::string __Graphic_Object_Base::Action_Wait::to_xml_text_name(){return std::string("action_wait");}
+    std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_duration() +  std::string(">");}
+    std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text_duration(){return std::string(" duration=") + scls::Fraction::from_double(duration).to_std_string(0);}
+    std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text_name(){return std::string("action_wait_until");}
 
     // Getters and setters
     scls::Fraction __Graphic_Object_Base::Graphic_Collision::absolute_height() const {return attached_transform()->absolute_scale_y();};
+    scls::Point_2D __Graphic_Object_Base::Graphic_Collision::absolute_scale() const {return attached_transform()->absolute_scale();};
     scls::Fraction __Graphic_Object_Base::Graphic_Collision::absolute_width() const {return attached_transform()->absolute_scale_x();};
     double __Graphic_Object_Base::Graphic_Collision::absolute_x() const {return attached_transform()->absolute_x();};
     double __Graphic_Object_Base::Graphic_Collision::absolute_y() const {return attached_transform()->absolute_y();};
@@ -104,15 +125,41 @@ namespace pleos {
     // Returns if the object contains a specific tag
     bool __Graphic_Object_Base::contains_tag(std::string tag){for(int i=0;i<static_cast<int>(a_tags.size());i++){if(a_tags.at(i)==tag){return true;}}return false;}
 
+    // Adds an action
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Structure::add_action(std::shared_ptr<__Graphic_Object_Base::Action> needed_action){a_actions.push_back(needed_action);return needed_action;}
     // Clears the actions
-    void __Graphic_Object_Base::clear_actions(){a_actions.clear();};
+    void __Graphic_Object_Base::Action_Structure::clear_actions(){a_actions.clear();};
+    void __Graphic_Object_Base::clear_actions(){a_actions.get()->clear_actions();};
     // Deletes the last action
-    void __Graphic_Object_Base::delete_last_action(){a_actions.erase(a_actions.begin());};
+    void __Graphic_Object_Base::Action_Structure::delete_last_action(){if(a_actions.size() > 0){a_actions.erase(a_actions.begin());}};
+    void __Graphic_Object_Base::delete_last_action(){a_actions.get()->delete_last_action();};
+    // Go to the next action
+    void __Graphic_Object_Base::Action_Structure::go_to_first_action(){a_current_action=0;__Graphic_Object_Base::Action* action = next_action();if(action != 0){action->soft_reset();}}
+    void __Graphic_Object_Base::Action_Structure::go_to_next_action(){a_current_action++;__Graphic_Object_Base::Action* action = next_action();if(action != 0){action->soft_reset();}}
+    // If the current action is the end action
+    bool __Graphic_Object_Base::Action_Structure::is_end_action() const{return a_current_action >= static_cast<int>(a_actions.size());}
     // Returns a last action
-    __Graphic_Object_Base::Action* __Graphic_Object_Base::last_action() const {if(a_actions.size() <= 0){return 0;}return a_actions.at(0).get();};
-    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Move*>(last_action());};
-    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::last_action_set_parameter() const {if(last_action() == 0 || last_action()->type != ACTION_SET_PARAMETER){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(last_action());};
-    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::last_action_wait() const {if(last_action() == 0 || last_action()->type != ACTION_WAIT){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(last_action());};
+    __Graphic_Object_Base::Action* __Graphic_Object_Base::last_action() const {return a_actions.get()->last_action();};
+    __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::last_action() const {if(static_cast<int>(a_actions.size()) <= 0){return 0;}return a_actions.at(0).get();};
+    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::Action_Container::last_action_delete() const{if(last_action() == 0 || last_action()->type != ACTION_DELETE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(last_action());};
+    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::last_action_delete() const{return a_actions.get()->last_action_delete();};
+    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::Action_Container::last_action_loop() const{if(last_action() == 0 || last_action()->type != ACTION_LOOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(last_action());}
+    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::last_action_loop() const{return a_actions.get()->last_action_loop();}
+    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::Action_Container::last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Move*>(last_action());};
+    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::last_action_move() const {return a_actions.get()->last_action_move();};
+    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::Action_Container::last_action_set_parameter() const {if(last_action() == 0 || last_action()->type != ACTION_SET_PARAMETER){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(last_action());};
+    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::last_action_set_parameter() const {return a_actions.get()->last_action_set_parameter();};
+    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::Action_Container::last_action_stop() const {if(last_action() == 0 || last_action()->type != ACTION_STOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Stop*>(last_action());};
+    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::last_action_stop() const {return a_actions.get()->last_action_stop();};
+    short __Graphic_Object_Base::Action_Structure::last_action_type() const {return last_action()->type;};
+    short __Graphic_Object_Base::last_action_type() const {return a_actions.get()->last_action_type();};
+    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::Action_Container::last_action_wait() const {if(last_action() == 0 || last_action()->type != ACTION_WAIT){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(last_action());};
+    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::last_action_wait() const {return a_actions.get()->last_action_wait();};
+    // Returns the next action
+    __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::next_action() const{if(static_cast<int>(a_actions.size()) <= a_current_action){return 0;}return a_actions.at(a_current_action).get();}
+    __Graphic_Object_Base::Action* __Graphic_Object_Base::next_action() const{return a_actions.get()->next_action();}
+    short __Graphic_Object_Base::Action_Structure::next_action_type() const{__Graphic_Object_Base::Action* action = next_action();if(action==0){return 0;}return action->type;}
+    short __Graphic_Object_Base::next_action_type() const{return a_actions.get()->next_action_type();}
 
     // Returns an introduction of the object
     std::string __Graphic_Object_Base::introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons l'object \"") + name() + std::string("\".");};
@@ -176,13 +223,24 @@ namespace pleos {
     scls::Fraction __Graphic_Object_Base::pixel_x_to_graphic_x(int x){return graphic_base()->a_middle_x + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
     scls::Fraction __Graphic_Object_Base::pixel_y_to_graphic_y(int y){return graphic_base()->a_middle_y + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
 
+    // Returns a parameter by its name
+    std::string __Graphic_Object_Base::parameter(std::string parameter_name) {
+        if(parameter_name == std::string("opacity")){return scls::Fraction::from_double(opacity()).to_std_string(0);}
+        return std::string();
+    }
     // Sets a parameter by its name
-    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, double proportion) {
-        if(parameter_name == std::string("opacity")){set_opacity(scls::string_to_double(parameter_value) * proportion);}
+    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+        if(parameter_name == std::string("opacity")){
+            double start = scls::Fraction::from_std_string(parameter_value_start).to_double();
+            double current = scls::string_to_double(parameter_value);
+            if(proportion != 1){set_opacity(start + (current - start) * proportion);}
+            else{set_opacity(current);}
+        }
     }
 
     // Sets the parent of the object
     void __Graphic_Object_Base::__delete_children(__Graphic_Object_Base* object_to_delete){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==object_to_delete){a_children.erase(a_children.begin() + i);break;}}}
+    void __Graphic_Object_Base::set_parent(__Graphic_Object_Base* new_parent){set_parent(new_parent->this_object_shared_ptr());}
     void __Graphic_Object_Base::set_parent(std::weak_ptr<__Graphic_Object_Base> new_parent) {
         // Reset the old parent
         if(parent() != 0){parent()->__delete_children(this);}
@@ -196,18 +254,20 @@ namespace pleos {
 
             // Update the position (TEMP)
             //move_x(-parent()->absolute_x());
+            //move_y(-parent()->absolute_y());
         }
     }
 
     // Returns the needed XML text to generate this object
     std::string __Graphic_Object_Base::to_displayed_text(){return std::string("objet");}
     std::string __Graphic_Object_Base::to_xml_text(){return std::string("<") + to_xml_text_base() + std::string(">");}
-    std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height();}
+    std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_opacity();}
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
     std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height_formula().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
     std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
+    std::string __Graphic_Object_Base::to_xml_text_opacity(){if(opacity() == 1){return std::string();}return std::string(" opacity=") + scls::Fraction::from_double(opacity()).to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_parent() {if(parent() == 0){return std::string();}return std::string(" parent=\"") + parent()->name() + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_rotation(){if(rotation_formula() == 0){return std::string();}return std::string(" rotation=\"") + rotation_formula().to_std_string(0) + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_tags(){if(static_cast<int>(a_tags.size())==0){return std::string();}std::string to_return=std::string();for(int i=0;i<static_cast<int>(a_tags.size());i++){to_return+=a_tags.at(i);if(i<static_cast<int>(a_tags.size())-1){to_return+=std::string(";");}}return std::string(" tags=\"") + to_return + std::string("\"");}
@@ -215,6 +275,23 @@ namespace pleos {
     std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + scls::remove_space(y_formula().to_std_string(0));}
     std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + width_formula().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_width(){return to_xml_text_width(std::string("width"));}
+
+    // Updates the actions of the object
+    bool __Graphic_Object_Base::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
+        if(action->type == ACTION_STOP){set_velocity(velocity() * 0);return true;}
+        else if(action->type == ACTION_WAIT){
+            // Wait action
+            __Graphic_Object_Base::Action_Wait* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(action);
+            if(l_a->passed_time >= l_a->duration){return true;}
+        }
+        else if(action->type == ACTION_WAIT_UNTIL){
+            // Wait  until action
+            __Graphic_Object_Base::Action_Wait_Until* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait_Until*>(action);
+            if(graphic_base()->a_time.to_double() >= l_a->duration){return true;}
+        }
+
+        return false;
+    }
 
     // Function called when the object should be delete
     void __Graphic_Object_Base::when_should_delete(){for(int i = 0;i<static_cast<int>(a_children.size());i++){a_children.at(i).get()->set_should_delete(true);}}
@@ -349,10 +426,22 @@ namespace pleos {
     }
     std::shared_ptr<Point_2D> Form_2D::new_point(scls::Point_2D point){return new_point(point.x(), point.y());}
 
+    // Returns a parameter by its name
+    std::string Form_2D::parameter(std::string parameter_name) {
+        if(parameter_name == std::string("color")){return color().to_std_string(0);}
+        return __Graphic_Object_Base::parameter(parameter_name);
+    }
     // Sets a parameter by its name
-    void Form_2D::set_parameter(std::string parameter_name, std::string parameter_value, double proportion) {
-        if(parameter_name == std::string("proportion")){if(a_points_link.size() > 0){a_points_link[0].drawing_proportion = scls::string_to_double(parameter_value) * proportion;}}
-        else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, proportion);}
+    void Form_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+        if(parameter_name == std::string("color")){
+            scls::Color base_color = scls::Color::from_std_string(parameter_value_start);
+            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
+            if(proportion < 1){needed_color = base_color + (needed_color - base_color) * proportion;}
+
+            set_color(needed_color);
+        }
+        else if(parameter_name == std::string("proportion")){if(a_points_link.size() > 0){a_points_link[0].drawing_proportion = scls::string_to_double(parameter_value) * proportion;}}
+        else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
     }
 
     // Returns this object to an XML text
@@ -374,7 +463,7 @@ namespace pleos {
             // Add the form
             double proportion = a_points_link.at(0).drawing_proportion;
             std::string proportion_string = std::string();if(proportion != 1){proportion_string = std::string(" proportion=") + std::to_string(proportion);}
-            content += std::string("<line") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + std::string(" x_1=") + x_1.to_std_string(0) + std::string(" y_1=") + y_1.to_std_string(0) + std::string(" x_2=") + x_2.to_std_string(0) + std::string(" y_2=") + y_2.to_std_string(0) + proportion_string + std::string(" physic=1 collision=line>");
+            content += std::string("<line") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + std::string(" x_1=") + x_1.to_std_string(0) + std::string(" y_1=") + y_1.to_std_string(0) + std::string(" x_2=") + x_2.to_std_string(0) + std::string(" y_2=") + y_2.to_std_string(0) + to_xml_text_border_radius() + proportion_string + std::string(" physic=1 collision=line>");
             return content;
         }
         else if(a_points.size() == 4 && object_name() == std::string("rect")) {
@@ -390,8 +479,6 @@ namespace pleos {
             scls::Fraction y_3 = a_points.at(2).get()->absolute_y();
             scls::Fraction y_4 = a_points.at(3).get()->absolute_y();
 
-            // Assert (TO ADD)
-
             // Get the good datas
             scls::__Formula_Base::Formula needed_height = height_formula();
             scls::__Formula_Base::Formula needed_width = width_formula();
@@ -399,14 +486,14 @@ namespace pleos {
             scls::__Formula_Base::Formula needed_y = y_formula() - needed_height / 2;
 
             // Add the form
-            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + std::string(" physic=1 collision=rect>");
+            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(" physic=1 collision=rect>");
             return content;
         }
         else if(object_name().size() > 6 && object_name().substr(0, 7) == std::string("polygon")) {
             // Add the form
             std::vector<std::string> cutted = scls::cut_string(object_name(), std::string("_"));
             int number = -1;if(cutted.size() >= 2){number =std::stoi(cutted.at(1));}
-            content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_width() + to_xml_text_height() + std::string(" polygon=") + std::to_string(number) + std::string(">");
+            content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_width() + to_xml_text_height() + std::string(" polygon=") + std::to_string(number) + std::string(">");
             return content;
         }
 
@@ -423,16 +510,18 @@ namespace pleos {
         if(point_names.size() > 0 && point_names.at(point_names.size() - 1) == ';'){point_names = point_names.substr(0, point_names.size() - 1);}
 
         // Add the form
-        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
+        content += std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + std::string(" points=") + point_names + std::string(">");
         return content;
 
     }
+    std::string Form_2D::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius());}
     std::string Form_2D::to_xml_text_object_name(){return std::string("form");}
 
     // Returns a list of the points triangulated
-    std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
+    void Form_2D::triangulate_points_external() {
         // Assert
-        if(static_cast<int>(points().size()) < 3){return std::vector<std::shared_ptr<Point_2D>>();}
+        a_last_triangulation.reset();
+        if(static_cast<int>(points().size()) < 3){return;}
 
         // Triangulate the face with the model maker part of SCLS
         scls::model_maker::Face form_to_face;
@@ -445,11 +534,18 @@ namespace pleos {
             form_to_face.exclusion_points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
         }
         a_last_triangulation = form_to_face.triangulate();
+    }
+    std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
+        // Triangulate the point
+        triangulate_points_external();
+        //if(a_last_triangulation.get() == 0){triangulate_points_external();}
+        if(a_last_triangulation.get() == 0){return std::vector<std::shared_ptr<Point_2D>>();}
 
         // Get the needed result
-        std::vector<std::shared_ptr<Point_2D>> to_return = std::vector<std::shared_ptr<Point_2D>>(form_to_face.points_for_rendering().size());
-        for(int i = 0;i<static_cast<int>(form_to_face.points_for_rendering().size());i++) {
-            scls::model_maker::Point* current_point = form_to_face.points_for_rendering()[i].get();
+        std::vector<std::shared_ptr<scls::model_maker::Point>>& points_for_rendering = a_last_triangulation.get()->points_for_rendering;
+        std::vector<std::shared_ptr<Point_2D>> to_return = std::vector<std::shared_ptr<Point_2D>>(points_for_rendering.size());
+        for(int i = 0;i<static_cast<int>(points_for_rendering.size());i++) {
+            scls::model_maker::Point* current_point = points_for_rendering.at(i).get();
             to_return[i]=Point_2D::from_point(graphic_base_shared_ptr(), current_point);
         }
         return to_return;
@@ -486,5 +582,5 @@ namespace pleos {
     std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
     std::string Circle::to_xml_text_object_name(){return std::string("circle");}
-    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_rotation() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
+    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_rotation() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
 }

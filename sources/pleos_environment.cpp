@@ -41,7 +41,11 @@ namespace pleos {
         // Loads basic balises
         defined_balises.get()->_load_built_in_balises();
 
-        std::shared_ptr<scls::Balise_Style_Datas> current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        std::shared_ptr<scls::Balise_Style_Datas> current_balise;
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("action_loop", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("case_plus", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
@@ -55,8 +59,8 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("graph", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
-        current_balise.get()->style.get()->set_border_width(1);
-        current_balise.get()->style.get()->set_margin_bottom(16);
+        current_balise.get()->style.set_border_width(1);
+        current_balise.get()->style.set_margin_bottom(16);
         defined_balises.get()->set_defined_balise("graphic", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
@@ -67,6 +71,9 @@ namespace pleos {
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("linked_list", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("loop_action", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("new_definition", current_balise);
@@ -87,7 +94,7 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("repeat", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
-        current_balise.get()->style.get()->set_margin_bottom(16);
+        current_balise.get()->style.set_margin_bottom(16);
         defined_balises.get()->set_defined_balise("table", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
