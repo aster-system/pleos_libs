@@ -79,7 +79,11 @@ namespace pleos {
     scls::Point_2D __Graphic_Object_Base::Graphic_Collision::absolute_scale() const {return attached_transform()->absolute_scale();};
     scls::Fraction __Graphic_Object_Base::Graphic_Collision::absolute_width() const {return attached_transform()->absolute_scale_x();};
     double __Graphic_Object_Base::Graphic_Collision::absolute_x() const {return attached_transform()->absolute_x();};
+    double __Graphic_Object_Base::Graphic_Collision::absolute_x_1() const{return a_x_1.to_double();};
+    double __Graphic_Object_Base::Graphic_Collision::absolute_x_2() const{return a_x_2.to_double();};
     double __Graphic_Object_Base::Graphic_Collision::absolute_y() const {return attached_transform()->absolute_y();};
+    double __Graphic_Object_Base::Graphic_Collision::absolute_y_1() const{return a_y_1.to_double();};
+    double __Graphic_Object_Base::Graphic_Collision::absolute_y_2() const{return a_y_2.to_double();};
     __Graphic_Object_Base* __Graphic_Object_Base::Graphic_Collision::attached_object()const{return a_attached_object.lock().get();};
     std::weak_ptr<__Graphic_Object_Base> __Graphic_Object_Base::Graphic_Collision::attached_object_weak_ptr()const{return a_attached_object;};
     scls::Transform_Object_2D* __Graphic_Object_Base::Graphic_Collision::attached_transform()const{return a_attached_transform.lock().get();};
@@ -87,25 +91,21 @@ namespace pleos {
     double __Graphic_Object_Base::Graphic_Collision::direct_x_2() const {return a_x_2.to_double();};
     double __Graphic_Object_Base::Graphic_Collision::direct_y_1() const {return a_y_1.to_double();};
     double __Graphic_Object_Base::Graphic_Collision::direct_y_2() const {return a_y_2.to_double();};
-    scls::Fraction __Graphic_Object_Base::Graphic_Collision::height() const {return a_height;};
-    double __Graphic_Object_Base::Graphic_Collision::max_x() const {return attached_transform()->x() + a_width.to_double() / 2;};
-    double __Graphic_Object_Base::Graphic_Collision::max_x_next() const {return attached_transform()->max_x_next();};
-    double __Graphic_Object_Base::Graphic_Collision::max_y() const {return attached_transform()->y() + a_height.to_double() / 2;};
-    double __Graphic_Object_Base::Graphic_Collision::max_y_next() const {return attached_transform()->max_y_next();};
-    double __Graphic_Object_Base::Graphic_Collision::min_x() const {return attached_transform()->x() - a_width.to_double() / 2;};
-    double __Graphic_Object_Base::Graphic_Collision::min_x_next() const {return attached_transform()->min_x_next();};
-    double __Graphic_Object_Base::Graphic_Collision::min_y() const {return attached_transform()->y() - a_height.to_double() / 2;};
-    double __Graphic_Object_Base::Graphic_Collision::min_y_next() const {return attached_transform()->min_y_next();};
+    double __Graphic_Object_Base::Graphic_Collision::max_absolute_x() const {return attached_transform()->max_absolute_x();};
+    double __Graphic_Object_Base::Graphic_Collision::max_absolute_x_next() const {return attached_transform()->max_absolute_x_next();};
+    double __Graphic_Object_Base::Graphic_Collision::max_absolute_y() const {return attached_transform()->max_absolute_y();};
+    double __Graphic_Object_Base::Graphic_Collision::max_absolute_y_next() const {return attached_transform()->max_absolute_y_next();};
+    double __Graphic_Object_Base::Graphic_Collision::min_absolute_x() const {return attached_transform()->min_absolute_x();};
+    double __Graphic_Object_Base::Graphic_Collision::min_absolute_x_next() const {return attached_transform()->min_absolute_x_next();};
+    double __Graphic_Object_Base::Graphic_Collision::min_absolute_y() const {return attached_transform()->min_absolute_y();};
+    double __Graphic_Object_Base::Graphic_Collision::min_absolute_y_next() const {return attached_transform()->min_absolute_y_next();};
     scls::Point_2D __Graphic_Object_Base::Graphic_Collision::position_next() const {return attached_transform()->position_next();};
-    void __Graphic_Object_Base::Graphic_Collision::set_height(scls::Fraction new_height) {a_height = new_height;};
     void __Graphic_Object_Base::Graphic_Collision::set_type(Graphic_Collision_Type new_type){a_type = new_type;};
-    void __Graphic_Object_Base::Graphic_Collision::set_width(scls::Fraction new_width) {a_width = new_width;};
     void __Graphic_Object_Base::Graphic_Collision::set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
     void __Graphic_Object_Base::Graphic_Collision::set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
     void __Graphic_Object_Base::Graphic_Collision::set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
     void __Graphic_Object_Base::Graphic_Collision::set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
     Graphic_Collision_Type __Graphic_Object_Base::Graphic_Collision::type()const{return a_type;};
-    scls::Fraction __Graphic_Object_Base::Graphic_Collision::width() const {return a_width;};
     double __Graphic_Object_Base::Graphic_Collision::x_1() const {return attached_transform()->x() + a_x_1.to_double();};
     double __Graphic_Object_Base::Graphic_Collision::x_2() const {return attached_transform()->x() + a_x_2.to_double();};
     double __Graphic_Object_Base::Graphic_Collision::y_1() const {return attached_transform()->y() + a_y_1.to_double();};
@@ -486,7 +486,7 @@ namespace pleos {
             scls::__Formula_Base::Formula needed_y = y_formula() - needed_height / 2;
 
             // Add the form
-            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(" physic=1 collision=rect>");
+            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(">");
             return content;
         }
         else if(object_name().size() > 6 && object_name().substr(0, 7) == std::string("polygon")) {
@@ -499,14 +499,7 @@ namespace pleos {
 
         // Add the points
         std::string point_names = std::string();
-        for(int i = 0;i<static_cast<int>(a_points.size());i++){
-            __Graphic_Object_Base* p = a_points.at(i).get();
-            //content += std::string("<point name=") + p->name();
-            //if(p->x() != 0){content += std::string(" x=") + p->x().to_std_string(0);}
-            //if(p->y() != 0){content += std::string(" y=") + p->y().to_std_string(0);}
-            //content += std::string(">");
-            point_names += p->name() + std::string(";");
-        }
+        for(int i = 0;i<static_cast<int>(a_points.size());i++){__Graphic_Object_Base* p = a_points.at(i).get();point_names += p->name() + std::string(";");}
         if(point_names.size() > 0 && point_names.at(point_names.size() - 1) == ';'){point_names = point_names.substr(0, point_names.size() - 1);}
 
         // Add the form
@@ -537,8 +530,8 @@ namespace pleos {
     }
     std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
         // Triangulate the point
-        triangulate_points_external();
-        //if(a_last_triangulation.get() == 0){triangulate_points_external();}
+        //triangulate_points_external();
+        if(a_last_triangulation.get() == 0){triangulate_points_external();}
         if(a_last_triangulation.get() == 0){return std::vector<std::shared_ptr<Point_2D>>();}
 
         // Get the needed result

@@ -56,6 +56,9 @@ namespace pleos {
             // Graphic_Base_Object constructor
             Graphic_Base_Object(std::weak_ptr<Graphic> graphic_base):__Graphic_Object_Base(graphic_base.lock().get()->graphic_base_shared_ptr()),a_graphic(graphic_base){};
 
+            // Deletes the physic object
+            void delete_physic_object();
+
             // Datas about the object
             inline int height_in_pixel() const {return (absolute_height() * pixel_by_case_y());};
             inline int width_in_pixel() const {return (absolute_width() * pixel_by_case_x());};
@@ -91,6 +94,9 @@ namespace pleos {
             // Draws the object on an image
             virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
 
+            // Loads the last texture of the object
+            void load_last_texture();
+
             // Coordinates datas
             int graphic_x_to_texture_x(scls::Fraction x);
             int graphic_y_to_texture_y(scls::Fraction y);
@@ -102,6 +108,7 @@ namespace pleos {
             std::string to_xml_text_source();
 
             // Getters and setters
+            inline scls::__Image_Base* last_texture() const {return a_last_texture.get();};
             inline void set_source(std::string new_source) {a_source = new_source;}
             inline void set_texture(scls::Image new_texture){set_texture(new_texture.image_shared_ptr());};
             inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();};
@@ -263,14 +270,17 @@ namespace pleos {
             virtual std::string to_displayed_text();
             virtual std::string to_xml_text();
             std::string to_xml_text_background_color();
+            std::string to_xml_text_color() const;
             std::string to_xml_text_font_size();
             std::string to_xml_text_font_size_in_scale();
             std::string to_xml_text_object_name();
 
             // Getters and setters
             inline scls::Color background_color() const {return style().background_color();};
+            inline scls::Color color() const {return style().color();};
             inline std::string content() const {return a_content;};
             inline scls::Fraction font_size_in_scale() const {return a_font_size_in_scale;};
+            inline void set_color(scls::Color new_color){a_style.set_color(new_color);};
             inline void set_content(std::string needed_content){a_content = needed_content;};
             inline void set_font_size_in_scale(scls::Fraction new_font_size_in_scale){a_font_size_in_scale = new_font_size_in_scale;};
             inline void set_style(scls::Text_Style needed_style){a_style = needed_style;};
@@ -342,6 +352,8 @@ namespace pleos {
         void image_draw_function(std::shared_ptr<scls::__Image_Base> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos);
 
         // Sets an object at the foreground object
+        void set_foreground_object(std::vector<std::shared_ptr<__Graphic_Object_Base>> objects);
+        void set_foreground_object(std::shared_ptr<__Graphic_Object_Base> object);
         void set_foreground_object(__Graphic_Object_Base* object);
         // Sets an object render before an other
         void set_object_render_before(std::shared_ptr<__Graphic_Object_Base> object, __Graphic_Object_Base* object_to_render_before);
@@ -518,6 +530,8 @@ namespace pleos {
         std::shared_ptr<__Graphic_Object_Base> object_by_name_shared_ptr(std::string name);
         // Returns a list of objects shared ptr
         std::vector<std::shared_ptr<__Graphic_Object_Base>> objects_by_tag(std::string tag_name);
+        // Returns a list of objects shared ptr by their type (to_xml_text_object_name())
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> objects_by_xml_type(std::string type_name);
 
         // Returns the middle position of the graphic
         inline scls::Fraction left_x() const {return a_graphic_base.get()->a_middle_x - width() / 2;};
@@ -540,6 +554,7 @@ namespace pleos {
         inline bool draw_background_texture() const {return a_draw_background_texture;};
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
+        inline bool eco_mode() const {return a_graphic_base.get()->a_eco_mode;};
         inline std::vector<std::shared_ptr<Form_2D>>& forms_2d(){return a_forms_2d;};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
@@ -553,6 +568,7 @@ namespace pleos {
         inline void set_background_color(scls::Color new_background_color){a_style.set_background_color(new_background_color);};
         inline void set_draw_base(bool new_draw_base) {a_draw_base = new_draw_base;};
         inline void set_draw_sub_bases(bool new_draw_sub_bases) {a_draw_sub_bases = new_draw_sub_bases;};
+        inline void set_eco_mode(bool new_eco_mode){a_graphic_base.get()->a_eco_mode = new_eco_mode;};
         inline void set_environment(std::shared_ptr<pleos::Text_Environment> new_environment){graphic_base()->a_environment = new_environment;}
         inline void set_style(scls::Text_Style new_style) {a_style = new_style;};
         inline void set_time(scls::Fraction new_time) {graphic_base()->a_time = new_time;};
@@ -595,7 +611,7 @@ namespace pleos {
             Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object):Graphic_Physic(attached_object, attached_object.lock().get()->attached_transform_shared_ptr()){};
 
             // Deletes the object
-            void delete_object(){a_attached_transform.reset();a_attached_object.reset();};
+            void delete_object();
             // If the object should be deleted or not
             bool should_delete() const;
             // Softs reset the object
@@ -629,10 +645,10 @@ namespace pleos {
             void __move(){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());};
 
             // Precise next movement
-            inline double max_x_next() const {return attached_transform()->max_x_next();};
-            inline double max_y_next() const {return attached_transform()->max_y_next();};
-            inline double min_x_next() const {return attached_transform()->min_x_next();};
-            inline double min_y_next() const {return attached_transform()->min_y_next();};
+            inline double max_absolute_x_next() const {return attached_transform()->max_absolute_x_next();};
+            inline double max_absolute_y_next() const {return attached_transform()->max_absolute_y_next();};
+            inline double min_absolute_x_next() const {return attached_transform()->min_absolute_x_next();};
+            inline double min_absolute_y_next() const {return attached_transform()->min_absolute_y_next();};
             inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
             inline double x_next() const {return attached_transform()->x_next();};
             inline double y_next() const {return attached_transform()->y_next();};
@@ -650,6 +666,7 @@ namespace pleos {
             inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
             inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
             inline scls::Fraction delta_time() const {return a_delta_time;};
+            inline bool ignore_dynamic_collisions() const {return a_ignore_dynamic_collisions;};
             inline bool is_static() const {return a_static;};
             inline bool loaded_in_map() const {return a_loaded_in_map;};
             inline bool moved_during_this_frame() const {return attached_transform()->moved_during_this_frame();};
@@ -658,8 +675,11 @@ namespace pleos {
             inline scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
             inline scls::Fraction raw_velocity_x() {return raw_velocity().x();};
             inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
+            inline bool save_to_xml_text() const {return a_save_to_xml_text;};
             inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
+            inline void set_ignore_dynamic_collisions(bool new_ignore_dynamic_collisions){a_ignore_dynamic_collisions = new_ignore_dynamic_collisions;};
             inline void set_loaded_in_map(bool new_loaded_map){a_loaded_in_map = new_loaded_map;};
+            inline void set_save_to_xml_text(bool new_save_to_xml_text){a_save_to_xml_text = new_save_to_xml_text;};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
             inline void set_velocity(scls::Point_2D_Formula new_velocity){attached_transform()->set_velocity(new_velocity);};
@@ -687,8 +707,12 @@ namespace pleos {
 
             // Delta time of the object
             scls::Fraction a_delta_time = scls::Fraction(1, 100);
+            // If the dynamic collision should be ignored or not
+            bool a_ignore_dynamic_collisions = false;
             // If the object is loaded in the map
             bool a_loaded_in_map = false;
+            // If the physic should be saved or not
+            bool a_save_to_xml_text = true;
             // If the object is static or not
             bool a_static = true;
             // If the object use gravity or not

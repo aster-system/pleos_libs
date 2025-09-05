@@ -59,6 +59,8 @@ namespace pleos {
         double a_pixel_by_case_x = 100;
         double a_pixel_by_case_y = 100;
 
+        // If the eco-mode is activated or not
+        bool a_eco_mode = false;
         // Environment in the graphic
         std::shared_ptr<pleos::Text_Environment> a_environment;
         // Time in the graphic
@@ -404,7 +406,11 @@ namespace pleos {
             scls::Point_2D absolute_scale() const;
             scls::Fraction absolute_width() const;
             double absolute_x() const;
+            double absolute_x_1() const;
+            double absolute_x_2() const;
             double absolute_y() const;
+            double absolute_y_1() const;
+            double absolute_y_2() const;
             __Graphic_Object_Base* attached_object()const;
             std::weak_ptr<__Graphic_Object_Base> attached_object_weak_ptr()const;
             scls::Transform_Object_2D* attached_transform()const;
@@ -412,25 +418,21 @@ namespace pleos {
             double direct_x_2() const;
             double direct_y_1() const;
             double direct_y_2() const;
-            scls::Fraction height() const;
-            double max_x() const;
-            double max_x_next() const;
-            double max_y() const;
-            double max_y_next() const;
-            double min_x() const;
-            double min_x_next() const;
-            double min_y() const;
-            double min_y_next() const;
+            double max_absolute_x() const;
+            double max_absolute_y() const;
+            double min_absolute_x() const;
+            double min_absolute_y() const;
+            double max_absolute_x_next() const;
+            double max_absolute_y_next() const;
+            double min_absolute_x_next() const;
+            double min_absolute_y_next() const;
             scls::Point_2D position_next() const;
-            void set_height(scls::Fraction new_height);
             void set_type(Graphic_Collision_Type new_type);
-            void set_width(scls::Fraction new_width);
             void set_x_1(scls::Fraction new_x_1);
             void set_x_2(scls::Fraction new_x_2);
             void set_y_1(scls::Fraction new_y_1);
             void set_y_2(scls::Fraction new_y_2);
             Graphic_Collision_Type type()const;
-            scls::Fraction width() const;
             double x_1() const;
             double x_2() const;
             double y_1() const;
@@ -442,9 +444,6 @@ namespace pleos {
             std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
             // Type of the collision
             Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
-
-            // Scale of the collision
-            scls::Fraction a_height = 1;scls::Fraction a_width = 1;
 
             // Two points (needed for lines)
             scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;

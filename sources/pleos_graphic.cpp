@@ -36,13 +36,16 @@ namespace pleos {
     //
     //******************
 
+    // Deletes the physic object
+    void Graphic::Graphic_Base_Object::delete_physic_object(){graphic()->physic_object_by_attached_object(this)->delete_object();}
+
     // Updates the actions of the object
     bool Graphic::Graphic_Base_Object::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
         if(action->type == ACTION_DELETE) {
             // Delete the object
             __Graphic_Object_Base::Action_Delete* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(action);
             if(l_a->to_delete == ACTION_DELETE_OBJECT){set_should_delete(true);}
-            else if(l_a->to_delete == ACTION_DELETE_PHYSIC){graphic()->physic_object_by_attached_object(this)->delete_object();}
+            else if(l_a->to_delete == ACTION_DELETE_PHYSIC){delete_physic_object();}
             deleted_objects++;return true;
         }
         else{return __Graphic_Object_Base::update_action(used_delta_time, action, deleted_objects);}
@@ -56,18 +59,13 @@ namespace pleos {
         // Asserts
         if(!a_drew_on_image || texture() == 0){return;}
 
-        int needed_height = height_in_pixel();
-        int needed_width = width_in_pixel();
+        // Create the needed datas
         int needed_x = 0;
         int needed_y = 0;
-        scls::Image needed_texture;
 
-        if(texture()->height() <= needed_height && texture()->width() <= needed_width){needed_texture = texture_shared_ptr();}
-        else{
-            a_last_texture = texture()->resize_adaptative(needed_width, needed_height);
-            a_last_texture_height=needed_height;a_last_texture_width=needed_width;
-            needed_texture=a_last_texture;
-        }
+        // Loads the texture
+        load_last_texture();
+        scls::Image needed_texture = a_last_texture;
 
         // Paste the image
         if(rotation() != 0){needed_texture.rotate(rotation().to_double());}
@@ -80,6 +78,17 @@ namespace pleos {
     // Coordinates datas
     int Graphic::Graphic_Texture::graphic_x_to_texture_x(scls::Fraction x){scls::Fraction local_x = x - min_x();return ((local_x / width()).to_double() * static_cast<double>(texture()->width()));}
     int Graphic::Graphic_Texture::graphic_y_to_texture_y(scls::Fraction y){scls::Fraction local_y = y - min_y();return (static_cast<double>(texture()->height()) - (local_y / height()).to_double() * static_cast<double>(texture()->height()));}
+
+    // Loads the last texture of the object
+    void Graphic::Graphic_Texture::load_last_texture(){
+        int needed_height = height_in_pixel();
+        int needed_width = width_in_pixel();
+        if(texture()->height() == needed_height && texture()->width() == needed_width){a_last_texture = texture_shared_ptr();}
+        else{
+            a_last_texture = texture()->resize_adaptative(needed_width, needed_height);
+            a_last_texture_height=needed_height;a_last_texture_width=needed_width;
+        }
+    }
 
     // Returns the source to a XML text
     std::string Graphic::Graphic_Texture::to_displayed_text(){return std::string("objet texturé");}
@@ -251,8 +260,9 @@ namespace pleos {
 
     // Returns the name of the object
     std::string Graphic::Graphic_Text::to_displayed_text(){return std::string("texte");}
-    std::string Graphic::Graphic_Text::to_xml_text(){return std::string("<") + to_xml_text_base() + to_xml_text_background_color() + to_xml_text_font_size() + to_xml_text_font_size_in_scale() + std::string(">") + content() + std::string("</") + to_xml_text_object_name() + std::string(">");};
+    std::string Graphic::Graphic_Text::to_xml_text(){return std::string("<") + to_xml_text_base() + to_xml_text_background_color() + to_xml_text_color() + to_xml_text_font_size() + to_xml_text_font_size_in_scale() + std::string(">") + content() + std::string("</") + to_xml_text_object_name() + std::string(">");};
     std::string Graphic::Graphic_Text::to_xml_text_background_color(){return std::string(" background_color=") + background_color().to_std_string(0);}
+    std::string Graphic::Graphic_Text::to_xml_text_color()const{return std::string(" color=") + color().to_std_string(0);}
     std::string Graphic::Graphic_Text::to_xml_text_font_size() {if(font_size_in_scale() > 0){return std::string();} return std::string(" font_size=") + std::to_string(style().font_size());}
     std::string Graphic::Graphic_Text::to_xml_text_font_size_in_scale() {if(font_size_in_scale() <= 0){return std::string();}return std::string(" font_size_in_scale=") + font_size_in_scale().to_std_string(0);}
     std::string Graphic::Graphic_Text::to_xml_text_object_name() {return std::string("text");}
@@ -552,6 +562,13 @@ namespace pleos {
         return to_return;
     }
 
+    // Returns a list of objects shared ptr by their type (to_xml_text_object_name())
+    std::vector<std::shared_ptr<__Graphic_Object_Base>> Graphic::objects_by_xml_type(std::string type_name) {
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> to_return = std::vector<std::shared_ptr<__Graphic_Object_Base>>();
+        for(int i = 0;i<static_cast<int>(a_objects.size());i++){if(!a_objects.at(i).get()->should_delete() && a_objects.at(i).get()->to_xml_text_object_name() == type_name){to_return.push_back(a_objects.at(i));}}
+        return to_return;
+    }
+
     // Resets the object
     void Graphic::reset(){a_graphic_base.get()->a_time=0;a_circles.clear();a_forms_2d.clear();a_functions.clear();a_objects.clear();a_physic_objects.clear();a_physic_map.clear();a_points.clear();a_texts.clear();a_textures.clear();a_vectors.clear();a_physic_map_start_x=0;a_physic_map_start_y=0;set_draw_base(true);set_draw_sub_bases(true);};
 
@@ -616,6 +633,8 @@ namespace pleos {
     //******************
 
     // Sets an object at the foreground object
+    void Graphic::set_foreground_object(std::vector<std::shared_ptr<__Graphic_Object_Base>> objects){for(int i = 0;i<static_cast<int>(objects.size());i++){set_foreground_object(objects.at(i).get());}}
+    void Graphic::set_foreground_object(std::shared_ptr<__Graphic_Object_Base> object){set_foreground_object(object.get());}
     void Graphic::set_foreground_object(__Graphic_Object_Base* object){
         // Assert
         if(a_objects.at(a_objects.size() - 1).get() == object){return;}
@@ -1013,8 +1032,7 @@ namespace pleos {
         if(attribute.name == "collision") {if(attribute.value == std::string("circle")){physic.get()->new_collision(Graphic_Collision_Type::GCT_Circle);}else if(attribute.value == std::string("rect")){physic.get()->new_collision(Graphic_Collision_Type::GCT_Rect);}else{physic.get()->new_collision(Graphic_Collision_Type::GCT_Line);}}
         else if(attribute.name == "gravity" || attribute.name == "use_gravity") {physic.get()->set_use_gravity((attribute.value == std::string("1") || attribute.value == std::string("true")));}
         else if(attribute.name == "physic") {
-            physic = new_physic_object(object);
-            physic.get()->set_use_gravity(false);
+            physic = new_physic_object(object);physic.get()->set_use_gravity(false);
             if(attribute.value == std::string("static") || attribute.value == std::string("1")){physic.get()->set_static(true);}
             else{physic.get()->set_static(false);}
         }
@@ -1209,41 +1227,44 @@ namespace pleos {
                 else if(attributes[j].name == "y_start" || attributes[j].name == "y_1") {y_1 = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "y_end" || attributes[j].name == "y_2") {y_2 = scls::Fraction::from_std_string(attributes[j].value);}
             }
+
             // Add the form
             std::shared_ptr<Form_2D> created_form = new_line(needed_name, x_1, y_1, x_2, y_2);
             created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
             created_form.get()->set_object_name(std::string("line"));created_form.get()->link(0).drawing_proportion = needed_proportion;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_form, environment, text_style)) {}}
 
             // Handle physic
             if(use_physic != 0){
                 if(physic_map().size() <= 0){load_physic_map(0, 0);}
                 std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = std::make_shared<pleos::Graphic::Graphic_Physic>(created_form, created_form.get()->attached_transform_shared_ptr());
                 physic.get()->set_use_gravity(use_gravity);physic.get()->set_static(use_physic == 1);add_physic_object(physic);
-                if(use_collision){physic.get()->add_collision(x_1, y_1, x_2, y_2);}
+                if(use_collision){physic.get()->add_collision(x_1, y_1, x_2, y_2);}physic.get()->set_save_to_xml_text(false);
             }
         }
         else if(current_balise_name == "physic") {
             // Get the datas about a physic of the graphic
-            std::string needed_attached_object_name = std::string();
+            std::string needed_attached_object_name = std::string();std::shared_ptr<pleos::__Graphic_Object_Base> needed_object;
             std::vector<Graphic_Collision_Type> collisions;bool use_gravity = false;int use_physic = 1; // 0 = None, 1 = Static, 2 = Dynamic
             scls::Point_2D_Formula velocity_start = scls::Point_2D(0, 0);
+            // Get the name
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "attached_object" || attributes[j].name == "object"){needed_attached_object_name = attributes.at(j).value;}
-                else if(attributes[j].name == "collision") {if(attributes[j].value == std::string("circle")){collisions.push_back(Graphic_Collision_Type::GCT_Circle);}else if(attributes[j].value == std::string("line")){collisions.push_back(Graphic_Collision_Type::GCT_Line);}else{collisions.push_back(Graphic_Collision_Type::GCT_Rect);}}
-                else if(attributes[j].name == "gravity" || attributes[j].name == "use_gravity") {use_gravity = (attributes[j].value == std::string("1") || attributes[j].value == std::string("true"));}
+                if(attributes[j].name == "attached_object" || attributes[j].name == "object"){needed_attached_object_name = attributes.at(j).value;needed_object = object_by_name_shared_ptr(needed_attached_object_name);}
                 else if(attributes[j].name == "type") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
-                else if(attributes[j].name == "velocity") {velocity_start = environment.value_point_2d(attributes[j].value);}
             }
 
-            // Add the physic
-            if(physic_map().size() <= 0){load_physic_map(0, 0);}
-            std::shared_ptr<pleos::__Graphic_Object_Base> needed_object = object_by_name_shared_ptr(needed_attached_object_name);
+            // Asserts
             if(needed_object.get() == 0) {scls::print("PLEOS Graphic", std::string("The object \"") + needed_attached_object_name + std::string("\" you want to attach to a physic object does not exist."));}
             else {
-                std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = std::make_shared<pleos::Graphic::Graphic_Physic>(needed_object, needed_object.get()->attached_transform_shared_ptr());
-                physic.get()->set_use_gravity(use_gravity);physic.get()->set_static(use_physic == 1);add_physic_object(physic);
-                for(int k = 0;k<static_cast<int>(collisions.size());k++){physic.get()->new_collision(collisions.at(k));}
-                physic.get()->set_velocity(velocity_start);
+                // Create the physic
+                if(physic_map().size() <= 0){load_physic_map(0, 0);}
+                std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = new_physic_object(needed_object);
+                physic.get()->set_static((use_physic == 1));
+                for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                    if(attributes[j].name != "attached_object" && attributes[j].name != "type"){
+                        if(graphic_from_xml_balise_attribute_physic(attributes.at(j), needed_object, physic, environment, text_style)) {}
+                    }
+                }
             }
         }
         else if(current_balise_name == "point" || current_balise_name == "vec" || current_balise_name == "vector") {
@@ -1282,6 +1303,7 @@ namespace pleos {
 
             // Create the form
             std::shared_ptr<Form_2D> created_form = new_rect(std::string(""), 0, -0.5, -0.5, 1, 1);
+            std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
@@ -1289,6 +1311,7 @@ namespace pleos {
                 else if(attributes[j].name == "height") {height = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "width") {width = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_form, environment, text_style)){}
+                else if(graphic_from_xml_balise_attribute_physic(attributes.at(j), created_form, physic, environment, text_style)) {}
             }
 
             // Add the form
@@ -1351,6 +1374,7 @@ namespace pleos {
             scls::Fraction needed_font_size_in_scale = -1;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "background_color") {current_style.set_background_color(scls::Color::from_std_string(attributes[j].value));}
+                else if(attributes[j].name == "color") {current_style.set_color(scls::Color::from_std_string(attributes[j].value));}
                 else if(attributes[j].name == "content") {needed_content = attributes[j].value;}
                 else if(attributes[j].name == "font_size") {current_style.set_font_size(std::stoi(attributes[j].value));}
                 else if(attributes[j].name == "font_size_in_scale") {needed_font_size_in_scale = environment.value_number(attributes[j].value);}
@@ -1615,7 +1639,8 @@ namespace pleos {
         }
 
         // After XML loading
-        for(int i = 0;i<static_cast<int>(a_objects.size());i++) {a_objects.at(i).get()->after_xml_loading();}
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> created_objects = objects();
+        for(int i = 0;i<static_cast<int>(created_objects.size());i++) {created_objects.at(i).get()->after_xml_loading();}
     }
 
     //******************
@@ -1714,60 +1739,56 @@ namespace pleos {
     }
     Collision_Result __check_collision_rect_line(std::shared_ptr<Graphic_Collision> collision_rect, std::shared_ptr<Graphic_Collision> collision_line, Graphic::Graphic_Physic* dynamic_object_1){
         // Check bottom collision
-        scls::Crossing_Datas_Segment datas_bottom = scls::check_crossing_segment(collision_rect.get()->min_x(), collision_rect.get()->min_y(), collision_rect.get()->max_x(), collision_rect.get()->min_y(), collision_line.get()->x_1(), collision_line.get()->y_1(), collision_line.get()->x_2(), collision_line.get()->y_2());
+        scls::Crossing_Datas_Segment datas_bottom_current = scls::check_crossing_segment(collision_rect.get()->min_absolute_x(), collision_rect.get()->min_absolute_y(), collision_rect.get()->max_absolute_x(), collision_rect.get()->min_absolute_y(), collision_line.get()->absolute_x_1(), collision_line.get()->absolute_y_1(), collision_line.get()->absolute_x_2(), collision_line.get()->absolute_y_2());
+        scls::Crossing_Datas_Segment datas_bottom_next = scls::check_crossing_segment(collision_rect.get()->min_absolute_x_next(), collision_rect.get()->min_absolute_y_next(), collision_rect.get()->max_absolute_x_next(), collision_rect.get()->min_absolute_y_next(), collision_line.get()->absolute_x_1(), collision_line.get()->absolute_y_1(), collision_line.get()->absolute_x_2(), collision_line.get()->absolute_y_2());
+        bool collision_bottom = (!datas_bottom_current.crossed_in_segment && datas_bottom_next.crossed_in_segment);
+        if(!collision_bottom){
+            scls::Point_2D base = scls::Point_2D(collision_line.get()->absolute_x_1(), collision_line.get()->absolute_y_1());
+            scls::Point_2D p_1 = scls::Point_2D(collision_rect.get()->min_absolute_x(), collision_rect.get()->min_absolute_y()) - base;
+            scls::Point_2D p_2 = scls::Point_2D(collision_rect.get()->min_absolute_x_next(), collision_rect.get()->min_absolute_y_next()) - base;
+            double angle_1 = scls::vector_2d_angle(p_1);double angle_2 = scls::vector_2d_angle(p_2);
+            while(angle_1 >= SCLS_PI){angle_1 -= SCLS_PI * 2.0;}while(angle_1 < -SCLS_PI){angle_1 += SCLS_PI * 2.0;}
+            while(angle_2 >= SCLS_PI){angle_2 -= SCLS_PI * 2.0;}while(angle_2 < -SCLS_PI){angle_2 += SCLS_PI * 2.0;}
+            collision_bottom = (scls::sign(angle_1) != scls::sign(angle_2));
+        }
 
         // Check right collision
-        scls::Crossing_Datas_Segment datas_right = scls::check_crossing_segment(collision_rect.get()->max_x(), collision_rect.get()->max_y(), collision_rect.get()->max_x(), collision_rect.get()->min_y(), collision_line.get()->x_1(), collision_line.get()->y_1(), collision_line.get()->x_2(), collision_line.get()->y_2());
+        scls::Crossing_Datas_Segment datas_right = scls::check_crossing_segment(collision_rect.get()->max_absolute_x_next(), collision_rect.get()->max_absolute_y_next(), collision_rect.get()->max_absolute_x_next(), collision_rect.get()->min_absolute_y_next(), collision_line.get()->absolute_x_1(), collision_line.get()->absolute_y_1(), collision_line.get()->absolute_x_2(), collision_line.get()->absolute_y_2());
 
         // Assert
-        if(!datas_bottom.crossed_in_segment && !datas_right.crossed_in_segment){return Collision_Result();}
+        if(!(collision_bottom || datas_right.crossed_in_segment)){return Collision_Result();}
 
         // Get the differences
-        double slope_x = std::abs(collision_line.get()->x_2() - collision_line.get()->x_1());
-        double slope_y = std::abs(collision_line.get()->y_2() - collision_line.get()->y_1());
+        double slope_x = std::abs(collision_line.get()->absolute_x_2() - collision_line.get()->absolute_x_1());
+        double slope_y = std::abs(collision_line.get()->absolute_y_2() - collision_line.get()->absolute_y_1());
         double temp = 0;scls::normalize_3d(slope_x, temp, slope_y);
-        std::shared_ptr<Collision_Rect_Rect> to_return = std::make_shared<Collision_Rect_Rect>(collision_rect);
-        to_return.get()->happens = true;
-        if(datas_bottom.crossed_in_segment){to_return.get()->side_bottom = true;}
-        if(datas_right.crossed_in_segment){to_return.get()->side_right = true;}
+
+        // Create the objects to return
+        std::shared_ptr<Collision_Rect_Rect> to_return_1 = std::make_shared<Collision_Rect_Rect>(collision_rect);
+        std::shared_ptr<Collision_Rect_Rect> to_return_2 = std::make_shared<Collision_Rect_Rect>(collision_rect);
+        to_return_1.get()->happens = true;to_return_2.get()->happens = true;
+        if(collision_bottom){to_return_1.get()->side_bottom = true;}
+        if(datas_right.crossed_in_segment){to_return_1.get()->side_right = true;}
 
         // Check the movement
-        if(to_return.get()->side_bottom && to_return.get()->side_right) {
-            double force_distribution = 0.5;
-            std::cout << slope_x << " " << slope_y << " " << dynamic_object_1->velocity_x() << " " << dynamic_object_1->velocity_y() << std::endl;
-
-            // Handle next movement
-            if(dynamic_object_1->next_movement_x() > 0 && dynamic_object_1->next_movement_y() < 0){
-                // Handle both axis at once
-                dynamic_object_1->accelerate_x(dynamic_object_1->velocity_x() * slope_y * force_distribution * -1);
-                dynamic_object_1->accelerate_y(dynamic_object_1->velocity_x() * slope_y * force_distribution);
-            }
-            else {
-                if(dynamic_object_1->next_movement_x() > 0){dynamic_object_1->accelerate_y(dynamic_object_1->velocity_x() * force_distribution);dynamic_object_1->remove_x_velocity();}
-                if(dynamic_object_1->next_movement_y() < 0){dynamic_object_1->accelerate_x(dynamic_object_1->velocity_y() * force_distribution);dynamic_object_1->remove_y_velocity();}
-            }
-        }
-        if(to_return.get()->side_bottom && !to_return.get()->side_right) {if(dynamic_object_1->velocity().y() < 0){dynamic_object_1->remove_y_velocity();}}
-        if(to_return.get()->side_left) {if(dynamic_object_1->velocity().x() < 0){dynamic_object_1->remove_x_velocity();}}
-        if(to_return.get()->side_right && !to_return.get()->side_bottom) {if(dynamic_object_1->velocity().x() > 0){dynamic_object_1->remove_x_velocity();}}
-        if(to_return.get()->side_top) {if(dynamic_object_1->velocity().y() > 0){dynamic_object_1->remove_y_velocity();}}
+        to_return_1.get()->acceleration = dynamic_object_1->velocity() * -1;
 
         // Return the result
-        return Collision_Result(to_return);
+        return Collision_Result(to_return_1, to_return_2);
     }
     Collision_Result __check_collision_rect_rect(std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2, Graphic::Graphic_Physic* dynamic_object_1){
         // Check X
-        bool x_1 = (collision_1->max_x_next() > collision_2->min_x_next() && collision_2->max_x_next() > collision_1->max_x_next());
-        bool x_2 = (collision_2->max_x_next() > collision_1->min_x_next() && collision_1->max_x_next() > collision_2->max_x_next());
-        bool x_3 = (collision_2->max_x_next() >= collision_1->max_x_next() && collision_1->min_x_next() >= collision_2->min_x_next());
-        bool x_4 = (collision_1->max_x_next() >= collision_2->max_x_next() && collision_2->min_x_next() >= collision_1->min_x_next());
+        bool x_1 = (collision_1->max_absolute_x_next() > collision_2->min_absolute_x_next() && collision_2->max_absolute_x_next() > collision_1->max_absolute_x_next());
+        bool x_2 = (collision_2->max_absolute_x_next() > collision_1->min_absolute_x_next() && collision_1->max_absolute_x_next() > collision_2->max_absolute_x_next());
+        bool x_3 = (collision_2->max_absolute_x_next() >= collision_1->max_absolute_x_next() && collision_1->min_absolute_x_next() >= collision_2->min_absolute_x_next());
+        bool x_4 = (collision_1->max_absolute_x_next() >= collision_2->max_absolute_x_next() && collision_2->min_absolute_x_next() >= collision_1->min_absolute_x_next());
         if(!(x_1 || x_2 || x_3 || x_4)){return Collision_Result();}
 
         // Check Y
-        bool y_1 = (collision_1->max_y_next() > collision_2->min_y_next() && collision_2->max_y_next() > collision_1->max_y_next());
-        bool y_2 = (collision_2->max_y_next() > collision_1->min_y_next() && collision_1->max_y_next() > collision_2->max_y_next());
-        bool y_3 = (collision_2->max_y_next() >= collision_1->max_y_next() && collision_1->min_y_next() >= collision_2->min_y_next());
-        bool y_4 = (collision_1->max_y_next() >= collision_2->max_y_next() && collision_2->min_y_next() >= collision_1->min_y_next());
+        bool y_1 = (collision_1->max_absolute_y_next() > collision_2->min_absolute_y_next() && collision_2->max_absolute_y_next() > collision_1->max_absolute_y_next());
+        bool y_2 = (collision_2->max_absolute_y_next() > collision_1->min_absolute_y_next() && collision_1->max_absolute_y_next() > collision_2->max_absolute_y_next());
+        bool y_3 = (collision_2->max_absolute_y_next() >= collision_1->max_absolute_y_next() && collision_1->min_absolute_y_next() >= collision_2->min_absolute_y_next());
+        bool y_4 = (collision_1->max_absolute_y_next() >= collision_2->max_absolute_y_next() && collision_2->min_absolute_y_next() >= collision_1->min_absolute_y_next());
         if(!(y_1 || y_2 || y_3 || y_4)){return Collision_Result();}
 
         // Load some datas
@@ -1775,50 +1796,43 @@ namespace pleos {
         scls::Transform_Object_2D* transform_2 = collision_2.get()->attached_transform();
 
         // Get the differences
-        std::shared_ptr<Collision_Rect_Rect> to_return = std::make_shared<Collision_Rect_Rect>(collision_1);
-        to_return.get()->happens = true;
+        std::shared_ptr<Collision_Rect_Rect> to_return_1 = std::make_shared<Collision_Rect_Rect>(collision_1);
+        std::shared_ptr<Collision_Rect_Rect> to_return_2 = std::make_shared<Collision_Rect_Rect>(collision_2);
+        to_return_1.get()->happens = true;to_return_2.get()->happens = true;
 
         // X
-        double x_diff = collision_2->min_x_next() - collision_1->max_x_next();
-        double x_diff_temp = collision_1->min_x_next() - collision_2->max_x_next();
+        double x_diff = collision_2->min_absolute_x_next() - collision_1->max_absolute_x_next();
+        double x_diff_temp = collision_1->min_absolute_x_next() - collision_2->max_absolute_x_next();
         if(std::abs(x_diff) > std::abs(x_diff_temp)){x_diff = x_diff_temp;}
         // Y
-        double y_diff = collision_2->min_y_next() - collision_1->max_y_next();
-        double y_diff_temp = collision_1->min_y_next() - collision_2->max_y_next();
+        double y_diff = collision_2->min_absolute_y_next() - collision_1->max_absolute_y_next();
+        double y_diff_temp = collision_1->min_absolute_y_next() - collision_2->max_absolute_y_next();
         if(std::abs(y_diff) > std::abs(y_diff_temp)){y_diff = y_diff_temp;}
 
         // Returns the good value
         if(std::abs(x_diff) > std::abs(y_diff)){
             // Returns a Y
-            if(y_1 || y_4){to_return.get()->side_top = true;}
-            else{to_return.get()->side_bottom = true;}
+            if(y_1 || y_4){to_return_1.get()->side_top = true;}
+            else{to_return_1.get()->side_bottom = true;}
 
             // Set the distance
-            to_return.get()->distance = std::abs(y_diff);
+            to_return_1.get()->distance = std::abs(y_diff);
         }
         else {
             // Returns a X
-            if(x_2 || x_3){to_return.get()->side_left = true;}
-            else{to_return.get()->side_right = true;}
+            if(x_2 || x_3){to_return_1.get()->side_left = true;}
+            else{to_return_1.get()->side_right = true;}
 
             // Set the distance
-            to_return.get()->distance = std::abs(x_diff);
+            to_return_1.get()->distance = std::abs(x_diff);
         }
 
         // Check the movement
-        if(to_return.get()->side_bottom) {
-            // Friction
-            if(transform_1->velocity_y() < 0){dynamic_object_1->accelerate_x(transform_1->velocity_x() * -0.01);}
-
-            // Contact
-            if(transform_1->velocity_y() < 0){dynamic_object_1->set_velocity_y(to_return.get()->distance);}
-        }
-        if(to_return.get()->side_left) {if(transform_1->next_movement_x() < 0){transform_1->set_velocity_x(to_return.get()->distance);}}
-        if(to_return.get()->side_right) {if(transform_1->next_movement_x() > 0){transform_1->set_velocity_x(-to_return.get()->distance);}}
-        if(to_return.get()->side_top) {if(transform_1->velocity_y() > 0){transform_1->set_velocity_y(-to_return.get()->distance);}}
+        if(to_return_1.get()->side_bottom || to_return_1.get()->side_top){to_return_1.get()->acceleration.set_y(-transform_1->velocity().y());}
+        to_return_1.get()->acceleration.set_x(-transform_1->velocity().x());
 
         // Return the result
-        return Collision_Result(to_return);
+        return Collision_Result(to_return_1, to_return_2);
     };
     Collision_Result __check_collision_circle_line_maths(double x_circle, double y_circle, double width_circle, scls::Point_2D position_next_circle, scls::Point_2D velocity_circle, double x_1, double y_1, double x_2, double y_2, std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2){
         // Get the angle
@@ -1920,22 +1934,22 @@ namespace pleos {
     Collision_Result __check_collision_circle_rect(std::shared_ptr<Graphic_Collision> collision_circle, std::shared_ptr<Graphic_Collision> collision_rect, Graphic::Graphic_Physic* object_circle, Graphic::Graphic_Physic* object_rect){
         // Check the collisions as line
         // Top collision
-        double line_x_1 = collision_rect->min_x();
-        double line_y_1 = collision_rect->max_y();
-        double line_x_2 = collision_rect->max_x();
-        double line_y_2 = collision_rect->max_y();
+        double line_x_1 = collision_rect->min_absolute_x();
+        double line_y_1 = collision_rect->max_absolute_y();
+        double line_x_2 = collision_rect->max_absolute_x();
+        double line_y_2 = collision_rect->max_absolute_y();
         Collision_Result result_top = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect);
         // Bottom collision
-        line_y_1 = collision_rect->min_y();
-        line_y_2 = collision_rect->min_y();
+        line_y_1 = collision_rect->min_absolute_y();
+        line_y_2 = collision_rect->min_absolute_y();
         Collision_Result result_bottom = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect);
         // Left collision
-        line_x_1 = collision_rect->min_x();line_y_1 = collision_rect->max_y();
-        line_x_2 = collision_rect->min_x();line_y_2 = collision_rect->min_y();
+        line_x_1 = collision_rect->min_absolute_x();line_y_1 = collision_rect->max_absolute_y();
+        line_x_2 = collision_rect->min_absolute_x();line_y_2 = collision_rect->min_absolute_y();
         Collision_Result result_left = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect);
         // Right collision
-        line_x_1 = collision_rect->max_x();
-        line_x_2 = collision_rect->max_x();
+        line_x_1 = collision_rect->max_absolute_x();
+        line_x_2 = collision_rect->max_absolute_x();
         Collision_Result result_right = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect);
         // Final collision
         Collision_Result final_result = result_top;
@@ -1962,6 +1976,10 @@ namespace pleos {
         }
         else if(collision_1->type() == Graphic_Collision_Type::GCT_Rect && collision_2->type() == Graphic_Collision_Type::GCT_Line) {
             Collision_Result current_result = __check_collision_rect_line(collision_1, collision_2, object_1);
+            if(current_result.collision_1.get() == 0 || current_result.collision_1.get()->happens) {return current_result;}
+        }
+        else if(collision_1->type() == Graphic_Collision_Type::GCT_Line && collision_2->type() == Graphic_Collision_Type::GCT_Rect) {
+            Collision_Result current_result = __check_collision_rect_line(collision_2, collision_1, object_2);
             if(current_result.collision_1.get() == 0 || current_result.collision_1.get()->happens) {return current_result;}
         }
         else if(collision_1->type() == Graphic_Collision_Type::GCT_Circle && collision_2->type() == Graphic_Collision_Type::GCT_Circle) {
@@ -2015,8 +2033,6 @@ namespace pleos {
     std::shared_ptr<Graphic_Collision> Graphic::Graphic_Physic::new_collision(Graphic_Collision_Type type){
         std::shared_ptr<Graphic_Collision>to_return=std::make_shared<Graphic_Collision>(a_attached_object, a_attached_transform);
         to_return.get()->set_type(type);add_collision(to_return);
-        to_return.get()->set_height(a_attached_transform.lock().get()->scale_y());
-        to_return.get()->set_width(a_attached_transform.lock().get()->scale_x());
         return to_return;
     };
 
@@ -2118,6 +2134,9 @@ namespace pleos {
         return to_return;
     }
 
+    // Deletes the object
+    void Graphic::Graphic_Physic::delete_object(){a_attached_transform.reset();a_attached_object.reset();};
+
     // Returns if the object should be deleted or not
     bool Graphic::Graphic_Physic::should_delete() const {return (attached_object()==0||attached_object()->should_delete())||attached_transform()==0;};
 
@@ -2148,6 +2167,7 @@ namespace pleos {
             to_return += std::string(" collision=");
             if(a_collisions.at(i).get()->type() == Graphic_Collision_Type::GCT_Circle){to_return += std::string("circle");}
             else if(a_collisions.at(i).get()->type() == Graphic_Collision_Type::GCT_Line){to_return += std::string("line");}
+            else if(a_collisions.at(i).get()->type() == Graphic_Collision_Type::GCT_Rect){to_return += std::string("rect");}
         }
 
         // Finish the text
@@ -2424,11 +2444,11 @@ namespace pleos {
 
                 // Get the needed datas
                 graphic()->physic_objects().at(i)->set_loaded_in_map(true);
-                int needed_height = std::ceil(graphic()->physic_objects().at(i)->max_y_next()) - std::floor(graphic()->physic_objects().at(i)->min_y_next());
-                int needed_width = std::ceil(graphic()->physic_objects().at(i)->max_x_next()) - std::floor(graphic()->physic_objects().at(i)->min_x_next());
+                int needed_height = std::ceil(graphic()->physic_objects().at(i)->max_absolute_y_next()) - std::floor(graphic()->physic_objects().at(i)->min_absolute_y_next());
+                int needed_width = std::ceil(graphic()->physic_objects().at(i)->max_absolute_x_next()) - std::floor(graphic()->physic_objects().at(i)->min_absolute_x_next());
                 if(needed_width <= 0){needed_width = 1;};
-                int x_start = std::floor(graphic()->physic_objects().at(i)->min_x_next());
-                int y_start = std::floor(graphic()->physic_objects().at(i)->min_y_next());
+                int x_start = std::floor(graphic()->physic_objects().at(i)->min_absolute_x_next());
+                int y_start = std::floor(graphic()->physic_objects().at(i)->min_absolute_y_next());
 
                 // Add the cases
                 for(int j = 0;j<needed_width;j++) {
@@ -2445,14 +2465,15 @@ namespace pleos {
                 }
             }
         }
-        // Static cases
+
+        // Dynamic objects
         for(int i = 0;i<static_cast<int>(dynamic_objects_physic.size());i++) {
             // Get the needed datas
-            int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_y_next()) - std::floor(dynamic_objects_physic.at(i)->min_y_next());
-            int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_x_next()) - std::floor(dynamic_objects_physic.at(i)->min_x_next());
+            int needed_height = std::ceil(dynamic_objects_physic.at(i)->max_absolute_y_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
+            int needed_width = std::ceil(dynamic_objects_physic.at(i)->max_absolute_x_next()) - std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
             if(needed_width <= 0){needed_width = 1;};
-            int x_start = std::floor(dynamic_objects_physic.at(i)->min_x_next());
-            int y_start = std::floor(dynamic_objects_physic.at(i)->min_y_next());
+            int x_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_x_next());
+            int y_start = std::floor(dynamic_objects_physic.at(i)->min_absolute_y_next());
 
             // Check the cases
             for(int j = 0;j<needed_width;j++) {
@@ -2467,9 +2488,11 @@ namespace pleos {
             }
 
             // Check the dynamics collisions
-            for(int j = 0;j<static_cast<int>(dynamic_objects_physic.size());j++){
-                for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
-                    dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+            if(!dynamic_objects_physic.at(i).get()->ignore_dynamic_collisions()){
+                for(int j = 0;j<static_cast<int>(dynamic_objects_physic.size());j++){
+                    for(int k = 0;k<static_cast<int>(dynamic_objects_physic.at(j).get()->collisions().size());k++){
+                        dynamic_objects_physic.at(i)->check_collision(dynamic_objects_physic.at(j).get()->collisions().at(k), dynamic_objects_physic.at(j).get());
+                    }
                 }
             }
         }
@@ -2682,7 +2705,7 @@ namespace pleos {
         // Add the physic
         if(to_return.size() > 0){to_return += std::string("\n");}
         for(int i = 0;i<static_cast<int>(a_physic_objects.size());i++) {
-            if(a_physic_objects.at(i).get()->attached_object() !=0 && a_physic_objects.at(i).get()->attached_object()->save_to_xml_text()) {
+            if(a_physic_objects.at(i).get()->attached_object() !=0 && a_physic_objects.at(i).get()->attached_object()->save_to_xml_text() && a_physic_objects.at(i).get()->save_to_xml_text()) {
                 to_return += a_physic_objects.at(i).get()->to_xml_text();
                 if(i!=static_cast<int>(a_physic_objects.size())-1){to_return += std::string("\n");}
             }
