@@ -148,7 +148,7 @@ namespace pleos {
         std::shared_ptr<Definition> new_definition(std::string definition_name);
 
         // Getters and setters
-
+        inline std::vector<std::shared_ptr<Definition>>& definitions() {return a_definitions;};
     private:
 
         // Repetitions

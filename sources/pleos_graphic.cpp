@@ -1114,6 +1114,22 @@ namespace pleos {
             // Configurate the form
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(graphic_from_xml_balise_attribute_form_2d(attributes[j], created_form, environment, text_style)) {}}
         }
+        else if(current_balise_name == "form_clone") {
+            // Create the form
+            std::shared_ptr<Form_2D> created_form = new_form(std::string("clone"));
+            created_form.get()->set_object_name(std::string("form_clone"));
+
+            // Get the pattern
+            std::string needed_name = xml.get()->attribute_by_name(std::string("from")).value;
+            std::shared_ptr<Form_2D> needed_pattern = form_2d_by_name_shared_ptr(needed_name);
+            if(needed_pattern.get() == 0){scls::print(std::string("PLEOS Graphic"), std::string("The form 2D \"") + needed_name + std::string("\" you try to clone does not exist."));}
+            else{
+                needed_pattern.get()->clone(created_form);
+
+                // Configurate the form
+                for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(graphic_from_xml_balise_attribute_form_2d(attributes[j], created_form, environment, text_style)) {}}
+            }
+        }
         else if(current_balise_name == "fun" || current_balise_name == "function") {
             // Get the datas about a function of the graphic
             scls::Color needed_color = scls::Color(255, 0, 0);
@@ -2524,11 +2540,14 @@ namespace pleos {
 
     // Update the texture of the object
     void Graphic_Object::update_texture(){
+        // Hierarchy
+        scls::GUI_Object::update_texture();
+
         // Set the good image
         int needed_width = width_in_pixel();int needed_height = height_in_pixel();
         if(use_image()) {
             std::shared_ptr<scls::__Image_Base> needed_image = a_datas.get()->to_image(needed_width, needed_height);
-            texture()->set_image(needed_image);
+            set_texture(needed_image);
         }
         __graphic_object_render_number++;
 

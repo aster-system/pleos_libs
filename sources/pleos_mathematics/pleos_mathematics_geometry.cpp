@@ -328,6 +328,17 @@ namespace pleos {
     void Form_2D::add_point_external(std::shared_ptr<__Graphic_Object_Base> point){if(!contains_point(point.get())){a_points.push_back(point);a_points_link.push_back(Link());}};
     void Form_2D::add_point(std::shared_ptr<__Graphic_Object_Base> point){add_point_external(point);point.get()->set_parent(this_object_shared_ptr());};
 
+    // Clones the form
+    void Form_2D::clone(std::shared_ptr<Form_2D> needed_clone) {
+        // Sets the basic datas
+        needed_clone.get()->set_border_color(border_color());
+        needed_clone.get()->set_cloned_from(this_object_shared_ptr());
+        needed_clone.get()->set_color(color());
+
+        // Clone the points
+        for(int i = 0;i<static_cast<int>(points().size());i++){std::shared_ptr<Point_2D> created_point = needed_clone.get()->new_point(points().at(i).get()->absolute_position());}
+    }
+
     // Returns if the form contains a point or not
     bool Form_2D::contains_point(__Graphic_Object_Base* tested_point){for(int i=0;i<static_cast<int>(a_points.size());i++){if(a_points.at(i).get()==tested_point){return true;}}return false;};
 
@@ -450,6 +461,13 @@ namespace pleos {
         // Basic datas
         std::string content = std::string();
 
+        // Clone
+        if(cloned_from() != 0){
+            content += std::string("<form_clone from=") + cloned_from()->name() + to_xml_text_name();
+            content += std::string(">");
+            return content;
+        }
+
         // Check the common forms
         if(a_points.size() == 2 && object_name() == std::string("line")) {
             // The form is a line
@@ -530,8 +548,8 @@ namespace pleos {
     }
     std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
         // Triangulate the point
-        //triangulate_points_external();
-        if(a_last_triangulation.get() == 0){triangulate_points_external();}
+        triangulate_points_external();
+        //if(a_last_triangulation.get() == 0){triangulate_points_external();}
         if(a_last_triangulation.get() == 0){return std::vector<std::shared_ptr<Point_2D>>();}
 
         // Get the needed result
