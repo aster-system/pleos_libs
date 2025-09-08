@@ -428,7 +428,7 @@ namespace pleos {
         std::shared_ptr<Form_2D> new_form(std::string name, std::vector<std::shared_ptr<Point_2D>> points);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent);
         std::shared_ptr<Form_2D> new_form(std::string name, std::string points);
-        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);add_form(to_return);return to_return;};
+        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);to_return.get()->set_unknowns(unknowns_shared_ptr());add_form(to_return);return to_return;};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name){return new_form(name, std::weak_ptr<__Graphic_Object_Base>());};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::shared_ptr<scls::__XML_Text_Base> xml){std::shared_ptr<T> created_form = new_form<T>(std::string(), std::weak_ptr<__Graphic_Object_Base>());__new_form_xml(created_form.get(), xml);return created_form;};
         // Creates and returns a form as a polygon
@@ -581,6 +581,7 @@ namespace pleos {
         inline scls::Fraction time() const {return graphic_base()->a_time;};
         inline std::string title() const {return a_title;};
         inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
+        inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr() const {return a_unknowns;};
         inline std::vector<std::shared_ptr<Point_2D>>& vectors(){return a_vectors;};
         inline scls::Fraction width() const {return a_graphic_base.get()->a_width.value_to_fraction(a_unknowns.get());};
         inline scls::__Formula_Base::Formula width_formula() const {return a_graphic_base.get()->a_width;};

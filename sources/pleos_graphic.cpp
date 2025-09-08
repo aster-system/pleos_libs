@@ -1335,8 +1335,8 @@ namespace pleos {
             created_form.get()->set_height(height);
             created_form.get()->set_object_name(std::string("rect"));
             created_form.get()->set_width(width);
-            created_form.get()->set_x(created_form.get()->x() + width.to_double() / 2.0);
-            created_form.get()->set_y(created_form.get()->y() + height.to_double() / 2.0);
+            created_form.get()->set_x(created_form.get()->x_formula() + width / 2);
+            created_form.get()->set_y(created_form.get()->y_formula() + height / 2);
             created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
             created_form.get()->set_color(color);
         }
@@ -1421,6 +1421,18 @@ namespace pleos {
                 if(attributes[j].name == "background_color") {text_style.set_background_color(scls::Color::from_std_string(attributes[j].value));}
                 else if(attributes[j].name == "font_size") {text_style.set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
             }
+        }
+        else if(current_balise_name == std::string("variable")) {
+            // Load a variable in the environment
+            std::string needed_name = std::string();
+            std::string needed_value = std::string();
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {
+                if(attributes[j].name == "name") {needed_name = attributes.at(j).value;}
+                else if(attributes[j].name == "value") {needed_value = attributes.at(j).value;}
+            }
+
+            // Add the variable
+            unknowns()->create_unknown(needed_name)->set_value(scls::string_to_formula(needed_value));
         }
         else{object = graphic_from_xml_balise_action(xml, environment, text_style, 0);}
 
