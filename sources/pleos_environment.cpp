@@ -151,8 +151,7 @@ namespace pleos {
     // Gets the content of a definition
     std::string Text_Environment::Definition::content(bool capitalise_first_letter)const{
         std::string to_return = std::string();
-        if(a_contents.size()>0){to_return = a_contents.at(0).get()->content;}
-        if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
+        if(a_contents.size()>0){to_return = a_contents.at(0).get()->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     };
     std::string Text_Environment::Definition::content(std::string content_name, bool capitalise_first_letter)const{
@@ -170,14 +169,12 @@ namespace pleos {
     // Gets one theorem of the definition
     std::string Text_Environment::Definition::theorem(bool capitalise_first_letter)const{
         std::string to_return = std::string();
-        if(a_theorems.size()>0){to_return = a_theorems.at(0).get()->content;}
-        if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
+        if(a_theorems.size()>0){to_return = a_theorems.at(0).get()->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     }
     std::string Text_Environment::Definition::theorem(std::string theorem_name, bool capitalise_first_letter)const{
         std::string to_return = std::string();__Content* needed_content = theorem_full_by_name(theorem_name);
-        if(a_theorems.size()>0){to_return = needed_content->content;}
-        if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}
+        if(needed_content!=0){to_return = needed_content->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     }
     Text_Environment::Definition::__Content* Text_Environment::Definition::theorem_full_by_name(std::string theorem_name) const{return theorem_full_by_name_shared_ptr(theorem_name).get();}

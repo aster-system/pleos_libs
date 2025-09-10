@@ -104,6 +104,7 @@ namespace pleos {
             // Returns the source to a XML text
             virtual std::string to_displayed_text();
             virtual std::string to_xml_text();
+            virtual std::string to_xml_text_base();
             virtual std::string to_xml_text_object_name();
             std::string to_xml_text_source();
 

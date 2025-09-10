@@ -93,6 +93,7 @@ namespace pleos {
     // Returns the source to a XML text
     std::string Graphic::Graphic_Texture::to_displayed_text(){return std::string("objet texturé");}
     std::string Graphic::Graphic_Texture::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_rotation() + to_xml_text_source() + to_xml_text_tags() + std::string(">");}
+    std::string Graphic::Graphic_Texture::to_xml_text_base(){return __Graphic_Object_Base::to_xml_text_base() + to_xml_text_source();}
     std::string Graphic::Graphic_Texture::to_xml_text_object_name(){return std::string("texture_object");}
     std::string Graphic::Graphic_Texture::to_xml_text_source(){return std::string(" source=\"") + source() + std::string("\"");}
 
