@@ -212,16 +212,16 @@ namespace pleos {
     void __Graphic_Object_Base::load_tags(std::string new_tags){a_tags = scls::cut_string(new_tags, std::string(";"));}
 
     // Annoying functions to draw the image
-    int __Graphic_Object_Base::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x.to_double()) * pixel_by_case_x() + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
-    int __Graphic_Object_Base::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - graphic_base()->a_middle_x) * pixel_by_case_x() + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
-    int __Graphic_Object_Base::graphic_y_to_pixel_y(double y){return (std::ceil((y - graphic_base()->a_middle_y.to_double()) * pixel_by_case_y()) + (graphic_base()->a_height_in_pixel / 2.0)) - graphic_base()->a_y_offset;};
-    int __Graphic_Object_Base::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - graphic_base()->a_middle_y) * pixel_by_case_y() + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double()) - graphic_base()->a_y_offset;};
+    int __Graphic_Object_Base::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x) * pixel_by_case_x() + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
+    int __Graphic_Object_Base::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - scls::Fraction::from_double(graphic_base()->a_middle_x)) * pixel_by_case_x() + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
+    int __Graphic_Object_Base::graphic_y_to_pixel_y(double y){return (std::ceil((y - graphic_base()->a_middle_y) * pixel_by_case_y()) + (graphic_base()->a_height_in_pixel / 2.0)) - graphic_base()->a_y_offset;};
+    int __Graphic_Object_Base::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - scls::Fraction::from_double(graphic_base()->a_middle_y)) * pixel_by_case_y() + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double()) - graphic_base()->a_y_offset;};
     int __Graphic_Object_Base::graphic_y_to_pixel_y_inversed(double y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
     int __Graphic_Object_Base::graphic_y_to_pixel_y_inversed(scls::Fraction y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
     double __Graphic_Object_Base::pixel_by_case_x() const {return graphic_base()->a_pixel_by_case_x;};
     double __Graphic_Object_Base::pixel_by_case_y() const {return graphic_base()->a_pixel_by_case_y;};
-    scls::Fraction __Graphic_Object_Base::pixel_x_to_graphic_x(int x){return graphic_base()->a_middle_x + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
-    scls::Fraction __Graphic_Object_Base::pixel_y_to_graphic_y(int y){return graphic_base()->a_middle_y + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
+    scls::Fraction __Graphic_Object_Base::pixel_x_to_graphic_x(int x){return scls::Fraction::from_double(graphic_base()->a_middle_x) + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
+    scls::Fraction __Graphic_Object_Base::pixel_y_to_graphic_y(int y){return scls::Fraction::from_double(graphic_base()->a_middle_y) + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
 
     // Returns a parameter by its name
     std::string __Graphic_Object_Base::parameter(std::string parameter_name) {
@@ -487,7 +487,7 @@ namespace pleos {
         else if(a_points.size() == 4 && object_name() == std::string("rect")) {
             // The form is a rect
 
-            // Needed coordinates
+            /*// Needed coordinates
             scls::Fraction x_1 = a_points.at(0).get()->absolute_x();
             scls::Fraction x_2 = a_points.at(1).get()->absolute_x();
             scls::Fraction x_3 = a_points.at(2).get()->absolute_x();
@@ -496,6 +496,7 @@ namespace pleos {
             scls::Fraction y_2 = a_points.at(1).get()->absolute_y();
             scls::Fraction y_3 = a_points.at(2).get()->absolute_y();
             scls::Fraction y_4 = a_points.at(3).get()->absolute_y();
+            //*/
 
             // Get the good datas
             scls::__Formula_Base::Formula needed_height = height_formula();

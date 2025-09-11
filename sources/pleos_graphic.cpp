@@ -1088,15 +1088,15 @@ namespace pleos {
             scls::__Formula_Base::Formula needed_height = height_formula();scls::__Formula_Base::Formula needed_width = width_formula();
             bool heigth_used = false;bool width_used = false;
             if(needed_height == -1){needed_height = 10;}if(needed_width == -1){needed_width = 10;}
-            scls::Fraction middle_x = 10;scls::Fraction middle_y = 10;
+            scls::__Formula_Base::Formula new_middle_x = middle_x();scls::__Formula_Base::Formula new_middle_y = middle_y();
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "height") {needed_height = environment.value_formula(attributes[j].value);heigth_used=true;}
                 else if(attributes[j].name == "width") {needed_width = environment.value_formula(attributes[j].value);width_used=true;}
-                else if(attributes[j].name == "x") {middle_x = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "y") {middle_y = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "x") {new_middle_x = environment.value_formula(attributes[j].value);}
+                else if(attributes[j].name == "y") {new_middle_y = environment.value_formula(attributes[j].value);}
                 else if(attributes[j].name == "draw") {if(attributes[j].value == "false" || attributes[j].value == "0"){set_draw_base(false);set_draw_sub_bases(false);}}
             }
-            set_middle(middle_x, middle_y);set_scale(needed_width, needed_height, width_used, heigth_used);
+            set_middle(new_middle_x.value_to_double(), new_middle_y.value_to_double());set_scale(needed_width, needed_height, width_used, heigth_used);
         }
         else if(current_balise_name == "border") {scls::border_from_xml(xml, style());}
         else if(current_balise_name == "circle") {
@@ -1641,7 +1641,7 @@ namespace pleos {
         }
 
         // Get the datas about the graphic
-        set_scale(0, 0);
+        set_middle(0, 0);set_scale(0, 0);
         scls::__Formula_Base::Formula graphic_width = 10;
         scls::__Formula_Base::Formula graphic_height = graphic_width * scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel);
         scls::Fraction graphic_x = 0;scls::Fraction graphic_y = 0;
@@ -1654,6 +1654,7 @@ namespace pleos {
         // Set the datas
         graphic_width = width_formula();
         graphic_height = height_formula();
+        graphic_x = middle_x();graphic_y = middle_y();
         if(graphic_width != 0 && graphic_height == 0){graphic_height = graphic_width * scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel);}
         else if(graphic_width == 0 && graphic_height != 0){graphic_width = graphic_height * scls::Fraction(graphic_width_in_pixel, graphic_height_in_pixel);}
         else if(graphic_width == 0 && graphic_height == 0){graphic_width = 10;graphic_height = graphic_width * scls::Fraction(graphic_height_in_pixel, graphic_width_in_pixel);}
@@ -2379,7 +2380,7 @@ namespace pleos {
         // Move the plane
         bool modified = (needed_update_physic > 0);
         if(is_focused()) {
-            scls::Fraction speed = scls::Fraction(round(5.0 * needed_delta_time * 10000.0), 10000);
+            double speed = 5.0 * needed_delta_time;
             if(window_struct().key_pressed("q")){middle_x_add(speed * -1);modified = true;}
             if(window_struct().key_pressed("d")){middle_x_add(speed);modified = true;}
             if(window_struct().key_pressed("z")){middle_y_add(speed);modified = true;}

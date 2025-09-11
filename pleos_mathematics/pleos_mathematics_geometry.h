@@ -54,8 +54,8 @@ namespace pleos {
         int a_y_offset = 0;
 
         // Coordinates of the base
-        scls::Fraction a_middle_x =  0;
-        scls::Fraction a_middle_y = 0;
+        double a_middle_x = 0;
+        double a_middle_y = 0;
         double a_pixel_by_case_x = 100;
         double a_pixel_by_case_y = 100;
 

@@ -315,7 +315,7 @@ namespace pleos {
         // Sets the size of the image
         void set_image_size(int image_width, int image_height);
         // Sets the middle of the base
-        inline void set_middle(scls::Fraction middle_x, scls::Fraction middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
+        inline void set_middle(double middle_x, double middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
         // Sets the scale of the base
         virtual void set_scale(scls::__Formula_Base::Formula width, scls::__Formula_Base::Formula height, bool width_used, bool height_used);
         void set_scale(scls::__Formula_Base::Formula width, scls::__Formula_Base::Formula height);
@@ -537,9 +537,9 @@ namespace pleos {
         // Returns the middle position of the graphic
         inline scls::Fraction left_x() const {return a_graphic_base.get()->a_middle_x - width() / 2;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
-        inline void middle_x_add(scls::Fraction value) {a_graphic_base.get()->a_middle_x += value;};
+        inline void middle_x_add(double value) {a_graphic_base.get()->a_middle_x += value;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
-        inline void middle_y_add(scls::Fraction value) {a_graphic_base.get()->a_middle_y += value;};
+        inline void middle_y_add(double value) {a_graphic_base.get()->a_middle_y += value;};
         // Returns the number of pixel by case
         double pixel_by_case_x() const;
         double pixel_in_case_x(int case_number) const;
@@ -1044,9 +1044,9 @@ namespace pleos {
         inline std::shared_ptr<Graphic> graphic_shared_ptr() {return a_datas;};
         inline std::vector<std::shared_ptr<Graphic_GUI_Object>>& gui_objects(){return a_gui_objects;};
         inline scls::Fraction middle_x() const {return a_datas.get()->middle_x();};
-        inline void middle_x_add(scls::Fraction value) {a_datas.get()->middle_x_add(value);};
+        inline void middle_x_add(double value) {a_datas.get()->middle_x_add(value);};
         inline scls::Fraction middle_y() const {return a_datas.get()->middle_y();};
-        inline void middle_y_add(scls::Fraction value) {a_datas.get()->middle_y_add(value);};
+        inline void middle_y_add(double value) {a_datas.get()->middle_y_add(value);};
         inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& objects(){return a_datas.get()->objects();};
         inline int operation_at_click() const {return a_operation_at_click;};
         inline double pixel_by_case_x() const {return a_datas.get()->pixel_by_case_x();};
