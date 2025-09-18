@@ -112,7 +112,14 @@ namespace pleos {
     Text_Environment::Definition::__Content::__Content(std::string needed_name,std::string needed_content):content(needed_content),name(needed_name){}
 
     // Returns a color value
-    scls::Color Text_Environment::value_color(std::string base)const{return scls::Color::from_std_string(base);}
+    scls::Color Text_Environment::value_color(std::string base)const{if(base == std::string("random")){return scls::Color(scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255));}return scls::Color::from_std_string(base);}
+    // Returns a list color value
+    std::vector<scls::Color> Text_Environment::value_color_list(std::string base)const{
+        std::vector<std::string> cutted = scls::cut_string_out_of_2(base, std::string(","), std::string("("), std::string(")"));
+        std::vector<scls::Color> to_return = std::vector<scls::Color>(cutted.size());
+        for(int i = 0;i<static_cast<int>(cutted.size());i++){to_return[i] = value_color(cutted.at(i));}
+        return to_return;
+    }
 	// Returns a formula value
     scls::__Formula_Base::Formula Text_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());}
     // Returns a number value
@@ -151,12 +158,12 @@ namespace pleos {
     // Gets the content of a definition
     std::string Text_Environment::Definition::content(bool capitalise_first_letter)const{
         std::string to_return = std::string();
-        if(a_contents.size()>0){to_return = a_contents.at(0).get()->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
+        if(a_contents.size()>0){to_return = a_contents.at(0).get()->content;if(to_return.size()>0&&capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     };
     std::string Text_Environment::Definition::content(std::string content_name, bool capitalise_first_letter)const{
         std::string to_return = std::string();__Content* needed_content = content_full_by_name(content_name);
-        if(needed_content!=0){to_return = needed_content->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
+        if(needed_content!=0){to_return = needed_content->content;if(to_return.size()>0&&capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     }
     Text_Environment::Definition::__Content* Text_Environment::Definition::content_full_by_name(std::string content_name) const{return content_full_by_name_shared_ptr(content_name).get();}
@@ -169,12 +176,12 @@ namespace pleos {
     // Gets one theorem of the definition
     std::string Text_Environment::Definition::theorem(bool capitalise_first_letter)const{
         std::string to_return = std::string();
-        if(a_theorems.size()>0){to_return = a_theorems.at(0).get()->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
+        if(a_theorems.size()>0){to_return = a_theorems.at(0).get()->content;if(to_return.size()>0&&capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     }
     std::string Text_Environment::Definition::theorem(std::string theorem_name, bool capitalise_first_letter)const{
         std::string to_return = std::string();__Content* needed_content = theorem_full_by_name(theorem_name);
-        if(needed_content!=0){to_return = needed_content->content;if(capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
+        if(needed_content!=0){to_return = needed_content->content;if(to_return.size()>0&&capitalise_first_letter&&std::isalpha(to_return.at(0))){to_return=scls::capitalise_letter(to_return,0);}}
         return to_return;
     }
     Text_Environment::Definition::__Content* Text_Environment::Definition::theorem_full_by_name(std::string theorem_name) const{return theorem_full_by_name_shared_ptr(theorem_name).get();}

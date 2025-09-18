@@ -518,7 +518,11 @@ namespace pleos {
         std::string to_xml_text_width();
 
         // Returns a color adapted with the needed opacity
-        scls::Color color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
+        scls::Color color_with_absolute_opacity(scls::Color needed_color)const;
+        scls::Color color_with_opacity(scls::Color needed_color)const;
+
+        // Returns the distance between this object and a point
+        inline double distance(scls::Point_2D needed_position) const {return absolute_position().distance(needed_position);};
 
         // Handles the settings of the object
         virtual void load_object_settings(scls::GUI_Object* gui_object);
@@ -533,6 +537,7 @@ namespace pleos {
         // Getters and setters
         inline double absolute_height() const {return a_transform.get()->absolute_scale_y();};
         inline scls::__Formula_Base::Formula absolute_height_formula() const {return a_transform.get()->absolute_scale_y_formula();};
+        inline double absolute_opacity() const {if(parent() == 0){return opacity();}return parent()->absolute_opacity() * opacity();};
         inline scls::Point_2D absolute_position() const {return a_transform.get()->absolute_position();};
         inline double absolute_rotation() const {return a_transform.get()->absolute_rotation();};
         inline double absolute_width() const {return a_transform.get()->absolute_scale_x();};
@@ -557,9 +562,13 @@ namespace pleos {
         inline int index() const {return a_index;};
         inline double live_time() const {return a_live_time;};
         inline double max_absolute_x() const {return a_transform.get()->max_absolute_x();};
+        inline double max_absolute_x_next() const {return a_transform.get()->max_absolute_x_next();};
         inline double max_absolute_y() const {return a_transform.get()->max_absolute_y();};
+        inline double max_absolute_y_next() const {return a_transform.get()->max_absolute_y_next();};
         inline double min_absolute_x() const {return a_transform.get()->min_absolute_x();};
+        inline double min_absolute_x_next() const {return a_transform.get()->min_absolute_x_next();};
         inline double min_absolute_y() const {return a_transform.get()->min_absolute_y();};
+        inline double min_absolute_y_next() const {return a_transform.get()->min_absolute_y_next();};
         inline double max_x() const {return a_transform.get()->max_x();};
         inline double max_y() const {return a_transform.get()->max_y();};
         inline double min_x() const {return a_transform.get()->min_x();};
@@ -599,6 +608,8 @@ namespace pleos {
         inline std::vector<std::string>& tags() {return a_tags;};
         inline std::shared_ptr<__Graphic_Object_Base> this_object_shared_ptr() const {return a_this_object.lock();};
         inline scls::Point_2D velocity() const {return a_transform.get()->velocity();};
+        inline double velocity_x() const {return a_transform.get()->velocity_x();};
+        inline double velocity_y() const {return a_transform.get()->velocity_y();};
         inline double width() const {return a_transform.get()->scale_x();};
         inline scls::__Formula_Base::Formula width_formula() const {return a_transform.get()->scale_x_formula();};
         inline double x() const {return a_transform.get()->x();};
@@ -631,12 +642,18 @@ namespace pleos {
 
         // Function called during an interaction
         virtual void interaction(__Graphic_Object_Base* sender, std::string current_interaction){};
-        // Function called when a collision occurs
-        virtual void when_collision(Graphic_Collision::Collision* collision){a_collisions_this_frame.push_back(collision);};
         // Function called when a new children is added
         virtual void when_new_children(__Graphic_Object_Base* new_child){};
         // Function called when the object should be delete
         virtual void when_should_delete();
+
+        // Physic
+        virtual int collision_height(){return std::ceil(max_absolute_y_next()) - std::floor(min_absolute_y_next());};
+        virtual int collision_width(){return std::ceil(max_absolute_x_next()) - std::floor(min_absolute_x_next());};
+        virtual int collision_x_start(){return std::floor(min_absolute_x_next());};
+        virtual int collision_y_start(){return std::floor(min_absolute_y_next());};
+        // Function called when a collision occurs
+        virtual void when_collision(Graphic_Collision::Collision* collision){a_collisions_this_frame.push_back(collision);};
 
     protected:
 
@@ -825,6 +842,12 @@ namespace pleos {
 
         // Function called when a new children is added
         //virtual void when_new_children(__Graphic_Object_Base* new_child){if(!contains_point(new_child)){add_point(new_child->this_object_shared_ptr());}};
+
+        // Physic
+        virtual int collision_height(){if(a_points.size() == 2){return std::ceil(std::max(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()) - std::min(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()));}return __Graphic_Object_Base::collision_height();};
+        virtual int collision_width(){if(a_points.size() == 2){return std::ceil(std::max(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()) - std::min(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()));}return __Graphic_Object_Base::collision_width();};
+        virtual int collision_x_start(){if(a_points.size() == 2){return std::floor(std::min(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()));}return __Graphic_Object_Base::collision_x_start();};
+        virtual int collision_y_start(){if(a_points.size() == 2){return std::floor(std::min(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()));}return __Graphic_Object_Base::collision_y_start();};
     private:
         // Color of the border of the form
         scls::Color a_border_color = scls::Color(255, 0, 0);
@@ -872,6 +895,7 @@ namespace pleos {
         virtual std::string to_xml_text();
         std::string to_xml_text_angle_end();
         std::string to_xml_text_angle_start();
+        std::string to_xml_text_border_radius();
         std::string to_xml_text_radius();
         std::string to_xml_text_radius_x();
         std::string to_xml_text_radius_y();

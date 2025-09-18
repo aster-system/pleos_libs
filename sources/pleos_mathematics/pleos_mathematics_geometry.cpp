@@ -161,6 +161,10 @@ namespace pleos {
     short __Graphic_Object_Base::Action_Structure::next_action_type() const{__Graphic_Object_Base::Action* action = next_action();if(action==0){return 0;}return action->type;}
     short __Graphic_Object_Base::next_action_type() const{return a_actions.get()->next_action_type();}
 
+    // Returns a color adapted with the needed opacity
+    scls::Color __Graphic_Object_Base::color_with_absolute_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * absolute_opacity());return needed_color;};
+    scls::Color __Graphic_Object_Base::color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
+
     // Returns an introduction of the object
     std::string __Graphic_Object_Base::introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons l'object \"") + name() + std::string("\".");};
 
@@ -285,7 +289,7 @@ namespace pleos {
             if(l_a->passed_time >= l_a->duration){return true;}
         }
         else if(action->type == ACTION_WAIT_UNTIL){
-            // Wait  until action
+            // Wait until action
             __Graphic_Object_Base::Action_Wait_Until* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait_Until*>(action);
             if(graphic_base()->a_time.to_double() >= l_a->duration){return true;}
         }
@@ -369,7 +373,7 @@ namespace pleos {
 
             // Apply the proportion
             int line_width = border_radius();
-            image.get()->draw_line(last_x + needed_move_x_minus + line_width / 2.0, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color_with_opacity(border_color()), line_width);
+            image.get()->draw_line(last_x + needed_move_x_minus + line_width / 2.0, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color_with_absolute_opacity(border_color()), line_width);
             return;
         }
 
@@ -377,7 +381,7 @@ namespace pleos {
         std::vector<std::shared_ptr<Point_2D>> current_triangulated_points = triangulated_points_external();
 
         // Draw the inner form
-        scls::Color inner_color = color_with_opacity(color());
+        scls::Color inner_color = color_with_absolute_opacity(color());
         if(inner_color.alpha() > 0) {
             for(int i = 0;i<static_cast<int>(current_triangulated_points.size());i+=3) {
                 std::shared_ptr<Point_2D> current_point = current_triangulated_points[i];
@@ -399,7 +403,7 @@ namespace pleos {
         double last_y = graphic_y_to_pixel_y_inversed(last_point.get()->absolute_y());
 
         // Link each points
-        scls::Color current_border_color = color_with_opacity(border_color());
+        scls::Color current_border_color = color_with_absolute_opacity(border_color());
         for(int j = 0;j<static_cast<int>(points().size());j++) {
             std::shared_ptr<__Graphic_Object_Base> current_point = points()[j];
             double needed_x = graphic_x_to_pixel_x(current_point.get()->absolute_x());
@@ -469,7 +473,7 @@ namespace pleos {
         }
 
         // Check the common forms
-        if(a_points.size() == 2 && object_name() == std::string("line")) {
+        if(a_points.size() == 2) {
             // The form is a line
 
             // Needed coordinates
@@ -549,8 +553,8 @@ namespace pleos {
     }
     std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
         // Triangulate the point
-        triangulate_points_external();
-        //if(a_last_triangulation.get() == 0){triangulate_points_external();}
+        //triangulate_points_external();
+        if(a_last_triangulation.get() == 0){triangulate_points_external();}
         if(a_last_triangulation.get() == 0){return std::vector<std::shared_ptr<Point_2D>>();}
 
         // Get the needed result
@@ -583,16 +587,17 @@ namespace pleos {
         double current_radius_y = radius_y().to_double();current_radius_y = current_radius_y * pixel_by_case_y();
         double needed_x = graphic_x_to_pixel_x(current_center.x());
         double needed_y = graphic_y_to_pixel_y_inversed(current_center.y());
-        image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation_formula().value_to_double(unknowns()), angle_start().value_to_double(unknowns()) , angle_end().value_to_double(unknowns()), color(), border_radius(), border_color());
+        image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation_formula().value_to_double(unknowns()), angle_start().value_to_double(unknowns()) , angle_end().value_to_double(unknowns()), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
     }
 
     // Returns the needed XML text to generate this object
     std::string Circle::to_displayed_text(){return std::string("cercle");}
     std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end().to_std_string(0));}
     std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start().to_std_string(0));}
+    std::string Circle::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius());};
     std::string Circle::to_xml_text_radius(){if(radius_x() != radius_y()){return std::string();}return std::string(" radius=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_y(){if(radius_y() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_y=") + radius_y().to_std_string(0);}
     std::string Circle::to_xml_text_object_name(){return std::string("circle");}
-    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_rotation() + to_xml_text_tags() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
+    std::string Circle::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_opacity() + to_xml_text_parent() + to_xml_text_rotation() + to_xml_text_tags() + to_xml_text_border_radius() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + to_xml_text_x() + to_xml_text_y() + to_xml_text_radius() + to_xml_text_radius_x() + to_xml_text_radius_y() + to_xml_text_angle_start() + to_xml_text_angle_end() + std::string(">");}
 }

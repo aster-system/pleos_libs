@@ -260,7 +260,7 @@ namespace pleos {
         // Create the image
         if(current_balise_name == "graph") {to_return = graph_from_xml(current_text, needed_style).get()->to_image();}
         else if(current_balise_name == "graphic") {to_return = graphic_image_from_xml(current_text, needed_style);}
-        else if(current_balise_name == "linked_list"){to_return = linked_list_from_xml(current_text, needed_style).get()->to_image(needed_style);}
+        else if(current_balise_name == "linked_list"){std::shared_ptr<Linked_List> l = linked_list_from_xml(current_text, needed_style);if(l == 0){scls::print("Warning", std::string("PLEOS"), std::string("Can't create a linked list."));}else{to_return = l.get()->to_image(needed_style);}}
         else if(current_balise_name == "table") {to_return = table_from_xml<Table>(current_text, needed_style).get()->to_image().image_shared_ptr();}
         else if(current_balise_name == "tree") {to_return = tree_from_xml(current_text, needed_style).get()->to_image();}
         // Format text

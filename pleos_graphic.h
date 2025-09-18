@@ -270,6 +270,7 @@ namespace pleos {
             // Returns the name of the object
             virtual std::string to_displayed_text();
             virtual std::string to_xml_text();
+            std::string to_xml_text_alignment_horizontal();
             std::string to_xml_text_background_color();
             std::string to_xml_text_color() const;
             std::string to_xml_text_font_size();
@@ -277,6 +278,7 @@ namespace pleos {
             std::string to_xml_text_object_name();
 
             // Getters and setters
+            inline scls::Alignment_Horizontal alignment_horizontal() const {return style().alignment_horizontal();};
             inline scls::Color background_color() const {return style().background_color();};
             inline scls::Color color() const {return style().color();};
             inline std::string content() const {return a_content;};
@@ -447,12 +449,20 @@ namespace pleos {
             std::shared_ptr<T>to_return;
             if(parent == 0){to_return = new_form<T>(name, std::shared_ptr<__Graphic_Object_Base>());}
             else{to_return = new_form<T>(name, parent->this_object_shared_ptr());}
-            scls::__Formula_Base::Formula needed_height = y_2 - y_1;if(needed_height < 0){needed_height *= -1;}
-            scls::__Formula_Base::Formula needed_width = x_2 - x_1;if(needed_width < 0){needed_width *= -1;}
+            double needed_distance = std::sqrt(std::pow((x_2 - x_1).value_to_double(), 2) + std::pow((y_2 - y_1).value_to_double(), 2));
+            scls::__Formula_Base::Formula needed_height = 1;
+            scls::__Formula_Base::Formula needed_width = needed_distance;
             scls::__Formula_Base::Formula needed_x = (x_2 + x_1) / 2;
             scls::__Formula_Base::Formula needed_y = (y_2 + y_1) / 2;
             to_return.get()->set_height(needed_height);to_return.get()->set_width(needed_width);
             to_return.get()->set_x(needed_x);to_return.get()->set_y(needed_y);
+            to_return.get()->set_rotation(-scls::vector_2d_angle(x_2 - x_1, y_2 - y_1) * SCLS_RADIANS_TO_ANGLE);
+
+            // Add the points
+            to_return.get()->new_point(-0.5, 0);
+            to_return.get()->new_point(0.5, 0);
+            add_form(to_return);__line_number++;
+            return to_return;
 
             // Add the points
             x_1 -= needed_x;x_2 -= needed_x;x_1 /= needed_width;x_2 /= needed_width;
@@ -792,6 +802,10 @@ namespace pleos {
         virtual void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
+
+        // Generates a new line from XML
+        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment){scls::__Formula_Base::Formula x_1;scls::__Formula_Base::Formula x_2;scls::__Formula_Base::Formula y_1;scls::__Formula_Base::Formula y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
+        void __new_line_xml(scls::__Formula_Base::Formula& x_1, scls::__Formula_Base::Formula& x_2, scls::__Formula_Base::Formula& y_1, scls::__Formula_Base::Formula& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment);
 
         //******************
         //

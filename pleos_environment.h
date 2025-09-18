@@ -82,6 +82,8 @@ namespace pleos {
 
         // Returns a color value
         scls::Color value_color(std::string base)const;
+        // Returns a list color value
+        std::vector<scls::Color> value_color_list(std::string base)const;
         // Returns a formula value
         scls::__Formula_Base::Formula value_formula(std::string base)const;
         // Returns a number value

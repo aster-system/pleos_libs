@@ -85,34 +85,20 @@ namespace pleos {
     private:
     };
 
-	class __Text_Block : public scls::Text_Image_Block {
-        // Class representating a more complete text handler for PLEOS
-    public:
-
-        // __Text_Block constructor
-        __Text_Block(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){};
-        __Text_Block(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){};
-
-        // Creates and returns a line for the block
-        virtual scls::Text_Image_Line* __create_line(scls::Line_Datas& needed_datas){return new __Text_Line(defined_balises_shared_ptr(), needed_datas.content);};
-    private:
-    };
-
-	class Text : public scls::Text_Image_Multi_Block {
+	class Text : public scls::Text_Image_Block {
         // Class representating a more complete text handler for PLEOS
     public:
 
         // Text constructor
-        Text():Text(std::make_shared<scls::_Balise_Style_Container>(),std::string()){};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text):scls::Text_Image_Multi_Block(defined_balises,text){load_balises(defined_balises);set_text(text);};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Text_Style style):scls::Text_Image_Multi_Block(defined_balises, text, style){load_balises(defined_balises);set_text(text);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){};
 
-        // Creates and returns a __Text_Block
-        virtual std::shared_ptr<scls::Text_Image_Block>__create_block(std::shared_ptr<scls::Block_Datas>needed_datas){return std::make_shared<__Text_Block>(defined_balises_shared_ptr(), needed_datas);};
+        // Creates and returns a line for the block
+        virtual scls::Text_Image_Line* __create_line(scls::Line_Datas& needed_datas){return new __Text_Line(defined_balises_shared_ptr(), needed_datas.content);};
 
         // Loads the needed balises
         void load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
-
     private:
     };
 
