@@ -112,7 +112,11 @@ namespace pleos {
     Text_Environment::Definition::__Content::__Content(std::string needed_name,std::string needed_content):content(needed_content),name(needed_name){}
 
     // Returns a color value
-    scls::Color Text_Environment::value_color(std::string base)const{if(base == std::string("random")){return scls::Color(scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255));}return scls::Color::from_std_string(base);}
+    scls::Color Text_Environment::value_color(std::string base)const{
+        scls::Function_Called_Text called_function = scls::parse_function_call(base);
+        if(called_function.name == std::string("random")){return scls::Color(scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255));}
+        return scls::Color::from_std_string(base);
+    }
     // Returns a list color value
     std::vector<scls::Color> Text_Environment::value_color_list(std::string base)const{
         std::vector<std::string> cutted = scls::cut_string_out_of_2(base, std::string(","), std::string("("), std::string(")"));

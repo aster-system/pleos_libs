@@ -1375,6 +1375,7 @@ namespace pleos {
             int number = 1;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "border_color") {border_color = environment.value_color(attributes[j].value);}
                 else if(attributes[j].name == "color") {color = environment.value_color(attributes[j].value);}
                 else if(attributes[j].name == "max_radius") {needed_max_radius = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "max_scale_x") {needed_max_scale_x = scls::Fraction::from_std_string(attributes[j].value);}
