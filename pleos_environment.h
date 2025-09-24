@@ -42,58 +42,19 @@ namespace pleos {
 	// Loads the PLEOS balises
     void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
 
-	class Text_Environment {
+	class Text_Environment : public scls::Math_Environment {
 	    // Class representating an environment for text in PLEOS
     public:
-
-        // Variables
-        struct Variable {
-            // Name of the variable
-            std::string name = std::string("x");
-            // Value of the variable
-            scls::Fraction value = 0;
-        };
 
         // Text_Environment constructor
         Text_Environment(){};
 
-        // Clears the environment
-        void clear(){a_unknowns.get()->clear();};
-
-        // Handle repetitions
-        // Adds a repetition
-        inline void add_repetition(){a_repetitions.push_back(0);};
-        // Returns the last repetition
-        inline int last_repetition(){if(a_repetitions.size() <= 0){return 0;}return a_repetitions.at(a_repetitions.size() - 1);}
-        // Removes the last repetition
-        inline void remove_repetition(){if(a_repetitions.size() > 0){a_repetitions.pop_back();}};
-        // Sets the last repetition
-        inline void set_repetition(int value){if(a_repetitions.size() > 0){a_repetitions[a_repetitions.size() - 1] = value;}};
-
-        // Handle unknowns
-        // Creates a unknown
-        scls::__Formula_Base::Unknown* create_unknown(std::string name);
-        std::shared_ptr<scls::__Formula_Base::Unknown> create_unknown_shared_ptr(std::string name);
-        // Returns a value by its name
-        scls::Fraction value_by_name(std::string name)const;
-        // Returns a unknown by its name
-        scls::__Formula_Base::Unknown* unknown_by_name(std::string name)const;
-        std::shared_ptr<scls::__Formula_Base::Unknown> unknown_shared_ptr_by_name(std::string name)const;
-
         // Returns a color value
-        scls::Color value_color(std::string base)const;
+        scls::Color value_color(std::string base) const;
         // Returns a list color value
-        std::vector<scls::Color> value_color_list(std::string base)const;
-        // Returns a formula value
-        scls::__Formula_Base::Formula value_formula(std::string base)const;
-        // Returns a number value
-        scls::Fraction value_number(std::string base)const;
-        // Returns a Point_2D_Formula value
-        scls::Point_2D_Formula value_point_2d(std::string base)const;
-
-        // Getters and setters
-        inline scls::__Formula_Base::Unknowns_Container* unknowns(){return a_unknowns.get();};
-        inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr(){return a_unknowns;};
+        std::vector<scls::Color> value_color_list(std::string base) const;
+        // Returns a point 2D value
+        scls::Point_2D_Formula value_point_2d(std::string base) const;
 
         //*********
         // Definition system
@@ -152,11 +113,6 @@ namespace pleos {
         // Getters and setters
         inline std::vector<std::shared_ptr<Definition>>& definitions() {return a_definitions;};
     private:
-
-        // Repetitions
-        std::vector<int> a_repetitions;
-        // Variables
-        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns = std::make_shared<scls::__Formula_Base::Unknowns_Container>();
 
         //*********
         // Definition system

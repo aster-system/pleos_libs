@@ -826,6 +826,7 @@ namespace pleos {
         inline void set_color(scls::Color new_color){a_color=new_color;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
         inline void set_links_drawing_proportion(double new_proportion){for(int i = 0;i<static_cast<int>(a_points_link.size());i++){a_points_link[i].drawing_proportion = new_proportion;}};
+        inline void set_triangulate_while_drawing(bool new_triangulate_while_drawing){a_triangulate_while_drawing = new_triangulate_while_drawing;};
 
         // Returns this object to an XML text
         virtual std::string to_displayed_text();
@@ -864,6 +865,8 @@ namespace pleos {
         std::vector<std::shared_ptr<__Graphic_Object_Base>> a_points;
         // Links for the point
         std::vector<Link> a_points_link;
+        // If the form must be triangualted at each drawing or not
+        bool a_triangulate_while_drawing = true;
 
         // From where the object was clone
         std::weak_ptr<__Graphic_Object_Base> a_cloned_from;

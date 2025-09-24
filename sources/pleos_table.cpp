@@ -163,10 +163,11 @@ namespace pleos {
 
     // Set the value of an std::string case
     std::shared_ptr<scls::__Image_Base> __Table_Case::case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){return tig->image_shared_ptr(value, needed_style);}
-    void __Table_Case::set_case_value(int x, int y, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = case_image_from_text(value, needed_style, tig);};
+    void __Table_Case::set_case_value(int x, int y, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = case_image_from_text(value, needed_style, tig);case_at(x, y)->content = value;case_at(x, y)->style = needed_style;};
     void __Table_Case::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig) {
         std::shared_ptr<scls::__Image_Base> img = case_image_from_text(value, needed_style, tig);
         (*case_at(x, y)->image.get()) = img;
+        case_at(x, y)->content = value;
         merge_cases(x, y, width, height);
     }
 
@@ -271,7 +272,8 @@ namespace pleos {
 	    std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
 	    std::string to_load = std::string();
 	    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-            if(attributes[i].name == std::string("font_size")){needed_style.set_font_size(std::stoi(attributes[i].value));}
+            if(attributes[i].name == std::string("color")){needed_style.set_color(scls::Color::from_std_string(attributes[i].value));}
+            else if(attributes[i].name == std::string("font_size")){needed_style.set_font_size(std::stoi(attributes[i].value));}
             else if(attributes[i].name == std::string("load")){to_load = attributes[i].value;}
             else if(attributes[i].name == std::string("minimum_case_width")){to_return.get()->set_minimum_case_width(std::stoi(attributes[i].value));}
             else if(attributes[i].name == std::string("title")){to_return.get()->set_title(attributes[i].value);}
@@ -281,7 +283,30 @@ namespace pleos {
 	    std::vector<std::string> cutted = scls::cut_string(to_load, std::string(";"));
 	    to_return.get()->set_loaded(to_load);
 	    if(cutted.size() > 0) {
-            if(cutted.at(0) == std::string("cartesian_product")) {
+            if(cutted.at(0) == std::string("arithmetic_base")) {
+                int height = 5; int width = 4;
+
+                // Create the parts
+                scls::Text_Style style = needed_style;
+
+                // Titles
+                style.set_color(scls::Color(0, 0, 0));
+                to_return.get()->set_case_value(0, 0, std::string("Base 10"), style.new_child(), &tig);
+                to_return.get()->set_case_value(1, 0, std::string("Base 2"), style.new_child(), &tig);
+                to_return.get()->set_case_value(2, 0, std::string("Base 8"), style.new_child(), &tig);
+                to_return.get()->set_case_value(3, 0, std::string("Base 16"), style.new_child(), &tig);
+                style.set_color(scls::Color(0, 0, 0, 0));
+
+                // Needed number
+                std::vector<int> bases = {10, 2, 8, 16};
+                std::vector<int> to_convert = {1, 2, 5, 10, 20, 100, 287};
+                for(int i = 0;i<static_cast<int>(to_convert.size());i++) {
+                    for(int j = 0;j<static_cast<int>(bases.size());j++) {
+                        to_return.get()->set_case_value(j, i + 1, scls::format_number_to_text(to_convert.at(i), -1, bases.at(j)) , style.new_child(), &tig);
+                    }
+                }
+            }
+            else if(cutted.at(0) == std::string("cartesian_product")) {
                 int height = 5; int width = 5;
 
                 // Relation
@@ -329,17 +354,20 @@ namespace pleos {
 	    }
 
 	    // Handle a lot of balises
-        for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
+	    for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++){
             std::string current_balise_name = xml->sub_texts()[i].get()->xml_balise_name();
             std::vector<scls::XML_Attribute>& attributes = xml->sub_texts()[i].get()->xml_balise_attributes();
             if(current_balise_name == "case" || current_balise_name == "case_plus"){
-                scls::Color background_color = scls::Color(255, 255, 255);std::string content = std::string();
+                scls::Color background_color = scls::Color(255, 255, 255);
+                scls::Color color = scls::Color(255, 255, 255);bool color_used = false;
+                std::string content = std::string();bool content_used = false;
                 scls::Text_Style case_style = needed_style.new_child();case_style.set_border_width(0);
                 int height = 1;int width = 1;bool right_border = true;int x = 0;int y = 0;
                 for(int i = 0;i<static_cast<int>(attributes.size());i++) {
                     if(!scls::text_style_from_xml_attribute(&attributes[i], case_style)) {
                         if(attributes[i].name == std::string("background_color")){background_color = scls::Color::from_std_string(attributes[i].value);}
-                        else if(attributes[i].name == std::string("content")){content = attributes[i].value;}
+                        else if(attributes[i].name == std::string("color")){color = scls::Color::from_std_string(attributes[i].value);color_used=true;}
+                        else if(attributes[i].name == std::string("content")){content = attributes[i].value;content_used=true;}
                         else if(attributes[i].name == std::string("height")){height = std::stoi(attributes[i].value);}
                         else if(attributes[i].name == std::string("right_border")){if(attributes[i].value==std::string("0")||attributes[i].value==std::string("false")||attributes[i].value==std::string("no")){right_border=false;}}
                         else if(attributes[i].name == std::string("width")){width = std::stoi(attributes[i].value);}
@@ -349,14 +377,19 @@ namespace pleos {
                 }
 
                 // Create the result
-                case_style.set_background_color(background_color);
-                if(current_balise_name == "case_plus"){
-                    content = xml->sub_texts()[i].get()->text();
-                    if(case_style.max_width() == -1){case_style.set_max_width(to_return.get()->column_width(x, width));}
+                case_style.set_background_color(scls::Color(0, 0, 0, 0));
+                case_style.set_font_size(needed_style.font_size());
+                if(color_used){case_style.set_color(color);}
+                if(content_used || current_balise_name == "case_plus") {
+                    if(current_balise_name == "case_plus"){
+                        content = xml->sub_texts()[i].get()->text();
+                        if(case_style.max_width() == -1){case_style.set_max_width(to_return.get()->column_width(x, width));}
+                    }
+                    to_return.get()->set_case_value(x, y, content, case_style, &tig);
                 }
-                to_return.get()->set_case_value(x, y, content, case_style, &tig);
                 to_return.get()->case_at(x, y)->right_border = right_border;
                 to_return.get()->case_at(x, y)->set_background_color(background_color);
+                to_return.get()->case_at(x, y)->style = case_style;
                 to_return.get()->merge_cases(x, y, width, height);
             }
         }

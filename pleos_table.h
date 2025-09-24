@@ -66,6 +66,8 @@ namespace pleos {
 
         // Cases in the table
         struct Table_Case {
+            // Content in the case
+            std::string content;
             // Image in the case
             std::shared_ptr<scls::Image> image;
             // Margin of the case
@@ -88,6 +90,7 @@ namespace pleos {
             inline scls::Color background_color() const {return style.background_color();};
             inline int font_size() const {return style.font_size();};
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
+            inline void set_color(scls::Color new_color) {style.set_color(new_color);};
             inline void set_image(scls::Image new_image){(*image.get()) = new_image;};
 
             // Parent table

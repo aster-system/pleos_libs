@@ -73,29 +73,17 @@ namespace pleos {
 	// Returns if a balise is a special PLEOS balise
 	bool is_special_pleos_balise(std::string name);
 
-	class __Text_Line : public scls::Text_Image_Line {
-        // Class representating a more complete text handler for PLEOS
-    public:
-
-        // __Text_Line constructor
-        __Text_Line(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::__XML_Text_Base> text):scls::Text_Image_Line(defined_balises,text){};
-
-        // Generate a word
-        virtual void generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, scls::Text_Style needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add);
-    private:
-    };
-
 	class Text : public scls::Text_Image_Block {
         // Class representating a more complete text handler for PLEOS
     public:
 
         // Text constructor
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){load_balises(defined_balises);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){load_balises(defined_balises);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){load_balises(defined_balises);};
 
-        // Creates and returns a line for the block
-        virtual scls::Text_Image_Line* __create_line(scls::Line_Datas& needed_datas){return new __Text_Line(defined_balises_shared_ptr(), needed_datas.content);};
+        // Creates and returns a word
+        virtual std::shared_ptr<scls::Text_Image_Block> __generate_block(std::shared_ptr<scls::Block_Datas> block_datas);
 
         // Loads the needed balises
         void load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
@@ -131,7 +119,7 @@ namespace pleos {
             __GUI_Text_Block_Graphic(std::shared_ptr<GUI_Object> needed_object):scls::__GUI_Text_Metadatas::__GUI_Text_Block(needed_object){};
 
             // Updates the texture of the block
-            virtual void update_texture(scls::Text_Image_Block* block_to_apply, scls::Image_Generation_Type generation_type);
+            virtual void update_texture(std::shared_ptr<scls::Text_Image_Block> block_to_apply, scls::Image_Generation_Type generation_type);
 
             // Graphic in the block
             inline Graphic* graphic() const {return graphic_object()->graphic();};

@@ -553,8 +553,8 @@ namespace pleos {
     }
     std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
         // Triangulate the point
-        //triangulate_points_external();
-        if(a_last_triangulation.get() == 0){triangulate_points_external();}
+        if(a_triangulate_while_drawing){triangulate_points_external();}
+        else{if(a_last_triangulation.get() == 0){triangulate_points_external();}}
         if(a_last_triangulation.get() == 0){return std::vector<std::shared_ptr<Point_2D>>();}
 
         // Get the needed result

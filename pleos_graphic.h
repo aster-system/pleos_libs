@@ -88,6 +88,9 @@ namespace pleos {
         class Graphic_Texture_Object : public Graphic_Base_Object{
             // Class representating a graphic object with a texture
         public:
+            // All possible displaying type
+            enum Texture_Displaying {TD_Fill,TD_From_Height,TD_From_Width,TD_Pixel_Size};
+
             // Graphic_Base_Object constructor
             Graphic_Texture_Object(std::weak_ptr<Graphic> graphic_base):Graphic_Base_Object(graphic_base){};
 
@@ -107,6 +110,7 @@ namespace pleos {
             virtual std::string to_xml_text_base();
             virtual std::string to_xml_text_object_name();
             std::string to_xml_text_source();
+            std::string to_xml_text_texture_displaying();
 
             // Getters and setters
             inline scls::__Image_Base* last_texture() const {return a_last_texture.get();};
@@ -114,8 +118,11 @@ namespace pleos {
             inline void set_texture(scls::Image new_texture){set_texture(new_texture.image_shared_ptr());};
             inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();};
             inline void set_texture(std::string path){if(path != std::string()){set_texture(std::make_shared<scls::__Image_Base>(path));}a_source=path;};
+            inline void set_texture_displaying(std::string new_texture_displaying){if(new_texture_displaying == std::string("fill")){set_texture_displaying(Texture_Displaying::TD_Fill);}else if(new_texture_displaying == std::string("from_height")){set_texture_displaying(Texture_Displaying::TD_From_Height);}else if(new_texture_displaying == std::string("from_width")){set_texture_displaying(Texture_Displaying::TD_From_Width);}else if(new_texture_displaying == std::string("pixel_size")){set_texture_displaying(Texture_Displaying::TD_Pixel_Size);}}
+            inline void set_texture_displaying(Texture_Displaying new_texture_displaying){a_texture_displaying = new_texture_displaying;}
             inline std::string source() const {return a_source;}
             inline scls::__Image_Base* texture() const {return a_texture.get();}
+            inline Texture_Displaying texture_displaying() const {return a_texture_displaying;};
             inline std::shared_ptr<scls::__Image_Base> texture_shared_ptr() const {return a_texture;}
 
         private:
@@ -127,6 +134,9 @@ namespace pleos {
             std::shared_ptr<scls::__Image_Base> a_last_texture;
             int a_last_texture_height = -1;int a_last_texture_width = -1;
             std::shared_ptr<scls::__Image_Base> a_texture;
+            // Way to display the texture
+            Texture_Displaying a_texture_displaying = Texture_Displaying::TD_Fill;
+
         }; typedef Graphic_Texture_Object Graphic_Texture;
         class Graphic_Texture_Table : public Graphic_Texture_Object{
             // Class representating a graphic object with a table
@@ -161,6 +171,9 @@ namespace pleos {
             inline void set_table(std::shared_ptr<__Table_Case> new_table){a_table = new_table;};
             inline __Table_Case* table() const {return a_table.get();};
 
+            // TEMP
+            void set_xml(std::string new_xml){a_xml = new_xml;};
+
             //******************
             // Hierarchy functions
             //******************
@@ -170,6 +183,8 @@ namespace pleos {
         private:
             // Needed table
             std::shared_ptr<__Table_Case> a_table = __Table_Case::new_table();
+            // XML code for this table (TEMP)
+            std::string a_xml;
         };
 
         // Needed fragment shader for the function

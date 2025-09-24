@@ -81,21 +81,35 @@ namespace pleos {
 
     // Loads the last texture of the object
     void Graphic::Graphic_Texture::load_last_texture(){
-        int needed_height = height_in_pixel();
-        int needed_width = width_in_pixel();
-        if(texture()->height() == needed_height && texture()->width() == needed_width){a_last_texture = texture_shared_ptr();}
-        else{
-            a_last_texture = texture()->resize_adaptative(needed_width, needed_height);
-            a_last_texture_height=needed_height;a_last_texture_width=needed_width;
+        if(a_texture_displaying == Texture_Displaying::TD_Fill) {
+            // Fill the texture
+            int needed_height = height_in_pixel();
+            int needed_width = width_in_pixel();
+            if(texture()->height() == needed_height && texture()->width() == needed_width){a_last_texture = texture_shared_ptr();}
+            else{
+                a_last_texture = texture()->resize_adaptative(needed_width, needed_height);
+                a_last_texture_height=needed_height;a_last_texture_width=needed_width;
+            }
         }
+        else if(a_texture_displaying == Texture_Displaying::TD_From_Width) {
+            // Fill the texture according to the width
+            int needed_width = width_in_pixel();int needed_height = (static_cast<double>(needed_width) * (static_cast<double>(texture()->height()) /static_cast<double>(texture()->width())));
+            if(texture()->height() == needed_height && texture()->width() == needed_width){a_last_texture = texture_shared_ptr();}
+            else{
+                a_last_texture = texture()->resize_adaptative(needed_width, needed_height);
+                a_last_texture_height=needed_height;a_last_texture_width=needed_width;
+            }
+        }
+        else {a_last_texture = texture_shared_ptr();}
     }
 
     // Returns the source to a XML text
     std::string Graphic::Graphic_Texture::to_displayed_text(){return std::string("objet texturé");}
-    std::string Graphic::Graphic_Texture::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_rotation() + to_xml_text_source() + to_xml_text_tags() + std::string(">");}
+    std::string Graphic::Graphic_Texture::to_xml_text(){return std::string("<") + to_xml_text_object_name() + to_xml_text_name() + to_xml_text_x() + to_xml_text_y() + to_xml_text_opacity() + to_xml_text_width() + to_xml_text_height() + to_xml_text_rotation() + to_xml_text_source() + to_xml_text_tags() + std::string(">");}
     std::string Graphic::Graphic_Texture::to_xml_text_base(){return __Graphic_Object_Base::to_xml_text_base() + to_xml_text_source();}
     std::string Graphic::Graphic_Texture::to_xml_text_object_name(){return std::string("texture_object");}
     std::string Graphic::Graphic_Texture::to_xml_text_source(){return std::string(" source=\"") + source() + std::string("\"");}
+    std::string Graphic::Graphic_Texture::to_xml_text_texture_displaying(){if(a_texture_displaying == Texture_Displaying::TD_Fill){return std::string(" texture_displying=fill");}else if(a_texture_displaying == Texture_Displaying::TD_From_Height){return std::string(" texture_displying=from_height");}else if(a_texture_displaying == Texture_Displaying::TD_From_Width){return std::string(" texture_displying=from_width");}else if(a_texture_displaying == Texture_Displaying::TD_Pixel_Size){return std::string(" texture_displying=pixel_size");}}
 
     // Returns a parameter by its name
     std::string Graphic::Graphic_Texture_Table::parameter(std::string parameter_name) {
@@ -117,6 +131,16 @@ namespace pleos {
             int x = std::stoi(cutted.at(1));int y = std::stoi(cutted.at(2));
             a_table.get()->case_at(x, y)->set_background_color(needed_color);
         }
+        else if(cutted.at(0) == std::string("case_color")){
+            scls::Color base_color = scls::Color::from_std_string(parameter_value_start);
+            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
+
+            if(proportion < 1){needed_color = base_color + (needed_color - base_color) * proportion;}
+
+            int x = std::stoi(cutted.at(1));int y = std::stoi(cutted.at(2));
+            a_table.get()->case_at(x, y)->set_color(needed_color);
+            a_table.get()->set_case_value(x, y, a_table.get()->case_at(x, y)->content, a_table.get()->case_at(x, y)->style, window_struct()->text_image_generator());
+        }
         Graphic::Graphic_Texture::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);
     }
 
@@ -126,7 +150,8 @@ namespace pleos {
     }
 
     // Returns the source to a XML text
-    std::string Graphic::Graphic_Texture_Table::to_xml_text(){return std::string("<") + to_xml_text_base() + to_xml_text_loaded() + to_xml_text_font_size() + std::string(">") + std::string("</") + to_xml_text_object_name() + std::string(">");}
+    std::string Graphic::Graphic_Texture_Table::to_xml_text(){return a_xml.substr(0, 6) + to_xml_text_texture_displaying() + a_xml.substr(6, a_xml.size() - 6);};
+    //std::string Graphic::Graphic_Texture_Table::to_xml_text(){return std::string("<") + to_xml_text_base() + to_xml_text_loaded() + std::string(">") + std::string("</") + to_xml_text_object_name() + std::string(">");}
     std::string Graphic::Graphic_Texture_Table::to_xml_text_font_size() const{return std::string(" font_size=120");}
     std::string Graphic::Graphic_Texture_Table::to_xml_text_loaded() const{if(a_table.get()->loaded()==std::string()){return std::string();}return std::string(" load=") + a_table.get()->loaded();}
     std::string Graphic::Graphic_Texture_Table::to_xml_text_object_name(){return std::string("table");}
@@ -911,28 +936,6 @@ namespace pleos {
     //
     //******************
 
-    // Handle utilities balises
-	#define BALISE_REPEAT 0
-	struct Utility_Balise {int times = 1;int type = -1;scls::Fraction value_start = 0;scls::Fraction value_end=1;};
-    Utility_Balise utilities_balise(std::shared_ptr<scls::__XML_Text_Base> xml) {
-        Utility_Balise to_return;
-
-        // Handle the balise
-        std::string balise_content = xml.get()->xml_balise();
-        std::string current_balise_name = xml.get()->xml_balise_name();
-        std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
-        if(current_balise_name == std::string("repeat")) {
-            // Repeat instructions
-            to_return.type = BALISE_REPEAT;
-            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                if(attributes[i].name == "times") {to_return.times = std::stoi(attributes.at(i).value);}
-            }
-        }
-
-        // Return the result
-        return to_return;
-    }
-
     // Balises circle in the graphic
     bool Graphic::graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment& environment, scls::Text_Style text_style) {
         // Asserts
@@ -1411,12 +1414,14 @@ namespace pleos {
             std::shared_ptr<Graphic::Graphic_Texture_Table> new_object = new_texture_object<Graphic::Graphic_Texture_Table>(std::string(""), 0, 0);
             object = new_object;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(graphic_from_xml_balise_attribute_texture_object(attributes[j], new_object, environment, text_style)){}
+                if(attributes.at(j).name == std::string("texture_displaying")){new_object.get()->set_texture_displaying(attributes.at(j).value);}
+                else if(graphic_from_xml_balise_attribute_texture_object(attributes[j], new_object, environment, text_style)){}
             }
 
             // Set the content
             scls::Text_Style style = text_style.new_child();
             new_object.get()->set_table(table_from_xml(xml, style));
+            new_object.get()->set_xml(xml.get()->full_text());
         }
         else if(current_balise_name == "text") {
             // Get the datas about a text of the graphic
@@ -1618,13 +1623,11 @@ namespace pleos {
         }
         else if(current_balise_name == "action_wait" || current_balise_name == "wait_action") {
             // Get the datas about the wait action
-            std::shared_ptr<__Graphic_Object_Base> needed_object;
+            LOAD_PRENEEDED_DATAS
             scls::__Formula_Base::Formula needed_time = 0;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "object") {needed_object = object_by_name_shared_ptr(attributes[j].value);}
-                else if(attributes[j].name == "duration" || attributes[j].name == "time") {needed_time = environment.value_formula(attributes[j].value);}
+                if(attributes[j].name == "duration" || attributes[j].name == "time") {needed_time = environment.value_formula(attributes[j].value);}
             }
-            if(needed_object.get() != 0){needed_objects.push_back(needed_object);}
 
             // Add the action
             if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Wait>(needed_time.value_to_double()));structure->last_action()->save_to_xml_text = true;}
@@ -1636,11 +1639,10 @@ namespace pleos {
         }
         else if(current_balise_name == "action_wait_until" || current_balise_name == "wait_until_action") {
             // Get the datas about the wait action
-            std::shared_ptr<__Graphic_Object_Base> needed_object;
+            LOAD_PRENEEDED_DATAS
             scls::__Formula_Base::Formula needed_time = 0;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "object") {needed_object = object_by_name_shared_ptr(attributes[j].value);}
-                else if(attributes[j].name == "duration" || attributes[j].name == "time") {needed_time = environment.value_formula(attributes[j].value);}
+                if(attributes[j].name == "duration" || attributes[j].name == "time") {needed_time = environment.value_formula(attributes[j].value);}
             }
 
             // Add the action
@@ -1685,12 +1687,12 @@ namespace pleos {
 	    // Handle a lot of balises
         for(int i = 0;i<static_cast<int>(xml->sub_texts().size());i++) {
             // Handle utilities
-            Utility_Balise utility = utilities_balise(xml->sub_texts().at(i));
+            scls::Utility_Balise utility = scls::utilities_balise(xml->sub_texts().at(i));
 
-            if(utility.type == BALISE_REPEAT) {
+            if(utility.type == SCLS_BALISE_REPEAT) {
                 environment.add_repetition();
                 scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("b");
-                needed_variable->set_value(utility.value_start);scls::Fraction step = (utility.value_end - utility.value_start) / (utility.times - 1);
+                needed_variable->set_value(utility.value_start);scls::Fraction step = scls::Fraction(utility.value_end - utility.value_start) / (utility.times - 1);
                 for(int j = 0;j<utility.times;j++){
                     environment.set_repetition(j);
                     Graphic::__graphic_from_xml_balises(xml->sub_texts().at(i), environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);

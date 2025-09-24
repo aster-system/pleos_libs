@@ -124,11 +124,7 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(cutted.size());i++){to_return[i] = value_color(cutted.at(i));}
         return to_return;
     }
-	// Returns a formula value
-    scls::__Formula_Base::Formula Text_Environment::value_formula(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.replace_unknowns(a_unknowns.get());}
-    // Returns a number value
-    scls::Fraction Text_Environment::value_number(std::string base)const{scls::__Formula_Base formula = scls::string_to_formula(base);return formula.value(a_unknowns.get()).real();}
-    // Returns a Point_2D value
+	// Returns a Point_2D value
     scls::Point_2D_Formula Text_Environment::value_point_2d(std::string base)const{
         // Format the text
         while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
@@ -140,16 +136,6 @@ namespace pleos {
         if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
         return scls::Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
     };
-
-    // Handle unknowns
-    // Creates a unknown
-    scls::__Formula_Base::Unknown* Text_Environment::create_unknown(std::string name){return a_unknowns.get()->create_unknown(name);};
-    std::shared_ptr<scls::__Formula_Base::Unknown> Text_Environment::create_unknown_shared_ptr(std::string name){return a_unknowns.get()->create_unknown_shared_ptr(name);};
-    // Returns a value by its name
-    scls::Fraction Text_Environment::value_by_name(std::string name)const{scls::__Formula_Base::Unknown*unknow=unknown_by_name(name);if(unknow==0){return 0;}return (unknow->value.get()->value(0).real());};
-    // Returns a unknown by its name
-    scls::__Formula_Base::Unknown* Text_Environment::unknown_by_name(std::string name)const{return a_unknowns.get()->unknown_by_name(name);};
-    std::shared_ptr<scls::__Formula_Base::Unknown> Text_Environment::unknown_shared_ptr_by_name(std::string name)const{return a_unknowns.get()->unknown_shared_ptr_by_name(name);};
 
     //*********
     // Definition system

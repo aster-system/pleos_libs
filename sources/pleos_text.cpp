@@ -299,7 +299,11 @@ namespace pleos {
 
         return to_return;
 	}
-    void __Text_Line::generate_word(std::shared_ptr<scls::__XML_Text_Base> current_text, unsigned int& current_position_in_plain_text, scls::Text_Style needed_style, std::shared_ptr<scls::Text_Image_Word>& word_to_add) {
+    std::shared_ptr<scls::Text_Image_Block> Text::__generate_block(std::shared_ptr<scls::Block_Datas> block_datas) {
+        // Get the datas about the block
+        std::shared_ptr<scls::__XML_Text_Base> current_text = block_datas.get()->content;
+        scls::Text_Style needed_style = block_datas.get()->global_style;
+
         std::string balise_content = current_text.get()->xml_balise();
         std::string current_balise_name = current_text.get()->xml_balise_name();
         if(is_special_pleos_balise(current_balise_name)) {
@@ -318,9 +322,14 @@ namespace pleos {
                 width = global_style().max_width();
                 height = static_cast<int>(static_cast<double>(width) * (static_cast<double>(src_img.get()->height()) / static_cast<double>(src_img.get()->width())));
             }
-            __generate_image(word_to_add, src_img, current_position_in_plain_text, a_current_width, height, width);
+
+            // Generate the image
+            std::shared_ptr<scls::Text_Image_Block> to_return = scls::Text_Image_Block::__generate_block(block_datas, src_img);
+            return to_return;
         }
-        else{scls::Text_Image_Line::generate_word(current_text, current_position_in_plain_text, needed_style, word_to_add);}
+
+        // Normal block
+        return scls::Text_Image_Block::__generate_block(block_datas);
     }
 
     // Loads the needed balises
@@ -340,10 +349,10 @@ namespace pleos {
     };
 
     // Updates the texture of the block
-    void GUI_Text::__GUI_Text_Block_Graphic::update_texture(scls::Text_Image_Block* block_to_apply, scls::Image_Generation_Type generation_type){
+    void GUI_Text::__GUI_Text_Block_Graphic::update_texture(std::shared_ptr<scls::Text_Image_Block> block_to_apply, scls::Image_Generation_Type generation_type){
         int height=0;int width=0;
-        graphic()->set_style(block_to_apply->global_style());
-        graphic()->graphic_from_xml(block_to_apply->datas()->content, block_to_apply->global_style(), width, height);
+        graphic()->set_style(block_to_apply.get()->global_style());
+        graphic()->graphic_from_xml(block_to_apply.get()->datas()->content, block_to_apply.get()->global_style(), width, height);
 
         // Update the size
         graphic_object()->set_height_in_pixel(height);
