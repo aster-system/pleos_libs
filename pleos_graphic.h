@@ -799,6 +799,10 @@ namespace pleos {
         //
         //******************
 
+        // Precise objects
+        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment);
+        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::string object_type, Text_Environment& environment);
+
         // Balises circle in the graphic
         bool graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment& environment, scls::Text_Style text_style);
         // Balises form 2D in the graphic

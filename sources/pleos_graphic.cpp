@@ -1064,6 +1064,14 @@ namespace pleos {
         }
     }
 
+    // Precise objects
+    std::string Graphic::graphic_from_xml_name(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment){return graphic_from_xml_name(attribute, object.get()->to_xml_text_object_name(), environment);}
+    std::string Graphic::graphic_from_xml_name(scls::XML_Attribute& attribute, std::string object_type, Text_Environment& environment){
+        scls::Function_Called_Text called_function = scls::parse_function_call(attribute.value);
+        if(called_function.name == std::string("type_number")){return object_type + std::string("-") + std::to_string(a_objects.size());}
+        return attribute.value;
+    }
+
     // Balises in the graphic
     std::shared_ptr<pleos::__Graphic_Object_Base> Graphic::graphic_from_xml_balise(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment, scls::Text_Style text_style){
         std::string balise_content = xml.get()->xml_balise();
@@ -1250,10 +1258,10 @@ namespace pleos {
             std::string needed_name = std::string();double needed_proportion = 1;
             bool use_collision = false;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = scls::Color::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = environment.value_color(attributes[j].value);}
+                else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = environment.value_double(attributes[j].value);}
                 else if(attributes[j].name == "collision") {use_collision=true;}
-                else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
+                else if(attributes[j].name == "name") {needed_name = graphic_from_xml_name(attributes[j], std::string("line"), environment);}
                 else if(attributes[j].name == "physic") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
                 else if(attributes[j].name == "proportion") {needed_proportion = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
