@@ -845,8 +845,8 @@ namespace pleos {
         //virtual void when_new_children(__Graphic_Object_Base* new_child){if(!contains_point(new_child)){add_point(new_child->this_object_shared_ptr());}};
 
         // Physic
-        virtual int collision_height(){if(a_points.size() == 2){return std::ceil(std::max(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()) - std::min(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()));}return __Graphic_Object_Base::collision_height();};
-        virtual int collision_width(){if(a_points.size() == 2){return std::ceil(std::max(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()) - std::min(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()));}return __Graphic_Object_Base::collision_width();};
+        virtual int collision_height(){if(a_points.size() == 2){return 1 + std::ceil(std::max(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()) - std::min(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()));}return __Graphic_Object_Base::collision_height();};
+        virtual int collision_width(){if(a_points.size() == 2){return 1 + std::ceil(std::max(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()) - std::min(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()));}return __Graphic_Object_Base::collision_width();};
         virtual int collision_x_start(){if(a_points.size() == 2){return std::floor(std::min(a_points.at(0).get()->absolute_x(), a_points.at(1).get()->absolute_x()));}return __Graphic_Object_Base::collision_x_start();};
         virtual int collision_y_start(){if(a_points.size() == 2){return std::floor(std::min(a_points.at(0).get()->absolute_y(), a_points.at(1).get()->absolute_y()));}return __Graphic_Object_Base::collision_y_start();};
     private:
