@@ -489,6 +489,7 @@ namespace pleos {
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter);
         // Sets a parameter by its name
+        void set_parameter(std::string parameter_name, std::string parameter_value);
         virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
 
         // Sets the parent of the object
@@ -893,6 +894,11 @@ namespace pleos {
         virtual scls::Fraction radius_y(){return attached_transform()->scale_y() / 2;};
         virtual scls::__Formula_Base::Formula radius_y_formula(){return attached_transform()->scale_y_formula() / 2;};
 
+        // Returns a parameter by its name
+        virtual std::string parameter(std::string parameter);
+        // Sets a parameter by its name
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
+
         // Returns the needed XML text to generate this object
         virtual std::string to_displayed_text();
         virtual std::string to_xml_text();
@@ -917,6 +923,7 @@ namespace pleos {
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
         inline void set_center(scls::Point_2D new_center){attached_transform()->set_position(new_center);};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
+        inline void set_radius(scls::__Formula_Base::Formula new_radius){set_radius_x(new_radius);set_radius_y(new_radius);}
         inline void set_radius_x(scls::__Formula_Base::Formula new_radius_x){attached_transform()->set_scale_x(new_radius_x * 2);}
         inline void set_radius_y(scls::__Formula_Base::Formula new_radius_y){attached_transform()->set_scale_y(new_radius_y * 2);}
     private:

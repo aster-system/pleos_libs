@@ -233,11 +233,11 @@ namespace pleos {
         return std::string();
     }
     // Sets a parameter by its name
+    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value){return set_parameter(parameter_name, parameter_value, std::string(""), 1);}
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
         if(parameter_name == std::string("opacity")){
-            double start = scls::Fraction::from_std_string(parameter_value_start).to_double();
             double current = scls::string_to_double(parameter_value);
-            if(proportion != 1){set_opacity(start + (current - start) * proportion);}
+            if(proportion != 1){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();set_opacity(start + (current - start) * proportion);}
             else{set_opacity(current);}
         }
     }
@@ -265,7 +265,7 @@ namespace pleos {
     // Returns the needed XML text to generate this object
     std::string __Graphic_Object_Base::to_displayed_text(){return std::string("objet");}
     std::string __Graphic_Object_Base::to_xml_text(){return std::string("<") + to_xml_text_base() + std::string(">");}
-    std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_opacity();}
+    std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_opacity() + to_xml_text_tags();}
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
     std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height_formula().to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
@@ -443,15 +443,21 @@ namespace pleos {
 
     // Returns a parameter by its name
     std::string Form_2D::parameter(std::string parameter_name) {
-        if(parameter_name == std::string("color")){return color().to_std_string(0);}
+        if(parameter_name == std::string("border_color")){return border_color().to_std_string(0);}
+        else if(parameter_name == std::string("color")){return color().to_std_string(0);}
         return __Graphic_Object_Base::parameter(parameter_name);
     }
     // Sets a parameter by its name
     void Form_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
-        if(parameter_name == std::string("color")){
-            scls::Color base_color = scls::Color::from_std_string(parameter_value_start);
+        if(parameter_name == std::string("border_color")){
             scls::Color needed_color = scls::Color::from_std_string(parameter_value);
-            if(proportion < 1){needed_color = base_color + (needed_color - base_color) * proportion;}
+            if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+
+            set_border_color(needed_color);std::cout << "L " << std::endl;
+        }
+        else if(parameter_name == std::string("color")){
+            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
+            if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
 
             set_color(needed_color);
         }
@@ -588,6 +594,30 @@ namespace pleos {
         double needed_x = graphic_x_to_pixel_x(current_center.x());
         double needed_y = graphic_y_to_pixel_y_inversed(current_center.y());
         image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation_formula().value_to_double(unknowns()), angle_start().value_to_double(unknowns()) , angle_end().value_to_double(unknowns()), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
+    }
+
+    // Returns a parameter by its name
+    std::string Circle::parameter(std::string parameter_name){
+        if(parameter_name == std::string("angle_end")){return angle_end().to_std_string(0);}
+        else if(parameter_name == std::string("angle_start")){return angle_start().to_std_string(0);}
+        return __Graphic_Object_Base::parameter(parameter_name);
+    }
+
+    // Sets a parameter by its name
+    void Circle::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){
+        if(parameter_name == std::string("angle_end")){
+            double needed_angle = scls::string_to_formula(parameter_value).value_to_double();
+            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+
+            set_angle_end(needed_angle);
+        }
+        else if(parameter_name == std::string("angle_start")){
+            double needed_angle = scls::string_to_formula(parameter_value).value_to_double();
+            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+
+            set_angle_start(needed_angle);
+        }
+        else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
     }
 
     // Returns the needed XML text to generate this object

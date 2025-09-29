@@ -248,12 +248,13 @@ namespace pleos {
         current_style.set_color(color_with_opacity(current_style.color()));
         current_style.set_background_color(color_with_opacity(current_style.background_color()));
         if(font_size_in_scale().to_double() > 0){current_style.set_font_size(round(static_cast<double>(pixel_by_case_y()) * font_size_in_scale().to_double()));}
-        std::shared_ptr<scls::__Image_Base> needed_image = a_text_image_generator.get()->image_shared_ptr(final_content(), current_style);
+        std::shared_ptr<scls::Text_Image_Block> image_block = a_text_image_generator.get()->new_text_image_block_shared_ptr(final_content(), current_style);
+        std::shared_ptr<scls::__Image_Base> needed_image = image_block.get()->image_shared_pointer();
 
         // Handle transformations
         if(rotation() != 0){needed_image.get()->rotate(rotation().to_double());}
         double needed_x = graphic_x_to_pixel_x(x());
-        double needed_y = graphic_y_to_pixel_y_inversed(y());
+        double needed_y = graphic_y_to_pixel_y_inversed(y()) + image_block.get()->datas()->max_last_line_bottom_offset;
         image.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
     }
 
