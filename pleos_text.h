@@ -138,6 +138,9 @@ namespace pleos {
         // Creates a text block from a block of text
         virtual std::shared_ptr<scls::__GUI_Text_Metadatas::__GUI_Text_Block> __create_text_block_object(scls::Text_Image_Block* block_to_apply);
     };
+
+    // Returns the image of a text
+    scls::Image string_to_image(std::string content);
 }
 
 #endif //PLEOS_TEXT

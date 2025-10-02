@@ -1020,7 +1020,7 @@ namespace pleos {
     // Balises object in the graphic
     bool Graphic::graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment, scls::Text_Style text_style) {
         if(attribute.name == "height") {object.get()->set_height(environment.value_formula(attribute.value).value_to_fraction());}
-        else if(attribute.name == "name") {std::string needed_name = attribute.value;if(environment.last_repetition() != 0){needed_name += std::string("-") + std::to_string(environment.last_repetition());}object.get()->set_name(needed_name);}
+        else if(attribute.name == "name") {std::string needed_name = graphic_from_xml_name(attribute, object.get()->to_xml_text_object_name(), environment);object.get()->set_name(needed_name);}
         else if(attribute.name == "opacity") {object.get()->set_opacity(environment.value_formula(attribute.value).value_to_double(unknowns()));}
         else if(attribute.name == "parent") {object.get()->set_parent(object_by_name_shared_ptr(attribute.value));}
         else if(attribute.name == "rotation") {object.get()->set_rotation(environment.value_formula(attribute.value));}

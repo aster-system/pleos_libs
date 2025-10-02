@@ -361,4 +361,13 @@ namespace pleos {
         // Update the texture
         graphic_object()->update_texture();
     };
+
+    // Returns the image of a text
+    scls::Image string_to_image(std::string content){
+        std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();
+        load_balises_pleos(balises);scls::Text_Style style;
+        pleos::Text t = pleos::Text(balises, content, style);
+        std::shared_ptr<scls::__Image_Base> to_return = t.image_shared_pointer();
+        return to_return;
+    }
 }
