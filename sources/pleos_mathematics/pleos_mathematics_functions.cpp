@@ -754,6 +754,9 @@ namespace pleos {
     std::string __redaction_root_0 = std::string("Le polynôme \"<full_formula>\" est constamment égal à 0, il admet tout son ensemble de définition comme racine.");
     std::string __redaction_root_0_not_0 = std::string("Le polynôme \"<full_formula>\" est constant, il n'a pas de racines.");
     std::string __redaction_root_1 = std::string("Le polynôme \"<full_formula>\" est linéaire, il admet comme solution : <math><mi>s</mi><mo>=</mo><mfrac><mi>-b</mi><mi>a</mi></mfrac><mo>=</mo><mfrac><mi>-<polynomial_0></mi><mi><polynomial_1></mi></mfrac><mo>=</mo><mi><solution_0></mi></math>");
+    std::string __redaction_root_2_d = std::string("Le polynôme \"<full_formula>\" est de degré 2, utilisons la formule du discriminant : </br><math><mdelta><mo>=</mo><mi>b</mi><msup>2</msup><mi>-4ac</mi><mo>=</mo><polynomial_1><msup>2</msup><mo>-</mo><mi>4</mi><mo>*</mo><polynomial_2><mo>*</mo><polynomial_0><mo>=</mo><mi><solution_d></mi></math></br>");
+    std::string __redaction_root_2_2r = std::string("Le discriminant est supérieur à 0, nous pouvons donc dénombrer 2 solutions distinctes : </br><math><mi>x</mi><msub>1</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>+</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math><math><mi>x</mi><msub>2</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>-</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_2></mi></math>");
+    std::string __redaction_root_2_1r = std::string("Le discriminant est égale à 0, nous pouvons donc dénombrer 1 solution distincte : </br><math><mi>x</mi><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math>");
     void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction) {
         scls::Polymonial polynomial = formula.to_polymonial();
         scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
@@ -782,6 +785,38 @@ namespace pleos {
                 (*redaction) = scls::replace(*redaction, std::string("<polynomial_0>"), b.to_std_string_simple(&settings));
                 (*redaction) = scls::replace(*redaction, std::string("<polynomial_1>"), a.to_std_string_simple(&settings));
                 (*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
+            }
+        }
+        else if(polynomial.degree(unknown_name) == 2) {
+            // Solve it
+            scls::Complex a = polynomial.monomonial(unknown_name, 2).factor();
+            scls::Complex b = polynomial.monomonial(unknown_name, 1).factor();
+            scls::Complex c = polynomial.known_monomonial().factor();
+            scls::Complex d = b * b - 4 * a * c;
+            scls::Formula solution_1 = 0;
+            scls::Formula solution_2 = 0;
+            if(d.real() > 0){
+                scls::Formula sqrt = scls::Formula(d);sqrt.set_applied_function<scls::__Sqrt_Function>();
+                solution_1 = (scls::Formula(b * -1) + sqrt) / scls::Formula(2 * a);
+                solution_2 = (scls::Formula(b * -1) - sqrt) / scls::Formula(2 * a);
+            }
+            else if(d.real() == 0){solution_1 = scls::Formula(b * -1) / scls::Formula(2 * a);}
+
+            // Set redaction
+            if(redaction != 0) {
+                (*redaction) += __redaction_root_2_d;
+                if(d.real() > 0){(*redaction) += __redaction_root_2_2r;}
+                else if(d.real() == 0){(*redaction) += __redaction_root_2_1r;}
+
+                // Edit
+                (*redaction) = scls::replace(*redaction, std::string("<full_formula>"), polynomial.to_std_string(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_0>"), c.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_1>"), b.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_2>"), a.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_d>"), d.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_1>"), std::to_string(solution_1.value_to_fraction().to_double()));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_2>"), std::to_string(solution_2.value_to_fraction().to_double()));
+                //(*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
             }
         }
     }
