@@ -153,6 +153,17 @@ namespace pleos {
 
     // Returns the interval of an sequence
     //scls::Interval sequence_variation(Function_Studied current_function, std::string& redaction);
+
+
+
+    //******************
+    //
+    // Polynomial handling
+    //
+    //******************
+
+    // Gets the roots of a polynomial
+    void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

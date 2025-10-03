@@ -743,4 +743,46 @@ namespace pleos {
         table.add_function(current_function);
         return table.to_xml(redaction, settings);
     }
+
+    //******************
+    //
+    // Polynomial handling
+    //
+    //******************
+
+    // Gets the roots of a polynomial
+    std::string __redaction_root_0 = std::string("Le polynôme \"<full_formula>\" est constamment égal à 0, il admet tout son ensemble de définition comme racine.");
+    std::string __redaction_root_0_not_0 = std::string("Le polynôme \"<full_formula>\" est constant, il n'a pas de racines.");
+    std::string __redaction_root_1 = std::string("Le polynôme \"<full_formula>\" est linéaire, il admet comme solution : <math><mi>s</mi><mo>=</mo><mfrac><mi>-b</mi><mi>a</mi></mfrac><mo>=</mo><mfrac><mi>-<polynomial_0></mi><mi><polynomial_1></mi></mfrac><mo>=</mo><mi><solution_0></mi></math>");
+    void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction) {
+        scls::Polymonial polynomial = formula.to_polymonial();
+        scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
+        std::string unknown_name = std::string("x");
+
+        // Get the good method
+        if(polynomial.degree(unknown_name) == 0) {
+            // Set redaction
+            if(redaction != 0) {
+                if(polynomial == 0){(*redaction) += scls::replace(__redaction_root_0, std::string("<full_formula>"), polynomial.to_std_string(&settings));}
+                else{(*redaction) += scls::replace(__redaction_root_0_not_0, std::string("<full_formula>"), polynomial.to_std_string(&settings));}
+            }
+        }
+        else if(polynomial.degree(unknown_name) == 1) {
+            // Solve it
+            scls::Complex a = polynomial.monomonial(unknown_name, 1).factor();
+            scls::Complex b = polynomial.known_monomonial().factor();
+            scls::Complex solution = (b * -1) / a;
+
+            // Set redaction
+            if(redaction != 0) {
+                (*redaction) += __redaction_root_1;
+
+                // Edit
+                (*redaction) = scls::replace(*redaction, std::string("<full_formula>"), polynomial.to_std_string(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_0>"), b.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_1>"), a.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
+            }
+        }
+    }
 }

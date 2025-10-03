@@ -560,7 +560,7 @@ namespace pleos {
         std::vector<std::shared_ptr<__Graphic_Object_Base>> objects_by_xml_type(std::string type_name);
 
         // Returns the middle position of the graphic
-        inline scls::Fraction left_x() const {return a_graphic_base.get()->a_middle_x - width() / 2;};
+        inline scls::Fraction left_x() const {return scls::Fraction::from_double(a_graphic_base.get()->a_middle_x) - width() / 2;};
         inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
         inline void middle_x_add(double value) {a_graphic_base.get()->a_middle_x += value;};
         inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};

@@ -80,6 +80,22 @@ namespace pleos {
 
 	// Add a node to the graph
 	void __graph_add_node_late_balises(int needed_node, std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, Graph<std::string>* graph){
+	    // Handle possible attributes
+	    std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+	    for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+            if(attributes.at(i).name == std::string("link") || attributes.at(i).name == std::string("links")){
+                std::vector<std::string> cutted = scls::cut_string(attributes.at(i).value, std::string(";"));
+                for(int j = 0;j<static_cast<int>(cutted.size());j++) {
+                    int needed_id = std::stoi(cutted.at(j));std::string needed_ponderation = std::string();
+                    if(needed_id == needed_node){scls::print(std::string("PLEOS Graph"), std::string("Can't link the ") + std::to_string(needed_id) + std::string(" with himself."));}
+                    else {
+                        graph->link_nodes(needed_node, needed_id);
+                        graph->set_link_ponderation(needed_node, needed_id, needed_ponderation, needed_style);
+                    }
+                }
+            }
+	    }
+
 	    // Handle the other balises
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
@@ -116,6 +132,7 @@ namespace pleos {
 
         // Handle a lot of balises
         // Handle the content
+        if(current_text.get()->only_text()){to_add = current_text.get()->text();}
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string balise_content = current_text->sub_texts()[i].get()->xml_balise();
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
@@ -136,7 +153,7 @@ namespace pleos {
         }
 
         // Handle a lot of late balises
-       int current_node = 0;
+        int current_node = 0;
         for(int i = 0;i<static_cast<int>(current_text->sub_texts().size());i++){
             std::string current_balise_name = current_text->sub_texts()[i].get()->xml_balise_name();
             if(current_balise_name == "node"){__graph_add_node_late_balises(current_node, current_text->sub_texts()[i], needed_style, graph);current_node++;}

@@ -699,6 +699,7 @@ namespace pleos {
             current_y++;
             needed_y = graphic_y_to_pixel_y(current_y, image);
         }
+
         // Vertical lines
         double current_x = pixel_x_to_graphic_x(0, image).to_double();
         current_x = ceil(current_x);
@@ -787,8 +788,8 @@ namespace pleos {
         }
     }
     // Returns the image of the graphic
-    int Graphic::graphic_x_to_pixel_x(double x, int image_width){return std::round((x - left_x().to_double()) * pixel_by_case_x());};
-    int Graphic::graphic_x_to_pixel_x(scls::Fraction x, int image_width){return std::round(((x - left_x()) * pixel_by_case_x()).to_double());};
+    int Graphic::graphic_x_to_pixel_x(double x, int needed_width){return std::round((x - middle_x().to_double()) * pixel_by_case_x() + (static_cast<double>(needed_width) / 2.0)) ;};
+    int Graphic::graphic_x_to_pixel_x(scls::Fraction x, int needed_width){return std::round(((x - middle_x()) * pixel_by_case_x()).to_double() + (static_cast<double>(needed_width) / 2.0));};
     int Graphic::graphic_y_to_pixel_y(double y, int needed_height){return (std::round((y - middle_y().to_double()) * pixel_by_case_y()) + (needed_height / 2.0)) - graphic_base()->a_y_offset;};
     int Graphic::graphic_y_to_pixel_y(scls::Fraction y, int needed_height){return std::round(((y - middle_y()) * pixel_by_case_y() + scls::Fraction(needed_height, 2)).to_double()) - graphic_base()->a_y_offset;};
     int Graphic::graphic_y_to_pixel_y_inversed(double y, int needed_height){return needed_height - graphic_y_to_pixel_y(y, needed_height);};
@@ -948,7 +949,7 @@ namespace pleos {
         else if(attribute.name == "border_color") {circle.get()->set_border_color(environment.value_color(attribute.value));}
         else if(attribute.name == "border_radius" || attribute.name == "border_width" || attribute.name == "width") {circle.get()->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
         else if(attribute.name == "color" || attribute.name == "background_color") {circle.get()->set_color(environment.value_color(attribute.value));}
-        else if(attribute.name == "radius") {circle.get()->set_radius_x((*environment.value_formula(attribute.value).formula_base()));circle.get()->set_radius_y((*environment.value_formula(attribute.value).formula_base()));}
+        else if(attribute.name == "radius") {scls::__Formula_Base::Formula f = environment.value_formula(attribute.value);circle.get()->set_radius_x((*f.formula_base()));circle.get()->set_radius_y((*f.formula_base()));}
         else if(attribute.name == "radius_x") {circle.get()->set_radius_x(environment.value_formula(attribute.value));}
         else if(attribute.name == "radius_y") {circle.get()->set_radius_y(environment.value_formula(attribute.value));}
         else{return false;}return true;
@@ -1068,8 +1069,14 @@ namespace pleos {
     // Precise objects
     std::string Graphic::graphic_from_xml_name(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment){return graphic_from_xml_name(attribute, object.get()->to_xml_text_object_name(), environment);}
     std::string Graphic::graphic_from_xml_name(scls::XML_Attribute& attribute, std::string object_type, Text_Environment& environment){
+        // Asserts
+        if(scls::contains_string(attribute.value, std::string(">"))){scls::print(std::string("Warning"), std::string("PLEOS Graphic"), std::string("The name \"") + attribute.value + std::string("\" is not a possible name : it contains the character \">\"."));attribute.value = std::string();}
+
+        // Defined function
         scls::Function_Called_Text called_function = scls::parse_function_call(attribute.value);
-        if(called_function.name == std::string("type_number")){return object_type + std::string("-") + std::to_string(a_objects.size());}
+        if(attribute.value == std::string("") || called_function.name == std::string("type_number")){return object_type + std::string("-") + std::to_string(a_objects.size());}
+
+        // Another name
         return attribute.value;
     }
 
