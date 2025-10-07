@@ -183,7 +183,7 @@ namespace pleos {
         // Stop action
         struct Action_Stop : public Action {
             // Action_Stop constructor
-            Action_Stop():Action(ACTION_STOP){};
+            Action_Stop(double needed_duration):Action(ACTION_STOP){duration = needed_duration;};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();
@@ -289,7 +289,7 @@ namespace pleos {
             void add_action_set_parameter(std::string parameter_name, double parameter_value){add_action_set_parameter(parameter_name, std::to_string(parameter_value), 0);};
             void add_action_set_parameter(std::string parameter_name, std::string parameter_value){add_action_set_parameter(parameter_name, parameter_value, 0);};
             // Adds a stop action
-            void add_action_stop(){std::shared_ptr<Action_Stop> action = std::make_shared<Action_Stop>();actions().push_back(action);};
+            void add_action_stop(){std::shared_ptr<Action_Stop> action = std::make_shared<Action_Stop>(0);actions().push_back(action);};
             // Adds a structure action
             void add_action_structure(std::shared_ptr<Action_Structure> loop){actions().push_back(loop);};
             // Adds a wait action

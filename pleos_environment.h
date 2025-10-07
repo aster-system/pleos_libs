@@ -47,7 +47,7 @@ namespace pleos {
     public:
 
         // Text_Environment constructor
-        Text_Environment(){};
+        Text_Environment();
 
         // Returns a color value
         scls::Color value_color(std::string base) const;

@@ -38,7 +38,7 @@ namespace pleos {
 
     // Returns the action to a XML text
     // Action
-    std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) +  std::string(">");}
+    std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_time() + std::string(">");}
     std::string __Graphic_Object_Base::Action::to_xml_text_name(){return std::string("action");}
     std::string __Graphic_Object_Base::Action::to_xml_text_object(std::string object_name){if(object_name == std::string()){return std::string();}return std::string(" object=\"") + object_name + std::string("\"");}
     std::string __Graphic_Object_Base::Action::to_xml_text_time() const{if(duration == 0){return std::string();}return std::string(" time=") + scls::Fraction::from_double(duration).to_std_string(0);}
@@ -282,7 +282,11 @@ namespace pleos {
 
     // Updates the actions of the object
     bool __Graphic_Object_Base::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
-        if(action->type == ACTION_STOP){set_velocity(velocity() * 0);return true;}
+        if(action->type == ACTION_STOP){
+            double proportion = 1;if(action->duration != 0){proportion = action->passed_time / action->duration;}
+            if(proportion >= 1){set_velocity(velocity() * 0);return true;}
+            else{set_velocity(velocity() * 0.995);}
+        }
         else if(action->type == ACTION_WAIT){
             // Wait action
             __Graphic_Object_Base::Action_Wait* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(action);

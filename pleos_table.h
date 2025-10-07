@@ -119,6 +119,9 @@ namespace pleos {
         inline int total_height_in_pixel() const {int to_return = 0;int needed_width = line_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += line_height(i);};return to_return;};
         inline int total_width_in_pixel() const {int to_return = 0;int needed_width = column_number();for(int i = 0;i<static_cast<int>(needed_width);i++){to_return += column_width(i);};return to_return;};
 
+        // Loads cases in the table
+        virtual void load_cases(std::shared_ptr<scls::__XML_Text_Base> cases, scls::Text_Style style, scls::Text_Image_Generator* tig);
+
         // Merges cases
         void merge_cases(int x, int y, int width, int height);
 

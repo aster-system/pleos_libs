@@ -148,6 +148,55 @@ namespace pleos {
         return a_cases[x][y].get();
     };
 
+    // Loads cases in the table
+    void __Table_Case::load_cases(std::shared_ptr<scls::__XML_Text_Base> cases, scls::Text_Style style, scls::Text_Image_Generator* tig) {
+        // Get the needed datas
+        std::vector<scls::XML_Attribute>& attributes = cases.get()->xml_balise_attributes();
+        int height = 0;int width = 0;int x = 0;int y = 0;std::string to_load = std::string();
+        for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+            if(attributes[i].name == std::string("load")){to_load = attributes[i].value;}
+            else if(attributes[i].name == std::string("height")){height = std::stoi(attributes[i].value);}
+            else if(attributes[i].name == std::string("width")){width = std::stoi(attributes[i].value);}
+            else if(attributes[i].name == std::string("x")){x = std::stoi(attributes[i].value);}
+            else if(attributes[i].name == std::string("y")){y = std::stoi(attributes[i].value);}
+        }
+        std::vector<std::string> cutted = scls::cut_string(to_load, std::string("-"));
+
+        // Loads each cases
+        if(cutted.at(0) == std::string("sequence_arithmetic")){
+            if(cutted.size() < 2){scls::print("Warning", std::string("PLEOS Table"), std::string("Not enough argument to load the cases \"") + cases.get()->text() + std::string("."));return;}
+            scls::Formula first_part = scls::string_to_formula(cutted.at(1));
+            scls::Formula reason = scls::string_to_formula(cutted.at(2));
+
+            // Get the cases
+            scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
+            scls::Formula current = first_part;
+            int needed_size = std::max(width, height);
+            for(int i = 0;i<needed_size;i++) {
+                int needed_x = x;int needed_y = y;
+                if(width > 1){needed_x += i;}else{needed_y += i;}
+                set_case_value(needed_x, needed_y, current.to_std_string(&settings), style, tig);
+                current += reason;
+            }
+        }
+        else if(cutted.at(0) == std::string("sequence_geometric")){
+            if(cutted.size() < 2){scls::print("Warning", std::string("PLEOS Table"), std::string("Not enough argument to load the cases \"") + cases.get()->text() + std::string("."));return;}
+            scls::Formula first_part = scls::string_to_formula(cutted.at(1));
+            scls::Formula reason = scls::string_to_formula(cutted.at(2));
+
+            // Get the cases
+            scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
+            scls::Formula current = first_part;
+            int needed_size = std::max(width, height);
+            for(int i = 0;i<needed_size;i++) {
+                int needed_x = x;int needed_y = y;
+                if(width > 1){needed_x += i;}else{needed_y += i;}
+                set_case_value(needed_x, needed_y, scls::format_number_to_text(current.value_to_double()), style, tig);
+                current *= reason;
+            }
+        }
+    }
+
     // Merges cases
     void __Table_Case::merge_cases(int x, int y, int width, int height){
         case_at(x, y)->merged_height = height;case_at(x, y)->merged_width = width;
@@ -392,6 +441,7 @@ namespace pleos {
                 to_return.get()->case_at(x, y)->style = case_style;
                 to_return.get()->merge_cases(x, y, width, height);
             }
+            else if(current_balise_name == "cases"){to_return.get()->load_cases(xml->sub_texts()[i], needed_style.new_child(), &tig);}
         }
 
         // Return the result

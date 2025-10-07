@@ -141,6 +141,7 @@ namespace pleos {
 
     // Returns the image of a text
     scls::Image string_to_image(std::string content);
+    scls::Image string_to_image(std::string content, scls::Text_Style style);
 }
 
 #endif //PLEOS_TEXT

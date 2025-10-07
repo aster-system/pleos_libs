@@ -943,8 +943,7 @@ namespace pleos {
         // Asserts
         if(circle.get() == 0){return false;}
 
-        if(graphic_from_xml_balise_attribute_object(attribute, circle, environment, text_style)){return true;}
-        else if(attribute.name == "angle_end") {circle.get()->set_angle_end(*environment.value_formula(attribute.value).formula_base());}
+        if(attribute.name == "angle_end") {circle.get()->set_angle_end(*environment.value_formula(attribute.value).formula_base());}
         else if(attribute.name == "angle_start") {circle.get()->set_angle_start(*environment.value_formula(attribute.value).formula_base());}
         else if(attribute.name == "border_color") {circle.get()->set_border_color(environment.value_color(attribute.value));}
         else if(attribute.name == "border_radius" || attribute.name == "border_width" || attribute.name == "width") {circle.get()->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
@@ -952,7 +951,8 @@ namespace pleos {
         else if(attribute.name == "radius") {scls::__Formula_Base::Formula f = environment.value_formula(attribute.value);circle.get()->set_radius_x((*f.formula_base()));circle.get()->set_radius_y((*f.formula_base()));}
         else if(attribute.name == "radius_x") {circle.get()->set_radius_x(environment.value_formula(attribute.value));}
         else if(attribute.name == "radius_y") {circle.get()->set_radius_y(environment.value_formula(attribute.value));}
-        else{return false;}return true;
+
+        return graphic_from_xml_balise_attribute_object(attribute, circle, environment, text_style);
     }
     // Balises form 2D in the graphic
     bool Graphic::graphic_from_xml_balise_attribute_form_2d(scls::XML_Attribute& attribute, std::shared_ptr<Form_2D> created_form, Text_Environment& environment, scls::Text_Style text_style){
@@ -1027,8 +1027,8 @@ namespace pleos {
         else if(attribute.name == "rotation") {object.get()->set_rotation(environment.value_formula(attribute.value));}
         else if(attribute.name == "tag" || attribute.name == "tags") {object.get()->load_tags(attribute.value);}
         else if(attribute.name == "width") {object.get()->set_width(environment.value_formula(attribute.value).value_to_fraction());}
-        else if(attribute.name == "x") {object.get()->set_x(environment.value_formula(attribute.value));}
-        else if(attribute.name == "y") {object.get()->set_y(environment.value_formula(attribute.value));}
+        else if(attribute.name == "x") {object.get()->set_x(environment.value_double(attribute.value));}
+        else if(attribute.name == "y") {object.get()->set_y(environment.value_double(attribute.value));}
         else{return false;}return true;
     }
     // Balises physic in the graphic
@@ -1038,6 +1038,7 @@ namespace pleos {
 
         if(attribute.name == "collision") {if(attribute.value == std::string("circle")){physic.get()->new_collision(Graphic_Collision_Type::GCT_Circle);}else if(attribute.value == std::string("rect")){physic.get()->new_collision(Graphic_Collision_Type::GCT_Rect);}else{physic.get()->new_collision(Graphic_Collision_Type::GCT_Line);}}
         else if(attribute.name == "gravity" || attribute.name == "use_gravity") {physic.get()->set_use_gravity((attribute.value == std::string("1") || attribute.value == std::string("true")));}
+        else if(attribute.name == "ignore_dynamic_collisions" ||attribute.name == "ignore_dynamic_collision") {physic.get()->set_ignore_dynamic_collisions((attribute.value == std::string("1") || attribute.value == std::string("true")));}
         else if(attribute.name == "physic") {
             physic = new_physic_object(object);physic.get()->set_use_gravity(false);
             if(attribute.value == std::string("static") || attribute.value == std::string("1")){physic.get()->set_static(true);}
@@ -1487,7 +1488,7 @@ namespace pleos {
             }
 
             // Add the variable
-            unknowns()->create_unknown(needed_name)->set_value(scls::string_to_formula(needed_value));
+            unknowns()->create_unknown(needed_name)->set_value(*environment.value_formula(needed_value).formula_base());
         }
         else{object = graphic_from_xml_balise_action(xml, environment, text_style, 0);}
 
@@ -1634,6 +1635,22 @@ namespace pleos {
             else if(needed_objects.size() > 0){
                 for(int i = 0;i<static_cast<int>(needed_objects.size());i++) {
                     needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_name, needed_parameter_value, needed_time.value_to_double())).get()->save_to_xml_text = true;
+                }
+            }
+        }
+        else if(current_balise_name == "action_stop" || current_balise_name == "stop_action") {
+            // Get the datas about he object
+            LOAD_PRENEEDED_DATAS
+            std::string needed_parameter_name = std::string();
+            std::string needed_parameter_value = std::string("0");
+            scls::__Formula_Base::Formula needed_time = 0;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(attributes[j].name == "time") {needed_time = environment.value_formula(attributes[j].value);}}
+
+            // Add the action
+            if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Stop>(needed_time.value_to_double())).get()->save_to_xml_text = true;}
+            else if(needed_objects.size() > 0){
+                for(int i = 0;i<static_cast<int>(needed_objects.size());i++) {
+                    needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Stop>(needed_time.value_to_double())).get()->save_to_xml_text = true;
                 }
             }
         }
@@ -2282,10 +2299,7 @@ namespace pleos {
         if(use_gravity()){to_return += std::string(" gravity=1");}else{to_return += std::string(" gravity=0");}
 
         // Velocity
-        if(a_velocity_start.x() != 0 || a_velocity_start.y() != 0){
-
-            to_return += std::string(" velocity=")+a_velocity_start.to_xml_text();
-        }
+        if(a_velocity_start.x() != 0 || a_velocity_start.y() != 0){to_return += std::string(" velocity=")+a_velocity_start.to_xml_text();}
 
         // Collision
         for(int i = 0;i<static_cast<int>(a_collisions.size());i++){
@@ -2294,6 +2308,9 @@ namespace pleos {
             else if(a_collisions.at(i).get()->type() == Graphic_Collision_Type::GCT_Line){to_return += std::string("line");}
             else if(a_collisions.at(i).get()->type() == Graphic_Collision_Type::GCT_Rect){to_return += std::string("rect");}
         }
+
+        // Ignored objects
+        if(ignore_dynamic_collisions()){to_return += std::string(" ignore_dynamic_collisions=1");}
 
         // Finish the text
         to_return += std::string(">");

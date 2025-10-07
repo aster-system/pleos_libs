@@ -380,9 +380,10 @@ namespace pleos {
     };
 
     // Returns the image of a text
-    scls::Image string_to_image(std::string content){
+    scls::Image string_to_image(std::string content){scls::Text_Style style;return string_to_image(content, style);}
+    scls::Image string_to_image(std::string content, scls::Text_Style style){
         std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();
-        load_balises_pleos(balises);scls::Text_Style style;
+        load_balises_pleos(balises);
         pleos::Text t = pleos::Text(balises, content, style);
         std::shared_ptr<scls::__Image_Base> to_return = t.image_shared_pointer();
         return to_return;
