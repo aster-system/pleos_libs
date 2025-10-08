@@ -382,6 +382,9 @@ namespace pleos {
     // Returns the image of a text
     scls::Image string_to_image(std::string content){scls::Text_Style style;return string_to_image(content, style);}
     scls::Image string_to_image(std::string content, scls::Text_Style style){
+        // Format content
+        content = scls::format_for_xml(content);
+
         std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();
         load_balises_pleos(balises);
         pleos::Text t = pleos::Text(balises, content, style);
