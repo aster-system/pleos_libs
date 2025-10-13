@@ -36,6 +36,16 @@ namespace pleos {
     //
     //******************
 
+    // Base of the graphic
+    int Plane_Base::graphic_x_to_pixel_x(double x, int needed_width){return std::round((x - a_middle_x) * a_pixel_by_case_x + (static_cast<double>(needed_width) / 2.0)) ;};
+    int Plane_Base::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::__Image_Base> needed_image){return graphic_x_to_pixel_x(x, needed_image.get()->width());};
+    int Plane_Base::graphic_y_to_pixel_y(double y, int needed_height){return (std::round((y - a_middle_y) * a_pixel_by_case_y) + (needed_height / 2.0)) - a_y_offset;};
+    int Plane_Base::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::__Image_Base> needed_image){return graphic_y_to_pixel_y(y, needed_image.get()->height());}
+    scls::Fraction Plane_Base::pixel_x_to_graphic_x(int x, int image_width){return scls::Fraction::from_double(a_middle_x) + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction::from_double(a_pixel_by_case_x));}
+    scls::Fraction Plane_Base::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_x_to_graphic_x(x, needed_image.get()->width());}
+    scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, int needed_height){return scls::Fraction::from_double(a_middle_y) + ((scls::Fraction(needed_height, 2) - scls::Fraction(y)) / scls::Fraction::from_double(a_pixel_by_case_y));}
+    scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());}
+
     // Returns the action to a XML text
     // Action
     std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_time() + std::string(">");}

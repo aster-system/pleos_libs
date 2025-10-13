@@ -45,19 +45,33 @@ namespace pleos {
     //******************
 
     // Base of the graphic
-    struct __Graphic_Base {
-        int a_function_number = 0;
+    struct Plane_Base {
+        // Datas about the plane
+        int graphic_x_to_pixel_x(double x, int needed_width);
+        int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::__Image_Base> needed_image);
+        int graphic_y_to_pixel_y(double y, int needed_height);
+        int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::__Image_Base> needed_image);
+        scls::Fraction pixel_x_to_graphic_x(int x, int needed_width);
+        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::__Image_Base> needed_image);
+        scls::Fraction pixel_y_to_graphic_y(int y, int needed_height);
+        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image);
 
-        scls::__Formula_Base::Formula a_height = -1;scls::__Formula_Base::Formula a_width = -1;
-        int a_height_in_pixel = -1;int a_width_in_pixel = -1;
-        bool a_height_used = false;bool a_width_used = false;
-        int a_y_offset = 0;
+        // Calculated datas
+        double a_pixel_by_case_x = 100;
+        double a_pixel_by_case_y = 100;
 
         // Coordinates of the base
         double a_middle_x = 0;
         double a_middle_y = 0;
-        double a_pixel_by_case_x = 100;
-        double a_pixel_by_case_y = 100;
+        int a_y_offset = 0;
+
+        // Size of the base
+        scls::__Formula_Base::Formula a_height = -1;scls::__Formula_Base::Formula a_width = -1;
+        int a_height_in_pixel = -1;int a_width_in_pixel = -1;
+        bool a_height_used = false;bool a_width_used = false;
+    };
+    struct __Graphic_Base : public Plane_Base {
+        int a_function_number = 0;
 
         // If the eco-mode is activated or not
         bool a_eco_mode = false;
@@ -279,8 +293,8 @@ namespace pleos {
             void add_action_delete(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();actions().push_back(action);};
             void add_action_delete_physic(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();action.get()->to_delete=ACTION_DELETE_PHYSIC;actions().push_back(action);};
             // Adds a move action
-            void add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);};
-            void add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);};
+            std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);return action;};
+            std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);return action;};
             void add_action_move(scls::Point_2D position, double needed_speed){add_action_move(position.x(), position.y(), needed_speed);};
             void add_action_move(scls::Point_2D position){add_action_move(position.x(), position.y());};
             // Adds a set_parameter action

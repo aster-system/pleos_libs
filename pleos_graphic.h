@@ -138,6 +138,24 @@ namespace pleos {
             Texture_Displaying a_texture_displaying = Texture_Displaying::TD_Fill;
 
         }; typedef Graphic_Texture_Object Graphic_Texture;
+        class Graphic_Texture_Plane : public Graphic_Texture_Object{
+            // Class representating a graphic object with a texture
+        public:
+            // Graphic_Texture_Plane constructor
+            Graphic_Texture_Plane(std::weak_ptr<Graphic> graphic_base);
+
+            // Draws the object on an image
+            //virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
+
+            // Returns the source to a XML text
+            virtual std::string to_xml_text_object_name();
+
+            // Getters and setters
+            inline Plane_Base* plane() {return &a_plane;};
+        private:
+            // Plane
+            Plane_Base a_plane;
+        };
         class Graphic_Texture_Table : public Graphic_Texture_Object{
             // Class representating a graphic object with a table
         public:
@@ -320,6 +338,17 @@ namespace pleos {
         //
         //******************
 
+        //******************
+        // Action handling
+        //******************
+
+        // Adds a move action
+        std::shared_ptr<__Graphic_Object_Base::Action_Move> add_action_move(double x_end, double y_end, double needed_speed);
+
+        //******************
+        // Graphic handling
+        //******************
+
         // Returns a new graphic
         static std::shared_ptr<Graphic> new_graphic(scls::_Window_Advanced_Struct* window_struct);
         static std::shared_ptr<Graphic> new_graphic();
@@ -348,22 +377,18 @@ namespace pleos {
         virtual void update(double used_delta_time);
 
         // Annoying functions to draw the image
-        int graphic_x_to_pixel_x(double x, int needed_width);
         int graphic_x_to_pixel_x(scls::Fraction x, int needed_width);
-        int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_x_to_pixel_x(x, needed_image.get()->width());};
         int graphic_x_to_pixel_x(scls::Fraction x, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_x_to_pixel_x(x, needed_image.get()->width());};
-        int graphic_y_to_pixel_y(double y, int needed_height);
         int graphic_y_to_pixel_y(scls::Fraction y, int needed_height);
-        int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_y_to_pixel_y(y, needed_image.get()->height());};
         int graphic_y_to_pixel_y(scls::Fraction y, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_y_to_pixel_y(y, needed_image.get()->height());};
         int graphic_y_to_pixel_y_inversed(double y, int needed_height);
         int graphic_y_to_pixel_y_inversed(scls::Fraction y, int needed_height);
         int graphic_y_to_pixel_y_inversed(double y, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_y_to_pixel_y_inversed(y, needed_image.get()->height());};
         int graphic_y_to_pixel_y_inversed(scls::Fraction y, std::shared_ptr<scls::__Image_Base>& needed_image){return graphic_y_to_pixel_y_inversed(y, needed_image.get()->height());};
         scls::Fraction pixel_x_to_graphic_x(int x, int needed_width);
-        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::__Image_Base>& needed_image){return pixel_x_to_graphic_x(x, needed_image.get()->width());};
+        scls::Fraction pixel_x_to_graphic_x(int x, std::shared_ptr<scls::__Image_Base> needed_image);
         scls::Fraction pixel_y_to_graphic_y(int y, int needed_height);
-        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base>& needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());};
+        scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image);
         // Draw the bases of the image
         void image_draw_base(std::shared_ptr<scls::__Image_Base> to_return);
         // Draw a function on the image
@@ -560,11 +585,13 @@ namespace pleos {
         std::vector<std::shared_ptr<__Graphic_Object_Base>> objects_by_xml_type(std::string type_name);
 
         // Returns the middle position of the graphic
-        inline scls::Fraction left_x() const {return scls::Fraction::from_double(a_graphic_base.get()->a_middle_x) - width() / 2;};
-        inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
-        inline void middle_x_add(double value) {a_graphic_base.get()->a_middle_x += value;};
-        inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
-        inline void middle_y_add(double value) {a_graphic_base.get()->a_middle_y += value;};
+        scls::Fraction left_x() const;
+        scls::Point_2D middle() const;
+        scls::Fraction middle_x() const;
+        void middle_x_add(double value);
+        scls::Fraction middle_y() const;
+        void middle_y_add(double value);
+        void set_middle(scls::Point_2D new_middle);
         // Returns the number of pixel by case
         double pixel_by_case_x() const;
         double pixel_in_case_x(int case_number) const;
@@ -838,7 +865,7 @@ namespace pleos {
     protected:
 
         // Graphic constructor
-        Graphic(){a_style.set_background_color(scls::Color(0, 0, 0, 0));};
+        Graphic();
 
         // This object
         std::weak_ptr<Graphic> a_this_object;
@@ -846,6 +873,17 @@ namespace pleos {
         scls::_Window_Advanced_Struct* a_window_struct = 0;
 
     private:
+
+        //******************
+        // Action handling
+        //******************
+
+        // Actions to do
+        std::shared_ptr<__Graphic_Object_Base::Action_Container> a_actions = std::make_shared<__Graphic_Object_Base::Action_Container>();
+
+        //******************
+        // Texture handling
+        //******************
 
         // Background texture of the graphic
         std::shared_ptr<scls::__Image_Base> a_background_texture;
