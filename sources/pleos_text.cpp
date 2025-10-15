@@ -338,6 +338,7 @@ namespace pleos {
                 // Update the result
                 if(result != std::string()){result += std::string("<mo>+</mo>");}
                 if(current_coefficient != std::string()){result += std::string("<mi>") + current_coefficient + std::string("</mi>");}
+                result += std::string("<mi>X</mi>");
             }
 
             // Set the result
@@ -358,6 +359,7 @@ namespace pleos {
         if(is_special_pleos_balise(current_balise_name)) {
             // Get the image
             std::shared_ptr<scls::__Image_Base> src_img = generate_text_image(current_text, needed_style, std::shared_ptr<Text_Environment>());
+            if(src_img.get() == 0){return scls::Text_Image_Block::__generate_block(block_datas);}
 
             // Change the image
             int height = -1; int width = -1;
