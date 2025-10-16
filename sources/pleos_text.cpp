@@ -327,7 +327,10 @@ namespace pleos {
             for(int i = 0;i<static_cast<int>(cutted.size());i++) {
                 std::vector<std::string> parts = scls::cut_string(cutted.at(i), ":");
                 std::string current_coefficient = std::string("1");
-                if(parts.size() == 1){current_coefficient = parts.at(0);}
+                int current_exponent = -1;
+                std::string current_exponent_str = std::string();
+                if(parts.size() == 1){current_coefficient = parts.at(0);current_exponent = (static_cast<int>(cutted.size()) - (i + 1));}
+                else if(parts.size() == 2){current_coefficient = parts.at(0);current_exponent_str = parts.at(1);}
 
                 // Asserts
                 bool full_coefficient_digit = true;
@@ -338,7 +341,11 @@ namespace pleos {
                 // Update the result
                 if(result != std::string()){result += std::string("<mo>+</mo>");}
                 if(current_coefficient != std::string()){result += std::string("<mi>") + current_coefficient + std::string("</mi>");}
-                result += std::string("<mi>X</mi>");
+                if(current_exponent > -1){
+                    if(current_exponent > 0){result += std::string("<mi>X</mi>");}
+                    if(current_exponent > 1){result += std::string("<msup>") + std::to_string(current_exponent) + std::string("</msup>");}
+                }
+                else{result += std::string("<mi>X</mi><msup>") + current_exponent_str + std::string("</msup>");}
             }
 
             // Set the result

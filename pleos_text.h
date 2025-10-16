@@ -83,6 +83,9 @@ namespace pleos {
         Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){load_balises(defined_balises);};
 
         // Creates and returns a word
+        virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){return std::make_shared<Text>(defined_balises_shared_ptr(), needed_datas);};
+
+        // Creates and returns a block
         virtual std::shared_ptr<scls::Text_Image_Block> __generate_block(std::shared_ptr<scls::Block_Datas> block_datas);
 
         // Loads the needed balises
