@@ -257,7 +257,7 @@ namespace pleos {
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word
-	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("linked_list") || name == std::string("poly") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");}
+	bool is_special_pleos_balise(std::string name){return name == std::string("definition") || name == std::string("graph") || name == std::string("graphic") || name == std::string("let") || name == std::string("linked_list") || name == std::string("poly") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");}
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
 	    std::string balise_content = current_text.get()->xml_balise();
@@ -313,6 +313,25 @@ namespace pleos {
                 utf_8_symbol_xml(current_text, true); // A RE REFLECHIR
             }
         }
+        else if(current_balise_name == std::string("let")) {
+            // Handle the attributes
+            std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+            std::string to_express = std::string();
+            for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+                if(attributes[i].name == std::string("expression") || attributes.at(i).name == std::string("simplify")){to_express = attributes[i].value;}
+            }
+
+            // Expression
+            std::string result = std::string();
+            if(to_express != std::string()) {
+                scls::__Formula_Base::Formula formula = scls::string_to_formula(to_express);
+                result = formula.to_mathml(0);
+            }
+
+            // Set the result
+            current_text.get()->set_xml_balise_name(std::string("math"));
+            current_text.get()->set_text(result);
+        }
         else if(current_balise_name == std::string("poly")) {
             // Handle the attributes
             std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
@@ -336,7 +355,7 @@ namespace pleos {
                 bool full_coefficient_digit = true;
                 for(int j = 0;j<static_cast<int>(current_coefficient.size());j++){if(!(std::isdigit(current_coefficient.at(j)) || current_coefficient.at(j) == '.')){full_coefficient_digit=false;break;}}
                 if(current_coefficient == std::string() || (full_coefficient_digit && std::stoi(parts.at(0)) == 0)){continue;}
-                else if(current_coefficient == std::string("1")){current_coefficient = std::string();}
+                else if(current_coefficient == std::string("1") && current_exponent != 0){current_coefficient = std::string();}
 
                 // Update the result
                 if(result != std::string()){result += std::string("<mo>+</mo>");}
@@ -351,7 +370,6 @@ namespace pleos {
             // Set the result
             current_text.get()->set_xml_balise_name(std::string("math"));
             current_text.get()->set_text(result);
-            std::cout << "G " << current_text.get()->full_text() << std::endl;
         }
 
         return to_return;
