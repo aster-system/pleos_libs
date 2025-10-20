@@ -57,7 +57,7 @@ namespace pleos {
         // Returns the list in an image
         std::shared_ptr<scls::__Image_Base> image() {
             // Get each needed images for elements
-            scls::Text_Style current_style; current_style.font_size = 70;
+            scls::Text_Style current_style; current_style.set_font_size(70);
             std::vector<std::shared_ptr<scls::__Image_Base>> elements_image;
             scls::Text_Image_Generator generator;
             int max_height = 0;
@@ -129,7 +129,7 @@ namespace pleos {
         std::shared_ptr<scls::__Image_Base> image() {
             // Get each needed images for elements
             int border_width = 4; int inline_border_width = 2;
-            scls::Text_Style current_style; current_style.font_size = 70;
+            scls::Text_Style current_style; current_style.set_font_size(70);
             std::vector<std::shared_ptr<scls::__Image_Base>> elements_image;
             scls::Text_Image_Generator generator;
             int max_width = 0;
