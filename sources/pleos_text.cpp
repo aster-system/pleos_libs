@@ -334,8 +334,8 @@ namespace pleos {
             }
 
             // Set the result
-            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("math"));}
-            else{current_text.get()->set_xml_balise_name(std::string("mrow"));}
+            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
+            else{current_text.get()->set_xml_balise_name(std::string("math"));}
             current_text.get()->set_text(result);
         }
         else if(current_balise_name == std::string("let")) {
@@ -354,7 +354,8 @@ namespace pleos {
             }
 
             // Set the result
-            current_text.get()->set_xml_balise_name(std::string("math"));
+            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
+            else{current_text.get()->set_xml_balise_name(std::string("math"));}
             current_text.get()->set_text(result);
         }
         else if(current_balise_name == std::string("poly")) {
@@ -393,8 +394,8 @@ namespace pleos {
             }
 
             // Set the result
-            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("math"));}
-            else{current_text.get()->set_xml_balise_name(std::string("mrow"));}
+            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
+            else{current_text.get()->set_xml_balise_name(std::string("math"));}
             current_text.get()->set_text(result);
         }
 
