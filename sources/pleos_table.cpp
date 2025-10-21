@@ -291,7 +291,7 @@ namespace pleos {
                     // Draw the separation
                     scls::Color separation_color = scls::Color(0, 0, 0);
                     if(i > 0 && case_at(i - 1, j)->right_border){to_return.fill_rect(needed_x[i] - column_separation(), needed_y[j], column_separation(), needed_height[j] + line_separation, separation_color);}
-                    if(j > 0){to_return.fill_rect(needed_x[i], needed_y[j] - line_separation, current_width + column_separation(), line_separation, separation_color);}
+                    if(j > 0 && case_at(i, j)->border_top()){to_return.fill_rect(needed_x[i], needed_y[j] - line_separation, current_width + column_separation(), line_separation, separation_color);}
                 }
             }
 
@@ -400,6 +400,40 @@ namespace pleos {
                     }
                 }
             }
+            else if(to_load == std::string("pascal_triangle")) {
+                int height = 15;
+
+                // Create the parts
+                scls::Text_Style style = needed_style;
+                std::vector<std::vector<int>> values = std::vector<std::vector<int>>(height, std::vector<int>(height, 0));
+                for(int i = 0;i<static_cast<int>(height);i++){values[0][i] = 1;}
+                for(int i = 0;i<height;i++) {
+                    for(int j = 0;j<height;j++) {
+                        // Get the needed value
+                        int current_value = values[j][i];
+                        if(j > 0 && i > 0) {
+                            current_value = values[j - 1][i - 1] + values[j][i - 1];
+                            values[j][i] = current_value;
+                        }
+
+                        // Set the text
+                        int needed_x = j;int needed_y = i;
+                        if(current_value != 0) {
+                            scls::Color needed_color = scls::Color(255, 255, 255, 0);
+
+                            to_return.get()->case_at(needed_x, needed_y)->style.set_background_color(needed_color);
+                            style.set_background_color(needed_color);
+                            scls::Text_Style needed_style = style.new_child();needed_style.set_background_color(scls::Color(0, 0, 0, 0));
+                            to_return.get()->set_case_value(needed_x, needed_y, std::to_string(current_value), needed_style, &tig);
+                        }
+                        else{
+                            to_return.get()->case_at(needed_x, needed_y)->set_border_right(false);
+                            to_return.get()->case_at(needed_x, needed_y)->set_border_top(false);
+                        }
+                    }
+                }
+            }
+            else{scls::print(std::string("PLEOS Table"), std::string("Unknown loaded state \"") + to_load + std::string("\"."));}
 	    }
 
 	    // Handle a lot of balises

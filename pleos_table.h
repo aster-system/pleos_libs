@@ -79,6 +79,7 @@ namespace pleos {
             int merged_height = 1;int merged_width = 1;
             // If the case use a right border or not
             bool right_border = true;
+            bool a_border_top = true;
             // Style of the case
             scls::Text_Style style;
 
@@ -92,6 +93,9 @@ namespace pleos {
             inline void set_background_color(scls::Color new_color) {style.set_background_color(new_color);};
             inline void set_color(scls::Color new_color) {style.set_color(new_color);};
             inline void set_image(scls::Image new_image){(*image.get()) = new_image;};
+            inline void set_border_right(bool new_border_right){right_border = new_border_right;};
+            inline void set_border_top(bool new_border_top){a_border_top = new_border_top;};
+            inline bool border_top() const {return a_border_top;};
 
             // Parent table
             __Table_Case* parent_table()const{return parent_table_weak_ptr.lock().get();};
