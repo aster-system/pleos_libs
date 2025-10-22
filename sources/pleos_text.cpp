@@ -257,7 +257,7 @@ namespace pleos {
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word
-	bool is_special_pleos_balise(std::string name){
+	int is_special_pleos_balise(std::string name){
 	    return name == std::string("definition") || name == std::string("factorial") || name == std::string("graph") || name == std::string("graphic") || name == std::string("let") || name == std::string("linked_list") || name == std::string("poly") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");
     }
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
@@ -438,8 +438,9 @@ namespace pleos {
     // Generates a piece of math in the block
     std::shared_ptr<scls::__Math_Part_Image> Text::__generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::__XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, Text_Image_Block* block) {
         std::string current_balise_name = content.get()->xml_balise_name();
-        std::cout << "G " << needed_balise_name << std::endl;
-        if(is_special_pleos_balise(current_balise_name)){}
+        if(is_special_pleos_balise(current_balise_name)){
+            generate_text_image(content, current_style, std::make_shared<pleos::Text_Environment>());
+        }
 
         // Go to the base function
         return scls::Text_Image_Block::__generate_maths_one_balise(needed_balise_name, bottom_offset, content, current_style, needed_height, needed_middle_bottom_offset, needed_middle_top_offset, needed_parts, needed_width, top_offset, block);

@@ -71,19 +71,19 @@ namespace pleos {
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment);
 
 	// Returns if a balise is a special PLEOS balise
-	bool is_special_pleos_balise(std::string name);
+	int is_special_pleos_balise(std::string name);
 
 	class Text : public scls::Text_Image_Block {
         // Class representating a more complete text handler for PLEOS
     public:
 
         // Text constructor
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){load_balises(defined_balises);};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){load_balises(defined_balises);};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){load_balises(defined_balises);};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){load_balises(defined_balises);update_datas();};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){load_balises(defined_balises);update_datas();};
+        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){load_balises(defined_balises);update_datas();};
 
         // Creates and returns a word
-        virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){std::shared_ptr<Text> to_return = std::make_shared<Text>(defined_balises_shared_ptr(), needed_datas); std::cout << "A " << needed_datas.get()->content.get()->xml_balise_name() << " " << this << " " << to_return.get() << std::endl; return to_return;};
+        virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){std::shared_ptr<Text> to_return = std::make_shared<Text>(defined_balises_shared_ptr(), needed_datas);return to_return;};
 
         // Generates a piece of math in the block
         virtual std::shared_ptr<scls::__Math_Part_Image> __generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::__XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, scls::Text_Image_Block* block);
