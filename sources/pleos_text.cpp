@@ -435,6 +435,16 @@ namespace pleos {
         return scls::Text_Image_Block::__generate_block(block_datas);
     }
 
+    // Generates a piece of math in the block
+    std::shared_ptr<scls::__Math_Part_Image> Text::__generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::__XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, Text_Image_Block* block) {
+        std::string current_balise_name = content.get()->xml_balise_name();
+        std::cout << "G " << needed_balise_name << std::endl;
+        if(is_special_pleos_balise(current_balise_name)){}
+
+        // Go to the base function
+        return scls::Text_Image_Block::__generate_maths_one_balise(needed_balise_name, bottom_offset, content, current_style, needed_height, needed_middle_bottom_offset, needed_middle_top_offset, needed_parts, needed_width, top_offset, block);
+    }
+
     // Loads the needed balises
     void Text::load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises) {load_balises_pleos(defined_balises);}
 
