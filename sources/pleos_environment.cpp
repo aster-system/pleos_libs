@@ -66,6 +66,9 @@ namespace pleos {
         current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("histogram", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("if", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = false;
         defined_balises.get()->set_defined_balise("link", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();

@@ -467,7 +467,7 @@ namespace pleos {
             scls::Color needed_color = scls::Color::from_std_string(parameter_value);
             if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
 
-            set_border_color(needed_color);std::cout << "L " << std::endl;
+            set_border_color(needed_color);
         }
         else if(parameter_name == std::string("color")){
             scls::Color needed_color = scls::Color::from_std_string(parameter_value);
@@ -630,6 +630,12 @@ namespace pleos {
             if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
 
             set_angle_start(needed_angle);
+        }
+        else if(parameter_name == std::string("color")){
+            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
+            if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+
+            set_color(needed_color);
         }
         else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
     }

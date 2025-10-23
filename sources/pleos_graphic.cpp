@@ -595,6 +595,9 @@ namespace pleos {
         return to_return;
     }
 
+    // Returns the last created object
+    __Graphic_Object_Base* Graphic::last_object() const{if(a_objects.size() <= 0){return 0;}return a_objects.at(a_objects.size() - 1).get();}
+
     // Returns an object shared ptr
     __Graphic_Object_Base* Graphic::object_by_name(std::string name){return object_by_name_shared_ptr(name).get();}
     std::shared_ptr<__Graphic_Object_Base> Graphic::object_by_name_shared_ptr(std::string name) {
@@ -1822,7 +1825,14 @@ namespace pleos {
             // Handle utilities
             scls::Utility_Balise utility = scls::utilities_balise(xml->sub_texts().at(i));
 
-            if(utility.type == SCLS_BALISE_REPEAT) {
+            if(utility.type == SCLS_BALISE_IF) {
+                // Condition to do this structure
+                __Graphic_Object_Base* needed_object = last_object();
+                if(static_cast<int>(round((needed_object->x() + 4.0) / 2.0)) % 2 == 0 ^ static_cast<int>(round((needed_object->y() + 4.0) / 2.0)) % 2 == 0){needed_object->set_parameter("color", "(random()*20,20*random(),230+random()*20)");}
+                Graphic::__graphic_from_xml_balises(xml->sub_texts().at(i), environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);
+            }
+            else if(utility.type == SCLS_BALISE_REPEAT) {
+                // Repeat some instructions
                 environment.add_repetition();
                 scls::__Formula_Base::Unknown* needed_variable = environment.create_unknown("b");
                 needed_variable->set_value(utility.value_start);scls::Fraction step = scls::Fraction(utility.value_end - utility.value_start) / (utility.times - 1);

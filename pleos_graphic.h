@@ -576,6 +576,8 @@ namespace pleos {
         //******************
 
         // Handle all the objects
+        // Returns the last created object
+        __Graphic_Object_Base* last_object() const;
         // Returns an object shared ptr
         __Graphic_Object_Base* object_by_name(std::string name);
         std::shared_ptr<__Graphic_Object_Base> object_by_name_shared_ptr(std::string name);
