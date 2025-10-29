@@ -259,7 +259,7 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        scls::Polymonial needed_polymonial = current_function->formula()->to_polymonial();
+        scls::Polynomial needed_polymonial = current_function->formula()->to_polynomial();
         if(redaction != 0) {
             (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
             (*redaction) += "Pour étudier sa dérivée, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
@@ -327,7 +327,7 @@ namespace pleos {
 
         // Check the type of function
         std::shared_ptr<scls::__Formula_Base> denominator = current_function->formula()->denominator();
-        if(current_function->formula()->is_simple_polymonial()) {result = function_derivation_polymonial(current_function, redaction, settings);}
+        if(current_function->formula()->is_simple_polynomial()) {result = function_derivation_polymonial(current_function, redaction, settings);}
         else if(current_function->formula()->applied_function() != 0) {
             // Check the applied function
             if(redaction != 0) {
@@ -362,13 +362,13 @@ namespace pleos {
     }
 
     // Returns the limit of a function / polymonial in + infinity
-    scls::Limit polymonial_limit(scls::Polymonial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction, scls::Textual_Math_Settings* settings) {
+    scls::Limit polymonial_limit(scls::Polynomial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction, scls::Textual_Math_Settings* settings) {
         // Check the limit for infinity
         scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
         redaction += "Le monôme " + current_monomonial.to_std_string(settings) + " a pour limite " + current_limit.to_std_string(settings) + ". ";
         return current_limit;
     }
-    scls::Limit __function_limit_monomonials(Function_Studied* current_function, scls::Polymonial polymonial, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings) {
+    scls::Limit __function_limit_monomonials(Function_Studied* current_function, scls::Polynomial polymonial, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings) {
         // Cut the formula by monomonial
         redaction += "Comme cette forme est un simple polynôme, étudions les limites de chaque monôme. ";
         std::vector<scls::Limit> limits;
@@ -405,7 +405,7 @@ namespace pleos {
         scls::Limit to_return = scls::Limit();
 
         // Only one polymonial
-        if(function_studied->is_simple_polymonial()) {
+        if(function_studied->is_simple_polynomial()) {
             if(function_studied->denominator() != 0) {
                 // The limit contains a fraction
                 redaction += "Cette forme est une division, nous avons besoin des limites du numérateur et du dénominateur pour avoir sa limite. ";
@@ -413,7 +413,7 @@ namespace pleos {
 
             // Start the search
             redaction += "Nous cherchons la limite de " + current_function->name() + ", qui peut s'écrire " + function_studied->to_std_string(settings) + ", en " + needed_limit.to_std_string(settings) + ". ";
-            scls::Polymonial polymonial = function_studied->to_polymonial();
+            scls::Polynomial polymonial = function_studied->to_polynomial();
 
             // Handle the polymonial monomonial by monomonial
             to_return = __function_limit_monomonials(current_function, polymonial, needed_limit, redaction, settings);
@@ -422,7 +422,7 @@ namespace pleos {
             if(to_return.is_error_ipi() && current_function->level() <= 1) {
                 redaction += "Or, nous avons une forme indéterminée \"infini + ou - infini\". ";
                 redaction += "Pour lever l'indétermination, factorisons toute la forme par le monôme du plus haut degré, et calculons sa limite. ";
-                scls::Polymonial needed_monomonial = scls::Polymonial(scls::Complex(1), current_function->unknown(), polymonial.degree(current_function->unknown()));
+                scls::Polynomial needed_monomonial = scls::Polynomial(scls::Complex(1), current_function->unknown(), polymonial.degree(current_function->unknown()));
                 std::shared_ptr<Function_Studied> needed_function = Function_Studied::new_function_studied_shared_ptr((*function_studied) / needed_monomonial, current_function);
                 needed_function.get()->set_name(current_function->name());
                 scls::Limit result = function_limit(needed_function.get(), needed_limit, redaction, settings);
@@ -458,7 +458,7 @@ namespace pleos {
         scls::Formula result;
 
         // Write the redaction
-        scls::Polymonial needed_polymonial = current_function->formula()->to_polymonial();
+        scls::Polynomial needed_polymonial = current_function->formula()->to_polynomial();
         if(redaction != 0) {
             (*redaction) += "Or, cette fonction n'est qu'un simple polymône. ";
             (*redaction) += "Pour étudier sa primitive, découpons cette fonction en plusieurs monômes, que nous étudierons l'un après l'autre. ";
@@ -482,13 +482,13 @@ namespace pleos {
         if(redaction != 0){(*redaction) += "Nous cherchons la primitive de la fonction " + current_function->name() + ". ";}
 
         // Check the type of function
-        if(current_function->formula()->is_simple_polymonial()) {result = function_primitive_polymonial(current_function, redaction, settings);}
+        if(current_function->formula()->is_simple_polynomial()) {result = function_primitive_polymonial(current_function, redaction, settings);}
 
         return result;
     }
 
     // Returns the set of roots of a function
-    scls::Set_Number function_roots_polymonial(scls::Polymonial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
+    scls::Set_Number function_roots_polymonial(scls::Polynomial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
         int degree = polymonial.degree(current_function->unknown()).real().to_int();
         scls::Set_Number to_return = scls::Set_Number();
         if(polymonial.is_known()) {if(redaction != 0){(*redaction) += "Or, " + polymonial.to_std_string(settings) + " n'est pas égal à 0, cette forme n'a donc pas de racines. ";}}
@@ -577,7 +577,7 @@ namespace pleos {
         function_studied.get()->check_formula();
 
         // Select the good study to do
-        if(function_studied.get()->is_simple_polymonial()) {to_return = function_roots_polymonial(function_studied.get()->to_polymonial(), current_function, redaction, settings);}
+        if(function_studied.get()->is_simple_polynomial()) {to_return = function_roots_polymonial(function_studied.get()->to_polynomial(), current_function, redaction, settings);}
         else if(function_studied.get()->is_simple_fraction()){to_return = function_roots_fraction(function_studied.get()->fraction(), current_function, redaction, settings);}
 
         current_function->set_roots(to_return);
@@ -585,7 +585,7 @@ namespace pleos {
     }
 
     // Returns the set of a positive function
-    scls::Set_Number function_sign_polymonial(scls::Polymonial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
+    scls::Set_Number function_sign_polymonial(scls::Polynomial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
         scls::Set_Number to_return = scls::Set_Number();
         if(current_function->roots() == 0){function_roots(current_function, redaction, settings);}
         int roots_number = current_function->roots()->cardinal();
@@ -718,7 +718,7 @@ namespace pleos {
         function_studied.get()->clear_applied_function();
 
         // Only one polymonial
-        if(function_studied->is_simple_polymonial()) {to_return = function_sign_polymonial(function_studied->to_polymonial(), current_function, redaction, settings);}
+        if(function_studied->is_simple_polynomial()) {to_return = function_sign_polymonial(function_studied->to_polynomial(), current_function, redaction, settings);}
         else if(function_studied->is_simple_fraction()) {to_return = function_sign_fraction(function_studied->fraction(), current_function, redaction, settings);}
 
         current_function->set_sign_set(to_return);
@@ -758,12 +758,14 @@ namespace pleos {
     std::string __redaction_root_2_2r = std::string("Le discriminant est supérieur à 0, nous pouvons donc dénombrer 2 solutions distinctes : </br><math><mi>x</mi><msub>1</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>+</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math><math><mi>x</mi><msub>2</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>-</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_2></mi></math>");
     std::string __redaction_root_2_1r = std::string("Le discriminant est égal à 0, nous pouvons donc dénombrer 1 solution distincte : </br><math><mi>x</mi><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math>");
     std::string __redaction_root_2_0r = std::string("Le discriminant est inférieur à 0, nous n'avons pas de solutions réelles.");
+    std::string __redaction_root_3_d = std::string("Le polynôme \"<full_formula>\" est de degré 3, utilisons la méthode de Cardan : </br><math><mdelta><mo>=</mo><mi>q'</mi><msup>2</msup><mo>+</mo><mi>p'</mi><msup>3</msup><mo>=</mo><polynomial_1><msup>2</msup><mo>-</mo><mi>4</mi><mo>*</mo><polynomial_2><mo>*</mo><polynomial_0><mo>=</mo><mi><solution_d></mi></math></br>");
     void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction) {
-        scls::Polymonial polynomial = formula.to_polymonial();
+        scls::Polynomial polynomial = formula.to_polynomial();
         scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
         std::string unknown_name = std::string("x");
 
         // Get the good method
+        scls::Complex max_degree = polynomial.degree(unknown_name);
         if(polynomial.degree(unknown_name) == 0) {
             // Set redaction
             if(redaction != 0) {
@@ -820,6 +822,54 @@ namespace pleos {
                 (*redaction) = scls::replace(*redaction, std::string("<solution_2>"), std::to_string(solution_2.value_to_fraction().to_double()));
                 //(*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
             }
+        }
+        else if(max_degree == 3) {
+            // Solve it
+            scls::Complex a = polynomial.monomonial(unknown_name, 3).factor();
+            scls::Complex b = polynomial.monomonial(unknown_name, 2).factor();
+            scls::Complex c = polynomial.monomonial(unknown_name, 1).factor();
+            scls::Complex d = polynomial.known_monomonial().factor();
+
+            // Solve it
+            scls::Complex p = (3 * a * c - b * b) / (3 * a * a);
+            scls::Complex q = (2 * b * b * b - 9 * a * b * c + 27 * a * a * d) / (27 * a * a * a);
+            scls::Complex p_prime = (p) / (3);
+            scls::Complex q_prime = (q) / (2);
+            scls::Complex discriminant = 4 * 27 * (q_prime * q_prime + p_prime * p_prime * p_prime) * -1;
+            std::cout << "E " << p.to_std_string_simple(0) << " " << p.real().to_double() << " " << q.to_std_string_simple(0) << " " << q.real().to_double() << " " << discriminant.real().to_std_string(0) << " " << discriminant.real().to_double() << std::endl;
+
+            // Get the solution
+            scls::Formula solution_1 = 0;
+            scls::Formula solution_2 = 0;
+            if(discriminant.real() > 0){
+                scls::Formula sqrt = scls::Formula(discriminant) / 27;sqrt.set_applied_function<scls::__Sqrt_Function>();
+                sqrt *= scls::Complex(0, 1);
+                scls::Formula u = (sqrt - q) / 2;
+                std::cout << "F " << u.to_std_string(0) << std::endl;
+            }
+
+            // Set redaction
+            if(redaction != 0) {
+                (*redaction) += __redaction_root_3_d;
+
+                // Edit
+                (*redaction) = scls::replace(*redaction, std::string("<full_formula>"), polynomial.to_std_string(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_0>"), c.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_1>"), b.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<polynomial_2>"), a.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_d>"), discriminant.to_std_string_simple(&settings));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_1>"), std::to_string(solution_1.value_to_fraction().to_double()));
+                (*redaction) = scls::replace(*redaction, std::string("<solution_2>"), std::to_string(solution_2.value_to_fraction().to_double()));
+                //(*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
+            }
+        }
+    }
+
+    // Solve an equation
+    void solve_equation(scls::__Formula_Base::Formula formula, std::string* redaction) {
+        // The formula is a polynomial
+        if(formula.is_simple_polynomial()){
+            polynomial_roots(formula, redaction);
         }
     }
 }

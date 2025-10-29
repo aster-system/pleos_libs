@@ -77,13 +77,8 @@ namespace pleos {
         // Class representating a more complete text handler for PLEOS
     public:
 
-        // Text constructor
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::shared_ptr<scls::Block_Datas> datas):scls::Text_Image_Block(defined_balises,datas){load_balises(defined_balises);update_datas();};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, scls::String text, scls::Text_Style style):scls::Text_Image_Block(defined_balises, text, style){load_balises(defined_balises);update_datas();};
-        Text(std::shared_ptr<scls::_Balise_Style_Container> defined_balises, std::string text, scls::Block_Type type):scls::Text_Image_Block(defined_balises, text, type){load_balises(defined_balises);update_datas();};
-
         // Creates and returns a word
-        virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){std::shared_ptr<Text> to_return = std::make_shared<Text>(defined_balises_shared_ptr(), needed_datas);return to_return;};
+        virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){std::shared_ptr<Text> to_return = new_text_image_block<Text>(defined_balises_shared_ptr(), needed_datas);return to_return;};
 
         // Generates a piece of math in the block
         virtual std::shared_ptr<scls::__Math_Part_Image> __generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::__XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, scls::Text_Image_Block* block);
@@ -93,7 +88,9 @@ namespace pleos {
 
         // Loads the needed balises
         void load_balises(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
-    private:
+    protected:
+        // Text constructor
+        TEXT_IMAGE_BLOCK_CHILD_CONSTRUCTOR(Text, load_balises(defined_balises););
     };
 
     // Final Table

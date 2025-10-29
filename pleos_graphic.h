@@ -116,7 +116,7 @@ namespace pleos {
             inline scls::__Image_Base* last_texture() const {return a_last_texture.get();};
             inline void set_source(std::string new_source) {a_source = new_source;}
             inline void set_texture(scls::Image new_texture){set_texture(new_texture.image_shared_ptr());};
-            inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();};
+            inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();a_last_texture.reset();};
             inline void set_texture(std::string path){if(path != std::string()){set_texture(std::make_shared<scls::__Image_Base>(path));}a_source=path;};
             inline void set_texture_displaying(std::string new_texture_displaying){if(new_texture_displaying == std::string("fill")){set_texture_displaying(Texture_Displaying::TD_Fill);}else if(new_texture_displaying == std::string("from_height")){set_texture_displaying(Texture_Displaying::TD_From_Height);}else if(new_texture_displaying == std::string("from_width")){set_texture_displaying(Texture_Displaying::TD_From_Width);}else if(new_texture_displaying == std::string("pixel_size")){set_texture_displaying(Texture_Displaying::TD_Pixel_Size);}}
             inline void set_texture_displaying(Texture_Displaying new_texture_displaying){a_texture_displaying = new_texture_displaying;}
@@ -829,31 +829,31 @@ namespace pleos {
         //******************
 
         // Precise objects
-        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment);
-        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::string object_type, Text_Environment& environment);
+        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment* environment);
+        std::string graphic_from_xml_name(scls::XML_Attribute& attribute, std::string object_type, Text_Environment* environment);
 
         // Balises circle in the graphic
-        bool graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment& environment, scls::Text_Style text_style);
+        bool graphic_from_xml_balise_attribute_circle(scls::XML_Attribute& attribute, std::shared_ptr<Circle> circle, Text_Environment* environment, scls::Text_Style text_style);
         // Balises form 2D in the graphic
-        bool graphic_from_xml_balise_attribute_form_2d(scls::XML_Attribute& attribute, std::shared_ptr<Form_2D> object, Text_Environment& environment, scls::Text_Style text_style);
+        bool graphic_from_xml_balise_attribute_form_2d(scls::XML_Attribute& attribute, std::shared_ptr<Form_2D> object, Text_Environment* environment, scls::Text_Style text_style);
         // Balises object in the graphic
-        bool graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment& environment, scls::Text_Style text_style);
+        bool graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment* environment, scls::Text_Style text_style);
         // Balises physic in the graphic
-        bool graphic_from_xml_balise_attribute_physic(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, std::shared_ptr<Graphic_Physic>& physic, Text_Environment& environment, scls::Text_Style text_style);
+        bool graphic_from_xml_balise_attribute_physic(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, std::shared_ptr<Graphic_Physic>& physic, Text_Environment* environment, scls::Text_Style text_style);
         // Balises object in the texture object
-        bool graphic_from_xml_balise_attribute_texture_object(scls::XML_Attribute& attribute, std::shared_ptr<Graphic_Texture> object, Text_Environment& environment, scls::Text_Style text_style);
+        bool graphic_from_xml_balise_attribute_texture_object(scls::XML_Attribute& attribute, std::shared_ptr<Graphic_Texture> object, Text_Environment* environment, scls::Text_Style text_style);
 
         // Balises in the graphic
-        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment, scls::Text_Style text_style);
-        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise_action(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment, scls::Text_Style text_style, __Graphic_Object_Base::Action_Structure* structure);
-        virtual void __graphic_from_xml_balises(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment, scls::Text_Style text_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
+        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style);
+        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise_action(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, __Graphic_Object_Base::Action_Structure* structure);
+        virtual void __graphic_from_xml_balises(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
         virtual void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
 
         // Generates a new line from XML
-        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment){scls::__Formula_Base::Formula x_1;scls::__Formula_Base::Formula x_2;scls::__Formula_Base::Formula y_1;scls::__Formula_Base::Formula y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
-        void __new_line_xml(scls::__Formula_Base::Formula& x_1, scls::__Formula_Base::Formula& x_2, scls::__Formula_Base::Formula& y_1, scls::__Formula_Base::Formula& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment& environment);
+        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment){scls::__Formula_Base::Formula x_1;scls::__Formula_Base::Formula x_2;scls::__Formula_Base::Formula y_1;scls::__Formula_Base::Formula y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
+        void __new_line_xml(scls::__Formula_Base::Formula& x_1, scls::__Formula_Base::Formula& x_2, scls::__Formula_Base::Formula& y_1, scls::__Formula_Base::Formula& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment);
 
         //******************
         //

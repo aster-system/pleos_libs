@@ -164,6 +164,9 @@ namespace pleos {
 
     // Gets the roots of a polynomial
     void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction);
+
+    // Solve an equation
+    void solve_equation(scls::__Formula_Base::Formula formula, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

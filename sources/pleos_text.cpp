@@ -342,8 +342,10 @@ namespace pleos {
             // Handle the attributes
             std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
             std::string to_express = std::string();
+            std::string to_solve = std::string();
             for(int i = 0;i<static_cast<int>(attributes.size());i++) {
                 if(attributes[i].name == std::string("expression") || attributes.at(i).name == std::string("simplify")){to_express = attributes[i].value;}
+                else if(attributes[i].name == std::string("solve")){to_solve = attributes[i].value;}
             }
 
             // Expression
@@ -351,11 +353,23 @@ namespace pleos {
             if(to_express != std::string()) {
                 scls::__Formula_Base::Formula formula = scls::string_to_formula(to_express);
                 result = formula.to_mathml(0);
+
+                // Set the good balise
+                if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
+                else{current_text.get()->set_xml_balise_name(std::string("math"));}
+            }
+
+            // Solving
+            if(to_solve != std::string()) {
+                scls::__Formula_Base::Formula formula = scls::string_to_formula(to_solve);
+                solve_equation(formula, &result);
+
+                // Set the good balise
+                if(current_text.get()->balise_in_hierarchy("p")){current_text.get()->set_xml_balise_name(std::string(""));}
+                else{current_text.get()->set_xml_balise_name(std::string("p"));}
             }
 
             // Set the result
-            if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
-            else{current_text.get()->set_xml_balise_name(std::string("math"));}
             current_text.get()->set_text(result);
         }
         else if(current_balise_name == std::string("poly")) {
@@ -484,8 +498,8 @@ namespace pleos {
 
         std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();
         load_balises_pleos(balises);
-        pleos::Text t = pleos::Text(balises, content, style);
-        std::shared_ptr<scls::__Image_Base> to_return = t.image_shared_pointer();
+        std::shared_ptr<pleos::Text> t = scls::Text_Image_Block::new_text_image_block<pleos::Text>(balises, content, style);
+        std::shared_ptr<scls::__Image_Base> to_return = t.get()->image_shared_pointer();
         return to_return;
     }
 }
