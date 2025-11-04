@@ -244,7 +244,7 @@ namespace pleos {
         if(needed_unknown != 0) {
             // Basic exponential form
             scls::Fraction new_exponent = needed_unknown->exponent().real() - 1;
-            if(new_exponent != 0) {result = scls::__Monomonial(needed_unknown->exponent() * current_monomonial.factor(), std::string("x"), new_exponent);} else {result = current_monomonial.factor().real();}
+            if(new_exponent != 0) {result = scls::__Monomonial(needed_unknown->exponent() * *current_monomonial.factor(), std::string("x"), new_exponent);} else {result = current_monomonial.factor()->real();}
         }
 
         if(redaction != 0) {
@@ -267,7 +267,7 @@ namespace pleos {
 
         // Study each monomonials
         for(int i = 0;i<static_cast<int>(needed_polymonial.monomonials().size());i++) {
-            result += function_derivation_monomonial(needed_polymonial.monomonials()[i], redaction, settings);
+            result += function_derivation_monomonial(*needed_polymonial.monomonial(i), redaction, settings);
         }
 
         // Finish the redaction
@@ -364,12 +364,12 @@ namespace pleos {
     // Returns the limit of a function / polymonial in + infinity
     scls::Limit polymonial_limit(scls::Polynomial current_monomonial, scls::Limit needed_limit, std::string unknown, std::string& redaction, scls::Textual_Math_Settings* settings) {
         // Check the limit for infinity
-        scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
+        /*scls::Limit current_limit = current_monomonial.limit(needed_limit, unknown);
         redaction += "Le monôme " + current_monomonial.to_std_string(settings) + " a pour limite " + current_limit.to_std_string(settings) + ". ";
-        return current_limit;
+        return current_limit;//*/
     }
     scls::Limit __function_limit_monomonials(Function_Studied* current_function, scls::Polynomial polymonial, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings) {
-        // Cut the formula by monomonial
+        /*// Cut the formula by monomonial
         redaction += "Comme cette forme est un simple polynôme, étudions les limites de chaque monôme. ";
         std::vector<scls::Limit> limits;
         int monomonial_number = static_cast<int>(polymonial.monomonials().size());
@@ -397,7 +397,7 @@ namespace pleos {
         scls::Limit final_limit;
         if(special == 0){final_limit = limit.real();}
         else{final_limit.set_special_value(special);}
-        return final_limit;
+        return final_limit;//*/
     }
     scls::Limit function_limit(Function_Studied* current_function, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings) {
         // Create the redaction
@@ -439,7 +439,7 @@ namespace pleos {
     // Returns the primitive of a function
     scls::Formula function_primitive_monomonial(scls::__Monomonial current_monomonial, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Do the calculation
-        scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown(std::string("x"));
+        /*scls::_Base_Unknown* needed_unknown = current_monomonial.contains_unknown(std::string("x"));
         scls::Formula result;
         if(needed_unknown != 0) {
             // Basic exponential form
@@ -451,7 +451,7 @@ namespace pleos {
 
         if(redaction != 0) {(*redaction) += std::string("La forme primitive de la forme ") + current_monomonial.to_std_string(settings) + std::string(" est ") + result.to_std_string(settings) + std::string(". ");}
 
-        return result;
+        return result;//*/
     }
     scls::Formula function_primitive_polymonial(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Do the calculation
@@ -466,7 +466,7 @@ namespace pleos {
 
         // Study each monomonials
         for(int i = 0;i<static_cast<int>(needed_polymonial.monomonials().size());i++) {
-            result += function_primitive_monomonial(needed_polymonial.monomonials()[i], redaction, settings);
+            result += function_primitive_monomonial(*needed_polymonial.monomonial(i), redaction, settings);
         }
 
         // Finish the redaction
@@ -489,7 +489,7 @@ namespace pleos {
 
     // Returns the set of roots of a function
     scls::Set_Number function_roots_polymonial(scls::Polynomial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
-        int degree = polymonial.degree(current_function->unknown()).real().to_int();
+        /*int degree = polymonial.degree(current_function->unknown()).real().to_int();
         scls::Set_Number to_return = scls::Set_Number();
         if(polymonial.is_known()) {if(redaction != 0){(*redaction) += "Or, " + polymonial.to_std_string(settings) + " n'est pas égal à 0, cette forme n'a donc pas de racines. ";}}
         else if(degree == 1) {
@@ -554,7 +554,7 @@ namespace pleos {
             }
         }
 
-        return to_return;
+        return to_return;//*/
     }
     scls::Set_Number function_roots_fraction(scls::Formula::Formula_Fraction* fraction, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Create the redaction
@@ -586,7 +586,7 @@ namespace pleos {
 
     // Returns the set of a positive function
     scls::Set_Number function_sign_polymonial(scls::Polynomial polymonial, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
-        scls::Set_Number to_return = scls::Set_Number();
+        /*scls::Set_Number to_return = scls::Set_Number();
         if(current_function->roots() == 0){function_roots(current_function, redaction, settings);}
         int roots_number = current_function->roots()->cardinal();
         if(roots_number == 0) {
@@ -686,7 +686,7 @@ namespace pleos {
         // Finish the redaction
         if(redaction != 0) {(*redaction) += std::string("</br>Au final, la fonction est strictement positive sur ") + to_return.to_std_string(settings) + std::string(". ");}
 
-        return to_return;
+        return to_return;//*/
     }
     scls::Set_Number function_sign_fraction(scls::Formula::Formula_Fraction* fraction, Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings) {
         // Create the redaction
@@ -769,14 +769,14 @@ namespace pleos {
         if(polynomial.degree(unknown_name) == 0) {
             // Set redaction
             if(redaction != 0) {
-                if(polynomial == 0){(*redaction) += scls::replace(__redaction_root_0, std::string("<full_formula>"), polynomial.to_std_string(&settings));}
+                if(polynomial.is_null()){(*redaction) += scls::replace(__redaction_root_0, std::string("<full_formula>"), polynomial.to_std_string(&settings));}
                 else{(*redaction) += scls::replace(__redaction_root_0_not_0, std::string("<full_formula>"), polynomial.to_std_string(&settings));}
             }
         }
         else if(polynomial.degree(unknown_name) == 1) {
             // Solve it
-            scls::Complex a = polynomial.monomonial(unknown_name, 1).factor();
-            scls::Complex b = polynomial.known_monomonial().factor();
+            scls::Complex a = *polynomial.monomonial(unknown_name, 1)->factor();
+            scls::Complex b = polynomial.known_monomonial_factor();
             scls::Complex solution = (b * -1) / a;
 
             // Set redaction
@@ -792,9 +792,9 @@ namespace pleos {
         }
         else if(polynomial.degree(unknown_name) == 2) {
             // Solve it
-            scls::Complex a = polynomial.monomonial(unknown_name, 2).factor();
-            scls::Complex b = polynomial.monomonial(unknown_name, 1).factor();
-            scls::Complex c = polynomial.known_monomonial().factor();
+            scls::Complex a = *polynomial.monomonial(unknown_name, 2)->factor();
+            scls::Complex b = *polynomial.monomonial(unknown_name, 1)->factor();
+            scls::Complex c = polynomial.known_monomonial_factor();
             scls::Complex d = b * b - 4 * a * c;
             scls::Formula solution_1 = 0;
             scls::Formula solution_2 = 0;
@@ -825,10 +825,10 @@ namespace pleos {
         }
         else if(max_degree == 3) {
             // Solve it
-            scls::Complex a = polynomial.monomonial(unknown_name, 3).factor();
-            scls::Complex b = polynomial.monomonial(unknown_name, 2).factor();
-            scls::Complex c = polynomial.monomonial(unknown_name, 1).factor();
-            scls::Complex d = polynomial.known_monomonial().factor();
+            scls::Complex a = *polynomial.monomonial(unknown_name, 3)->factor();
+            scls::Complex b = *polynomial.monomonial(unknown_name, 2)->factor();
+            scls::Complex c = *polynomial.monomonial(unknown_name, 1)->factor();
+            scls::Complex d = polynomial.known_monomonial_factor();
 
             // Solve it
             scls::Complex p = (3 * a * c - b * b) / (3 * a * a);

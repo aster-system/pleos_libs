@@ -114,49 +114,6 @@ namespace pleos {
     Text_Environment::Definition::__Content::__Content(std::string needed_content):content(needed_content){}
     Text_Environment::Definition::__Content::__Content(std::string needed_name,std::string needed_content):content(needed_content),name(needed_name){}
 
-    // Returns a color value
-    scls::Color Text_Environment::value_color(std::string base)const{
-        // Function
-        scls::Function_Called_Text called_function = scls::parse_function_call(base);
-        if(called_function.name == std::string("random")){return scls::Color(scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255), scls::random_int_between_included(0, 255));}
-
-        // Set the color
-        std::vector<std::string> cutted = scls::Color::from_std_string_parts(base);
-
-        // Get the color
-        scls::Color to_return(255, 255, 255);
-        if(cutted.size() > 1) {
-            for(int i = 0;i<static_cast<int>(cutted.size());i++) {
-                if(i == 0) to_return.set_red(value_double(cutted[i]));
-                else if(i == 1) to_return.set_green(value_double(cutted[i]));
-                else if(i == 2) to_return.set_blue(value_double(cutted[i]));
-                else if(i == 3) to_return.set_alpha(value_double(cutted[i]));
-            }
-        }
-        else if(cutted.size() == 1) {scls::defined_color_by_name(cutted.at(0), to_return);}
-
-        return to_return;
-    }
-    // Returns a list color value
-    std::vector<scls::Color> Text_Environment::value_color_list(std::string base)const{
-        std::vector<std::string> cutted = scls::cut_string_out_of_2(base, std::string(","), std::string("("), std::string(")"));
-        std::vector<scls::Color> to_return = std::vector<scls::Color>(cutted.size());
-        for(int i = 0;i<static_cast<int>(cutted.size());i++){to_return[i] = value_color(cutted.at(i));}
-        return to_return;
-    }
-	// Returns a Point_2D value
-    scls::Point_2D_Formula Text_Environment::value_point_2d(std::string base)const{
-        // Format the text
-        while(base.size() > 0 && base.at(0) == '('){base = base.substr(1, base.size() - 1);}
-        while(base.size() > 0 && base.at(base.size() - 1) == ')'){base = base.substr(0, base.size() - 1);}
-
-        // Get the point
-        base = scls::replace(base, std::string(";"), std::string(","));
-        std::vector<std::string> cutted = scls::cut_string(base, std::string(","));
-        if(cutted.size() != 2) {scls::print(std::string("PLEOS Text Environment"), std::string("Can't get a point 2D from \"") + base + std::string("\"."));return scls::Point_2D(0, 0);}
-        return scls::Point_2D_Formula(value_number(cutted.at(0)), value_number(cutted.at(1)));
-    };
-
     //*********
     // Definition system
     //*********
@@ -202,7 +159,7 @@ namespace pleos {
     std::shared_ptr<Text_Environment::Definition> Text_Environment::definition_by_name_shared_ptr(std::string definition_name){for(int i = 0;i<static_cast<int>(a_definitions.size());i++){if(a_definitions.at(i).get()->name() == definition_name){return a_definitions.at(i);}}return std::shared_ptr<Text_Environment::Definition>();};
 
     // Text_Environment constructor
-    Text_Environment::Text_Environment():scls::Math_Environment(){};
+    Text_Environment::Text_Environment():scls::Text_Environment(){};
 
     // Loads the definitions
     void Text_Environment::__load_definition_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text) {

@@ -109,7 +109,7 @@ namespace pleos {
     std::string Graphic::Graphic_Texture::to_xml_text_base(){return __Graphic_Object_Base::to_xml_text_base() + to_xml_text_source();}
     std::string Graphic::Graphic_Texture::to_xml_text_object_name(){return std::string("texture_object");}
     std::string Graphic::Graphic_Texture::to_xml_text_source(){return std::string(" source=\"") + source() + std::string("\"");}
-    std::string Graphic::Graphic_Texture::to_xml_text_texture_displaying(){if(a_texture_displaying == Texture_Displaying::TD_Fill){return std::string(" texture_displying=fill");}else if(a_texture_displaying == Texture_Displaying::TD_From_Height){return std::string(" texture_displying=from_height");}else if(a_texture_displaying == Texture_Displaying::TD_From_Width){return std::string(" texture_displying=from_width");}else if(a_texture_displaying == Texture_Displaying::TD_Pixel_Size){return std::string(" texture_displying=pixel_size");}}
+    std::string Graphic::Graphic_Texture::to_xml_text_texture_displaying(){if(a_texture_displaying == Texture_Displaying::TD_Fill){return std::string(" texture_displying=fill");}else if(a_texture_displaying == Texture_Displaying::TD_From_Height){return std::string(" texture_displying=from_height");}else if(a_texture_displaying == Texture_Displaying::TD_From_Width){return std::string(" texture_displying=from_width");}else if(a_texture_displaying == Texture_Displaying::TD_Pixel_Size){return std::string(" texture_displying=pixel_size");}return std::string();}
 
     // Graphic_Texture_Plane constructor
     Graphic::Graphic_Texture_Plane::Graphic_Texture_Plane(std::weak_ptr<Graphic> graphic_base):Graphic::Graphic_Texture_Object(graphic_base){}
@@ -1772,6 +1772,7 @@ namespace pleos {
                     needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Wait>(needed_time.value_to_double()));needed_objects.at(i).get()->last_action()->save_to_xml_text = true;
                 }
             }
+            else{scls::print("PLEOS Graphic \"actions\"", std::string("An action of type \"") + current_balise_name + std::string("\" has no object specified."));}
         }
         else if(current_balise_name == "action_wait_until" || current_balise_name == "wait_until_action") {
             // Get the datas about the wait action
@@ -1828,7 +1829,14 @@ namespace pleos {
             if(utility.type == SCLS_BALISE_IF) {
                 // Condition to do this structure
                 __Graphic_Object_Base* needed_object = last_object();
-                if(static_cast<int>(round((needed_object->x() + 4.0) / 2.0)) % 2 == 0 ^ static_cast<int>(round((needed_object->y() + 4.0) / 2.0)) % 2 == 0){needed_object->set_parameter("color", "(random()*20,20*random(),230+random()*20)");}
+                double d = needed_object->position().distance(scls::Point_2D(0, 0));
+                if(d > 1.0 && d < 2.7){needed_object->set_parameter("color", "(random()*20,230+20*random(),random()*20)");}
+                scls::Point_2D random_point = scls::Point_2D(scls::random_fraction(-2, 2, 3).to_double(), scls::random_fraction(-2, 2, 3).to_double());
+                scls::Point_2D velocity = random_point - needed_object->absolute_position();
+                if(random_point.x() < 0){needed_object->set_x(random_point.x() - 3);}else{needed_object->set_x(random_point.x() + 3);}
+                if(random_point.y() < 0){needed_object->set_y(random_point.y() - 3);}else{needed_object->set_y(random_point.y() + 3);}
+                needed_object->actions()->add_action_move((velocity - random_point) * -1, 2).get()->save_to_xml_text = true;
+
                 Graphic::__graphic_from_xml_balises(xml->sub_texts().at(i), environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);
             }
             else if(utility.type == SCLS_BALISE_REPEAT) {
@@ -2228,10 +2236,10 @@ namespace pleos {
         line_x_2 = collision_rect->max_absolute_x();
         Collision_Result result_right = __check_collision_circle_line_maths(collision_circle->absolute_x(), collision_circle->absolute_y(), collision_circle->absolute_width().to_double(), collision_circle->position_next(), object_circle->velocity(), line_x_1, line_y_1, line_x_2, line_y_2, collision_circle, collision_rect, object_circle, object_rect);
         // Final collision
-        Collision_Result final_result = result_top;int result = 0;
-        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_bottom;result = 1;}
-        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_left;result = 2;}
-        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_right;result = 3;}
+        Collision_Result final_result = result_top;
+        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_bottom;}
+        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_left;}
+        if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {final_result = result_right;}
         if(final_result.collision_1.get() == 0 || !final_result.collision_1.get()->happens) {return Collision_Result();}
 
         // Add some needed datas

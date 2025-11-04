@@ -42,19 +42,12 @@ namespace pleos {
 	// Loads the PLEOS balises
     void load_balises_pleos(std::shared_ptr<scls::_Balise_Style_Container> defined_balises);
 
-	class Text_Environment : public scls::Math_Environment {
+	class Text_Environment : public scls::Text_Environment {
 	    // Class representating an environment for text in PLEOS
     public:
 
         // Text_Environment constructor
         Text_Environment();
-
-        // Returns a color value
-        scls::Color value_color(std::string base) const;
-        // Returns a list color value
-        std::vector<scls::Color> value_color_list(std::string base) const;
-        // Returns a point 2D value
-        scls::Point_2D_Formula value_point_2d(std::string base) const;
 
         //*********
         // Definition system

@@ -290,8 +290,8 @@ namespace pleos {
             // Adds a move action
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);return action;};
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);return action;};
-            void add_action_move(scls::Point_2D position, double needed_speed){add_action_move(position.x(), position.y(), needed_speed);};
-            void add_action_move(scls::Point_2D position){add_action_move(position.x(), position.y());};
+            std::shared_ptr<Action_Move> add_action_move(scls::Point_2D position, double needed_speed){return add_action_move(position.x(), position.y(), needed_speed);};
+            std::shared_ptr<Action_Move> add_action_move(scls::Point_2D position){return add_action_move(position.x(), position.y());};
             // Adds a set_parameter action
             void add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;actions().push_back(action);};
             void add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
