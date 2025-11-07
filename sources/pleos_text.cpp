@@ -258,7 +258,7 @@ namespace pleos {
 
 	// Generate a word
 	int is_special_pleos_balise(std::string name){
-	    return name == std::string("definition") || name == std::string("factorial") || name == std::string("graph") || name == std::string("graphic") || name == std::string("let") || name == std::string("linked_list") || name == std::string("poly") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");
+	    return name == std::string("definition") || name == std::string("factorial") || name == std::string("graph") || name == std::string("graphic") || name == std::string("let") || name == std::string("linked_list") || name == std::string("poly") || name == std::string("scientist") || name == std::string("table") || name == std::string("theorem") || name == std::string("tree");
     }
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment){return generate_text_image(current_text, needed_style, std::shared_ptr<scls::__XML_Text_Base>(), possible_environment);}
 	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment){
@@ -411,6 +411,26 @@ namespace pleos {
             if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
             else{current_text.get()->set_xml_balise_name(std::string("math"));}
             current_text.get()->set_text(result);
+        }
+        else if(current_balise_name == "scientist") {
+        	// Handle the attributes
+			std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+			std::string scientists_lastname = std::string();
+			for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+				if(attributes[i].name == std::string("lastname") || attributes[i].name == std::string("name")){scientists_lastname = attributes[i].value;}
+			}
+
+			// Get the needed scientist
+			Text_Environment::Scientist* needed_scientist = possible_environment.get()->scientist_by_name(scientists_lastname);
+
+			if(needed_scientist == 0) {
+				current_text.get()->set_xml_balise_name(std::string());
+				current_text.get()->set_text(std::string("un mec intelligent"));
+			}
+			else {
+				current_text.get()->set_xml_balise_name(std::string());
+				current_text.get()->set_text(scls::capitalise_first_letter(needed_scientist->lastname()));
+			}
         }
 
         return to_return;

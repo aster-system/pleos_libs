@@ -50,7 +50,7 @@ namespace pleos {
         Text_Environment();
 
         //*********
-        // Definition system
+        // Definition and Scientist system
         //*********
 
         // Class containing a definition
@@ -92,16 +92,40 @@ namespace pleos {
             std::vector<std::shared_ptr<__Content>> a_theorems;
         };
 
+        // Class containing a scientist
+        class Scientist {
+        public:
+			// Scientist constructor
+        	Scientist(std::string firstname, std::string lastname, std::string birth, std::string death):a_birth(birth),a_death(death),a_firstname(firstname),a_lastname(lastname){};
+
+        	// Getters and setters
+        	inline std::string lastname() const {return a_lastname;};
+        private:
+        	// Datas about the scientist
+        	std::string a_birth = std::string();
+        	std::string a_death = std::string();
+        	std::string a_firstname = std::string();
+        	std::string a_lastname = std::string();
+        };
+
         // Returns a definition by its name
         Definition* definition_by_name(std::string name);
         std::shared_ptr<Definition> definition_by_name_shared_ptr(std::string name);
+        // Returns a scientist by its name
+        Scientist* scientist_by_name(std::string name);
+        std::shared_ptr<Scientist> scientist_by_name_shared_ptr(std::string name);
 
         // Loads the definitions
         void __load_definition_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text);
         void load_definitions_from_path(std::string path);
+        // Loads the scientists
+        void __load_scientist_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text);
+        void load_scientists_from_path(std::string path);
 
         // Creates and returns a new definition
         std::shared_ptr<Definition> new_definition(std::string definition_name);
+        // Creates and returns a new scientist
+        std::shared_ptr<Scientist> new_scientist(std::string firstname, std::string lastname, std::string birth, std::string death);
 
         // Getters and setters
         inline std::vector<std::shared_ptr<Definition>>& definitions() {return a_definitions;};
@@ -113,6 +137,8 @@ namespace pleos {
 
         // Created definitions
         std::vector<std::shared_ptr<Definition>> a_definitions;
+        // Created scientists
+        std::vector<std::shared_ptr<Scientist>> a_scientists;
 	};
 }
 

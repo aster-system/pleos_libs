@@ -157,6 +157,9 @@ namespace pleos {
     // Returns a definition by its name
     Text_Environment::Definition* Text_Environment::definition_by_name(std::string definition_name){return definition_by_name_shared_ptr(definition_name).get();}
     std::shared_ptr<Text_Environment::Definition> Text_Environment::definition_by_name_shared_ptr(std::string definition_name){for(int i = 0;i<static_cast<int>(a_definitions.size());i++){if(a_definitions.at(i).get()->name() == definition_name){return a_definitions.at(i);}}return std::shared_ptr<Text_Environment::Definition>();};
+    // Returns a scientist by its name
+    Text_Environment::Scientist* Text_Environment::scientist_by_name(std::string lastname){return scientist_by_name_shared_ptr(lastname).get();}
+    std::shared_ptr<Text_Environment::Scientist> Text_Environment::scientist_by_name_shared_ptr(std::string lastname){for(int i = 0;i<static_cast<int>(a_scientists.size());i++){if(a_scientists.at(i).get()->lastname() == lastname){return a_scientists.at(i);}}return std::shared_ptr<Text_Environment::Scientist>();};
 
     // Text_Environment constructor
     Text_Environment::Text_Environment():scls::Text_Environment(){};
@@ -209,6 +212,46 @@ namespace pleos {
         }
     }
 
+    // Loads the scientists
+	void Text_Environment::__load_scientist_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text) {
+		// Handle the attributes
+		std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
+		std::string scientist_birth = std::string();
+		std::string scientist_death = std::string();
+		std::string scientist_firstname = std::string();
+		std::string scientist_lastname = std::string();
+		for(int i = 0;i<static_cast<int>(attributes.size());i++) {
+			if(attributes[i].name == std::string("birth")){scientist_birth = attributes[i].value;}
+			else if(attributes[i].name == std::string("death")){scientist_death = attributes[i].value;}
+			else if(attributes[i].name == std::string("firstname")){scientist_firstname = attributes[i].value;}
+			else if(attributes[i].name == std::string("lastname")){scientist_lastname = attributes[i].value;}
+		}
+
+		// Create the definition
+		if(scientist_lastname != std::string()) {
+			new_scientist(scientist_firstname, scientist_lastname, scientist_birth, scientist_death);
+		}
+	}
+	void Text_Environment::load_scientists_from_path(std::string path) {
+        // Get the entire text
+        std::string total = std::string();
+        if(std::filesystem::is_directory(path)){
+            std::vector<std::string> all_path = scls::directory_content(path, true);
+            for(int i = 0;i<static_cast<int>(all_path.size());i++){total+=scls::read_file(all_path.at(i));}
+        }
+        else if(std::filesystem::exists(path)){total=scls::read_file(path);}
+        else{scls::print(std::string("PLEOS Text Environment"), std::string("The path \"") + path + std::string("\" where you want to load scientists does not exists."));return;}
+
+        // Loads the definitions
+        std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();load_balises_pleos(balises);
+        std::shared_ptr<scls::__XML_Text_Base> content = scls::xml(balises, total);
+        for(int i = 0;i<static_cast<int>(content.get()->sub_texts().size());i++) {
+            if(content.get()->sub_texts().at(i).get()->xml_balise_name() == std::string("metadata")){__load_scientist_from_xml(content.get()->sub_texts().at(i));}
+        }
+    }
+
     // Creates and returns a new definition
     std::shared_ptr<Text_Environment::Definition> Text_Environment::new_definition(std::string definition_name){std::shared_ptr<Text_Environment::Definition> created_definition = std::make_shared<Text_Environment::Definition>(definition_name);a_definitions.push_back(created_definition);return created_definition;}
+    // Creates and returns a new scientist
+    std::shared_ptr<Text_Environment::Scientist> Text_Environment::new_scientist(std::string firstname, std::string lastname, std::string birth, std::string death){std::shared_ptr<Text_Environment::Scientist> created_scientist = std::make_shared<Text_Environment::Scientist>(firstname, lastname, birth, death);a_scientists.push_back(created_scientist);return created_scientist;}
 }
