@@ -165,12 +165,12 @@ namespace pleos {
         // Loads each cases
         if(cutted.at(0) == std::string("sequence_arithmetic")){
             if(cutted.size() < 2){scls::print("Warning", std::string("PLEOS Table"), std::string("Not enough argument to load the cases \"") + cases.get()->text() + std::string("."));return;}
-            scls::Formula first_part = scls::string_to_formula(cutted.at(1));
-            scls::Formula reason = scls::string_to_formula(cutted.at(2));
+            scls::__Formula first_part = *scls::string_to_formula(cutted.at(1)).get();
+            scls::__Formula reason = *scls::string_to_formula(cutted.at(2)).get();
 
             // Get the cases
             scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
-            scls::Formula current = first_part;
+            scls::__Formula current = first_part;
             int needed_size = std::max(width, height);
             for(int i = 0;i<needed_size;i++) {
                 int needed_x = x;int needed_y = y;
@@ -181,12 +181,12 @@ namespace pleos {
         }
         else if(cutted.at(0) == std::string("sequence_geometric")){
             if(cutted.size() < 2){scls::print("Warning", std::string("PLEOS Table"), std::string("Not enough argument to load the cases \"") + cases.get()->text() + std::string("."));return;}
-            scls::Formula first_part = scls::string_to_formula(cutted.at(1));
-            scls::Formula reason = scls::string_to_formula(cutted.at(2));
+            scls::__Formula first_part = *scls::string_to_formula(cutted.at(1)).get();
+            scls::__Formula reason = *scls::string_to_formula(cutted.at(2)).get();
 
             // Get the cases
             scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
-            scls::Formula current = first_part;
+            scls::__Formula current = first_part;
             int needed_size = std::max(width, height);
             for(int i = 0;i<needed_size;i++) {
                 int needed_x = x;int needed_y = y;

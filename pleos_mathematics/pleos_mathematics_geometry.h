@@ -50,16 +50,15 @@ namespace pleos {
     public:
 
         // Point_2D constructor
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula point);
         Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D point);
         Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D point);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Formula x, scls::Formula y);
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y);
+        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, double x, double y);
         Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
         Point_2D(std::weak_ptr<__Graphic_Base> graphic_base);
 
         // Returns a vector 3D from a point
-        static std::shared_ptr<Point_2D> from_point(std::shared_ptr<__Graphic_Base> graphic_base, scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(graphic_base, std::string(), scls::Fraction(needed_point->x() * 1000000.0, 1000000), scls::Fraction(needed_point->z() * 1000000.0, 1000000));};
+        static std::shared_ptr<Point_2D> from_point(std::shared_ptr<__Graphic_Base> graphic_base, scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(graphic_base, std::string(), needed_point->x(), needed_point->z());};
 
         // Returns the needed XML text to generate this object
         virtual std::string to_displayed_text();
@@ -111,7 +110,7 @@ namespace pleos {
         // Returns if the form contains a point or not
         bool contains_point(__Graphic_Object_Base* tested_point);
         // Creates a new point to the form
-        std::shared_ptr<Point_2D> new_point(scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y);
+        std::shared_ptr<Point_2D> new_point(double x, double y);
         std::shared_ptr<Point_2D> new_point(scls::Point_2D point);
 
         // Returns a parameter by its name
@@ -201,16 +200,14 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius_x, scls::__Formula_Base::Formula radius_y);
+        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y);
 
         // Draws the circle on an image
         virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
         // Returns the radius of the circle
         virtual scls::Fraction radius_x(){return attached_transform()->scale_x() / 2;};
-        virtual scls::__Formula_Base::Formula radius_x_formula(){return attached_transform()->scale_x_formula() / 2;};
         virtual scls::Fraction radius_y(){return attached_transform()->scale_y() / 2;};
-        virtual scls::__Formula_Base::Formula radius_y_formula(){return attached_transform()->scale_y_formula() / 2;};
 
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter);
@@ -229,24 +226,26 @@ namespace pleos {
         virtual std::string to_xml_text_object_name();
 
         // Getters and setters
-        inline scls::Formula angle_end() const {return a_angle_end;};
-        inline scls::Formula angle_start() const {return a_angle_start;};
+        inline double angle_end() const {return a_angle_end;};
+        inline scls::__Formula angle_end_formula() const {return scls::__Formula(scls::Complex::from_double(a_angle_end));};
+        inline double angle_start() const {return a_angle_start;};
+        inline scls::__Formula angle_start_formula() const {return scls::__Formula(scls::Complex::from_double(a_angle_start));};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
         inline scls::Point_2D center() const {return attached_transform()->absolute_position();};
         inline scls::Color color() const {return a_color;};
-        inline void set_angle_end(scls::Formula new_angle_end){a_angle_end = new_angle_end;};
-        inline void set_angle_start(scls::Formula new_angle_start){a_angle_start = new_angle_start;};
+        inline void set_angle_end(double new_angle_end){a_angle_end = new_angle_end;};
+        inline void set_angle_start(double new_angle_start){a_angle_start = new_angle_start;};
         inline void set_border_color(scls::Color new_border_color) {a_border_color = new_border_color;};
         inline void set_border_radius(int new_border_radius) {a_border_radius = new_border_radius;};
         inline void set_center(scls::Point_2D new_center){attached_transform()->set_position(new_center);};
         inline void set_color(scls::Color new_color) {a_color = new_color;};
-        inline void set_radius(scls::__Formula_Base::Formula new_radius){set_radius_x(new_radius);set_radius_y(new_radius);}
-        inline void set_radius_x(scls::__Formula_Base::Formula new_radius_x){attached_transform()->set_scale_x(new_radius_x * 2);}
-        inline void set_radius_y(scls::__Formula_Base::Formula new_radius_y){attached_transform()->set_scale_y(new_radius_y * 2);}
+        inline void set_radius(double new_radius){set_radius_x(new_radius);set_radius_y(new_radius);}
+        inline void set_radius_x(double new_radius_x){attached_transform()->set_scale_x(new_radius_x * 2);}
+        inline void set_radius_y(double new_radius_y){attached_transform()->set_scale_y(new_radius_y * 2);}
     private:
         // Angle to start / end the drawing
-        scls::Formula a_angle_end = 360;scls::Formula a_angle_start = 0;
+        double a_angle_end = 360;double a_angle_start = 0;
         // Color of the border of the circle
         scls::Color a_border_color = scls::Color(0, 0, 0);
         // Radius of the border

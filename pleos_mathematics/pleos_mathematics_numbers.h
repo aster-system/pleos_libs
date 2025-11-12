@@ -52,8 +52,8 @@ namespace pleos {
         // Needed choice
         bool choice_1 = false;
         // Needed value
-        scls::Formula value_1;
-        scls::Formula value_2;
+        scls::__Formula value_1;
+        scls::__Formula value_2;
 
         // Possible input
         std::shared_ptr<scls::GUI_Text_Input> input_1;

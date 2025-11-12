@@ -49,25 +49,25 @@ namespace pleos {
         Function_Studied(){};
 
         // Returns the introduction for this function
-        std::string introduction(scls::Textual_Math_Settings* settings) const;
+        std::string introduction(scls::Textual_Math_Settings* settings) const{return std::string();};
 
         // Creates and returns a new function studied
-        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula needed_formula, Function_Studied* parent){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->a_parent_object=parent->a_this_object;to_return.get()->set_formula(needed_formula);return to_return;};
-        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula(needed_formula);return to_return;};
+        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::__Formula needed_formula, Function_Studied* parent){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->a_parent_object=parent->a_this_object;to_return.get()->set_formula(needed_formula);return to_return;};
+        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::__Formula needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula(needed_formula);return to_return;};
 
         // Getters and setters
         inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline scls::Set_Number* definition_set(){return a_definition_set.get();};
-        inline scls::Formula* formula()const{return a_function_segments.at(0).formula.get();};
-        inline std::shared_ptr<scls::Formula> formula_copy()const{return formula()->formula_copy();};
+        inline scls::__Formula* formula()const{return a_function_segments.at(0).formula.get();};
+        inline std::shared_ptr<scls::__Formula> formula_copy()const{return formula()->clone();};
         inline int level() const {if(a_parent_object.lock().get() == 0){return 0;}return a_parent_object.lock().get()->level() + 1;}
         inline std::string name() const {return a_function_name;};
         inline scls::Set_Number* roots(){return a_roots.get();};
         inline void set_color(scls::Color new_color){a_color = new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_definition_set(scls::Set_Number new_definition_set){a_definition_set=std::make_shared<scls::Set_Number>(new_definition_set);};
-        inline void set_formula(scls::Formula formula){a_function_segments.at(0).formula = std::make_shared<scls::Formula>(formula);};
+        inline void set_formula(scls::__Formula formula){a_function_segments.at(0).formula = std::make_shared<scls::__Formula>(formula);};
         inline void set_function_unknown(std::string unknown){a_function_unknown = unknown;};
         inline void set_name(std::string new_name){a_function_name = new_name;if(connected_object()!=0){connected_object()->set_text(std::string("Fonction ") + new_name);}};
         inline void set_roots(scls::Set_Number new_roots){a_roots = std::make_shared<scls::Set_Number>(new_roots);};
@@ -79,7 +79,7 @@ namespace pleos {
     private:
 
         // Segmented parts
-        struct Segmented_Part {std::shared_ptr<scls::Formula> formula = std::make_shared<scls::Formula>();};
+        struct Segmented_Part {std::shared_ptr<scls::__Formula> formula = std::make_shared<scls::__Formula>();};
         // Formulas of the function
         std::vector<Segmented_Part> a_function_segments = std::vector<Segmented_Part>(1, Segmented_Part());
 
@@ -129,33 +129,6 @@ namespace pleos {
         std::vector<std::shared_ptr<Function_Studied>> a_studied_function;
     };
 
-    // Returns the definition set of a function
-    scls::Set_Number function_definition_set(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-    // Returns the derivation of a function
-    scls::Formula function_derivation(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-    // Returns the image of a function
-    scls::__Formula_Base::Formula function_image(Function_Studied* current_function, scls::Formula needed_value, std::string& redaction, scls::Textual_Math_Settings* settings);
-    // Returns the limit of a function / polymonial in + infinity
-    scls::Limit function_limit(Function_Studied* current_function, scls::Limit needed_limit, std::string& redaction, scls::Textual_Math_Settings* settings);
-    // Returns the primitive of a function
-    scls::Formula function_primitive(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-    // Returns the set of roots of a function
-    scls::Set_Number function_roots(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-    // Returns the set of a positive function
-    scls::Set_Number function_sign(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-    std::string function_sign_table(Function_Studied* current_function, std::string* redaction, scls::Textual_Math_Settings* settings);
-
-    //******************
-    //
-    // Sequences handling
-    //
-    //******************
-
-    // Returns the interval of an sequence
-    //scls::Interval sequence_variation(Function_Studied current_function, std::string& redaction);
-
-
-
     //******************
     //
     // Polynomial handling
@@ -163,10 +136,10 @@ namespace pleos {
     //******************
 
     // Gets the roots of a polynomial
-    void polynomial_roots(scls::__Formula_Base::Formula formula, std::string* redaction);
+    void polynomial_roots(scls::__Formula formula, std::string* redaction);
 
     // Solve an equation
-    void solve_equation(scls::__Formula_Base::Formula formula, std::string* redaction);
+    void solve_equation(scls::__Formula formula, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

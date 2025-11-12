@@ -255,7 +255,7 @@ namespace pleos {
     //
     //******************
 
-    template<typename E = scls::Formula>
+    template<typename E = scls::__Formula>
     class Matrice_GUI : public scls::GUI_Object {
         // Class representating a GUI way to handle a matrice
     public:

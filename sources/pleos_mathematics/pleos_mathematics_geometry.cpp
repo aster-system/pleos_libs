@@ -37,11 +37,10 @@ namespace pleos {
     //******************
 
     // Point_2D constructor
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula point):__Graphic_Object_Base(graphic_base, name, point){};
     Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D point):__Graphic_Object_Base(graphic_base, name, point){};
     Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D point):Point_2D(graphic_base, std::string(), point){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y):Point_2D(graphic_base, name, scls::__Point_2D_Formula(x, y)){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Formula x, scls::Formula y):Point_2D(graphic_base, std::string(), x, y){};
+    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y):Point_2D(graphic_base, name, scls::Point_2D(x, y)){};
+    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, double x, double y):Point_2D(graphic_base, std::string(), x, y){};
     Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base):Point_2D(graphic_base, std::string(), scls::Point_2D(0, 0)){};
 
     // Returns the needed XML text to generate this object
@@ -164,7 +163,7 @@ namespace pleos {
     std::string Form_2D::introduction() const {return std::string("Nous avons le ") + type_name(false) + std::string(" ") + name() + std::string(".");};
 
     // Creates a new point to the form
-    std::shared_ptr<Point_2D> Form_2D::new_point(scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){
+    std::shared_ptr<Point_2D> Form_2D::new_point(double x, double y){
         std::shared_ptr<Point_2D> point = std::make_shared<Point_2D>(graphic_base_shared_ptr(), name() + std::string("_") + std::to_string(a_points.size()), x, y);
         point.get()->set_this_object(point);point.get()->set_parent(this_object_shared_ptr());add_point(point);
         return point;
@@ -213,10 +212,10 @@ namespace pleos {
             // The form is a line
 
             // Needed coordinates
-            scls::__Formula_Base::Formula x_1 = a_points.at(0).get()->absolute_x_formula();
-            scls::__Formula_Base::Formula x_2 = a_points.at(1).get()->absolute_x_formula();
-            scls::__Formula_Base::Formula y_1 = a_points.at(0).get()->absolute_y_formula();
-            scls::__Formula_Base::Formula y_2 = a_points.at(1).get()->absolute_y_formula();
+            scls::__Formula x_1 = a_points.at(0).get()->absolute_x();
+            scls::__Formula x_2 = a_points.at(1).get()->absolute_x();
+            scls::__Formula y_1 = a_points.at(0).get()->absolute_y();
+            scls::__Formula y_2 = a_points.at(1).get()->absolute_y();
 
             // Add the form
             double proportion = a_points_link.at(0).drawing_proportion;
@@ -239,13 +238,13 @@ namespace pleos {
             //*/
 
             // Get the good datas
-            scls::__Formula_Base::Formula needed_height = height_formula();
-            scls::__Formula_Base::Formula needed_width = width_formula();
-            scls::__Formula_Base::Formula needed_x = x_formula() - needed_width / 2;
-            scls::__Formula_Base::Formula needed_y = y_formula() - needed_height / 2;
+            scls::__Formula needed_height = height_formula();
+            scls::__Formula needed_width = width_formula();
+            scls::__Formula needed_x = x_formula() - needed_width / 2;
+            scls::__Formula needed_y = y_formula() - needed_height / 2;
 
             // Add the form
-            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(">");
+            content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_parent() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(">");
             return content;
         }
         else if(object_name().size() > 6 && object_name().substr(0, 7) == std::string("polygon")) {
@@ -314,7 +313,7 @@ namespace pleos {
     //******************
 
     // Circle constructor
-    Circle::Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius_x, scls::__Formula_Base::Formula radius_y):__Graphic_Object_Base(graphic_base, name, scls::Point_2D_Formula(x, y)){set_radius_x(radius_x);set_radius_y(radius_y);}
+    Circle::Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y):__Graphic_Object_Base(graphic_base, name, scls::Point_2D(x, y)){set_radius_x(radius_x);set_radius_y(radius_y);}
 
     // Draws the circle on an image
     void Circle::draw_on_image(std::shared_ptr<scls::__Image_Base> image){
@@ -323,27 +322,27 @@ namespace pleos {
         double current_radius_y = radius_y().to_double();current_radius_y = current_radius_y * pixel_by_case_y();
         double needed_x = graphic_x_to_pixel_x(current_center.x());
         double needed_y = graphic_y_to_pixel_y_inversed(current_center.y());
-        image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation_formula().value_to_double(unknowns()), angle_start().value_to_double(unknowns()) , angle_end().value_to_double(unknowns()), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
+        image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation().to_double(), angle_start(), angle_end(), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
     }
 
     // Returns a parameter by its name
     std::string Circle::parameter(std::string parameter_name){
-        if(parameter_name == std::string("angle_end")){return angle_end().to_std_string(0);}
-        else if(parameter_name == std::string("angle_start")){return angle_start().to_std_string(0);}
+        if(parameter_name == std::string("angle_end")){return angle_end_formula().to_std_string(0);}
+        else if(parameter_name == std::string("angle_start")){return angle_start_formula().to_std_string(0);}
         return __Graphic_Object_Base::parameter(parameter_name);
     }
 
     // Sets a parameter by its name
     void Circle::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){
         if(parameter_name == std::string("angle_end")){
-            double needed_angle = scls::string_to_formula(parameter_value).value_to_double();
-            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+            double needed_angle = scls::string_to_formula(parameter_value).get()->value_to_double();
+            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).get()->value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
 
             set_angle_end(needed_angle);
         }
         else if(parameter_name == std::string("angle_start")){
-            double needed_angle = scls::string_to_formula(parameter_value).value_to_double();
-            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+            double needed_angle = scls::string_to_formula(parameter_value).get()->value_to_double();
+            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).get()->value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
 
             set_angle_start(needed_angle);
         }
@@ -358,8 +357,8 @@ namespace pleos {
 
     // Returns the needed XML text to generate this object
     std::string Circle::to_displayed_text(){return std::string("cercle");}
-    std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end().to_std_string(0));}
-    std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start().to_std_string(0));}
+    std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end_formula().to_std_string(0));}
+    std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start_formula().to_std_string(0));}
     std::string Circle::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius());};
     std::string Circle::to_xml_text_radius(){if(radius_x() != radius_y()){return std::string();}return std::string(" radius=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}

@@ -123,7 +123,6 @@ namespace pleos {
 
     // __Graphic_Object_Base constructor
     int __current_id = 0;
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_id(__current_id),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_id(__current_id),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base,name,scls::Point_2D(0, 0)){};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position):__Graphic_Object_Base(graphic_base, std::string(), position){};
@@ -202,11 +201,11 @@ namespace pleos {
         x_title->set_height_in_pixel(40);x_title->set_width_in_scale(scls::Fraction(1, 10));
         x_title->set_text(std::string("X :"));
         std::shared_ptr<scls::GUI_Text_Input> x_shared_ptr = *gui_object->new_object<scls::GUI_Text_Input>(gui_object->name() + std::string("-x"));
-        scls::GUI_Text_Input* x = x_shared_ptr.get();
-        x->set_border_width_in_pixel(1);
-        x->attach_right_of_object_in_parent(x_title, 10);x->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
-        x->set_height_in_pixel(40);x->set_width_in_scale(scls::Fraction(1, 4));
-        x->set_text(x_formula().to_std_string(0));
+        scls::GUI_Text_Input* x_text = x_shared_ptr.get();
+        x_text->set_border_width_in_pixel(1);
+        x_text->attach_right_of_object_in_parent(x_title, 10);x_text->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
+        x_text->set_height_in_pixel(40);x_text->set_width_in_scale(scls::Fraction(1, 4));
+        x_text->set_text(std::to_string(x()));
 
         // Y of the object
         std::shared_ptr<scls::GUI_Text> y_title_shared_ptr = *gui_object->new_object<scls::GUI_Text>(gui_object->name() + std::string("-y_title"));
@@ -215,11 +214,11 @@ namespace pleos {
         y_title->set_height_in_pixel(40);y_title->set_width_in_scale(scls::Fraction(1, 10));
         y_title->set_text(std::string("Y :"));
         std::shared_ptr<scls::GUI_Text_Input> y_shared_ptr = *gui_object->new_object<scls::GUI_Text_Input>(gui_object->name() + std::string("-y"));
-        scls::GUI_Text_Input* y = y_shared_ptr.get();
-        y->set_border_width_in_pixel(1);
-        y->attach_right_of_object_in_parent(y_title, 10);y->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
-        y->set_height_in_pixel(40);y->set_width_in_scale(scls::Fraction(1, 4));
-        y->set_text(y_formula().to_std_string(0));
+        scls::GUI_Text_Input* y_text = y_shared_ptr.get();
+        y_text->set_border_width_in_pixel(1);
+        y_text->attach_right_of_object_in_parent(y_title, 10);y_text->attach_bottom_of_object_in_parent(name_shared_ptr, 10);
+        y_text->set_height_in_pixel(40);y_text->set_width_in_scale(scls::Fraction(1, 4));
+        y_text->set_text(std::to_string(y()));
     }
 
     // Loads the tags
@@ -277,13 +276,13 @@ namespace pleos {
     std::string __Graphic_Object_Base::to_xml_text(){return std::string("<") + to_xml_text_base() + std::string(">");}
     std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_opacity() + to_xml_text_tags();}
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
-    std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + height_formula().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + std::to_string(height());}
     std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
     std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
     std::string __Graphic_Object_Base::to_xml_text_opacity(){if(opacity() == 1){return std::string();}return std::string(" opacity=") + scls::Fraction::from_double(opacity()).to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_parent() {if(parent() == 0){return std::string();}return std::string(" parent=\"") + parent()->name() + std::string("\"");}
-    std::string __Graphic_Object_Base::to_xml_text_rotation(){if(rotation_formula() == 0){return std::string();}return std::string(" rotation=\"") + rotation_formula().to_std_string(0) + std::string("\"");}
+    std::string __Graphic_Object_Base::to_xml_text_rotation(){if(rotation() == 0){return std::string();}return std::string(" rotation=\"") + rotation().to_std_string(0) + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_tags(){if(static_cast<int>(a_tags.size())==0){return std::string();}std::string to_return=std::string();for(int i=0;i<static_cast<int>(a_tags.size());i++){to_return+=a_tags.at(i);if(i<static_cast<int>(a_tags.size())-1){to_return+=std::string(";");}}return std::string(" tags=\"") + to_return + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + scls::remove_space(x_formula().to_std_string(0));}
     std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + scls::remove_space(y_formula().to_std_string(0));}

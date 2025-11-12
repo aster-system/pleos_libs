@@ -61,7 +61,7 @@ namespace pleos {
         int a_y_offset = 0;
 
         // Size of the base
-        scls::__Formula_Base::Formula a_height = -1;scls::__Formula_Base::Formula a_width = -1;
+        double a_height = -1;double a_width = -1;
         int a_height_in_pixel = -1;int a_width_in_pixel = -1;
         bool a_height_used = false;bool a_width_used = false;
     };
@@ -467,7 +467,6 @@ namespace pleos {
         //******************
 
         // __Graphic_Object_Base constructor
-        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::__Point_2D_Formula position);
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position);
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position);
@@ -541,21 +540,23 @@ namespace pleos {
         inline void move_x(scls::Fraction movement){attached_transform()->move_x(movement);};
         inline void move_y(scls::Fraction movement){attached_transform()->move_y(movement);};
 
+        // Formula datas
+        inline scls::__Formula height_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->scale_y()));};
+        inline scls::__Formula width_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->scale_x()));};
+        inline scls::__Formula y_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->y()));};
+        inline scls::__Formula x_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->x()));};
+
         // Returns the point in a point 3D
         inline scls::Point_3D to_point_3d_absolute() {return scls::Point_3D(absolute_x(), 0, absolute_y());};
 
         // Getters and setters
         inline double absolute_height() const {return a_transform.get()->absolute_scale_y();};
-        inline scls::__Formula_Base::Formula absolute_height_formula() const {return a_transform.get()->absolute_scale_y_formula();};
         inline double absolute_opacity() const {if(parent() == 0){return opacity();}return parent()->absolute_opacity() * opacity();};
         inline scls::Point_2D absolute_position() const {return a_transform.get()->absolute_position();};
         inline double absolute_rotation() const {return a_transform.get()->absolute_rotation();};
         inline double absolute_width() const {return a_transform.get()->absolute_scale_x();};
-        inline scls::__Formula_Base::Formula absolute_width_formula() const {return a_transform.get()->absolute_scale_x_formula();};
         inline double absolute_x() const {return a_transform.get()->absolute_x();};
-        inline scls::__Formula_Base::Formula absolute_x_formula() const {return a_transform.get()->absolute_x_formula();};
         inline double absolute_y() const {return a_transform.get()->absolute_y();};
-        inline scls::__Formula_Base::Formula absolute_y_formula() const {return a_transform.get()->absolute_y_formula();};
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline scls::Transform_Object_2D* attached_transform_parent() const {return a_transform.get()->parent();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
@@ -567,7 +568,6 @@ namespace pleos {
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.lock().get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base.lock();};
         inline double height() const {return a_transform.get()->scale_y();};
-        inline scls::__Formula_Base::Formula height_formula() const {return a_transform.get()->scale_y_formula();};
         inline int id() const {return a_id;};
         inline int index() const {return a_index;};
         inline double live_time() const {return a_live_time;};
@@ -590,12 +590,11 @@ namespace pleos {
         inline scls::Point_2D position() const {return a_transform.get()->position();};
         inline void rotate(scls::Fraction needed_rotation) const {a_transform.get()->rotate(needed_rotation);}
         inline scls::Fraction rotation() const {return a_transform.get()->rotation();}
-        inline scls::__Formula_Base::Formula rotation_formula() const {return a_transform.get()->rotation_formula();};
         inline bool save_to_xml_text() const {return a_save_to_xml_text;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_deadline(double new_dead_line){a_deadline = new_dead_line;if(should_delete()){when_should_delete();}};
         inline void set_drawing_proportion(double new_drawing_proportion) {a_drawing_proportion = new_drawing_proportion;};
-        inline void set_height(scls::__Formula_Base::Formula new_height){a_transform.get()->set_scale_y(new_height);};
+        inline void set_height(double new_height){a_transform.get()->set_scale_y(new_height);};
         inline void set_index(int new_index){a_index=new_index;};
         inline void set_live_time(double new_live_time){a_live_time = new_live_time;};
         inline void set_object_name(std::string new_object_name){a_object_name = new_object_name;};
@@ -605,27 +604,23 @@ namespace pleos {
         inline void set_rotation(double new_rotation){a_transform.get()->set_rotation(scls::Fraction::from_double(new_rotation));};
         inline void set_rotation(scls::__Fraction_Base new_rotation){a_transform.get()->set_rotation(new_rotation);};
         inline void set_rotation(scls::Fraction new_rotation){a_transform.get()->set_rotation(new_rotation);};
-        inline void set_rotation(scls::__Formula_Base::Formula new_rotation){a_transform.get()->set_rotation(new_rotation);};
         inline void set_save_to_xml_text(bool new_save_to_xml_text) {a_save_to_xml_text = new_save_to_xml_text;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;if(should_delete()){when_should_delete();}};
         inline void set_this_object(std::weak_ptr<__Graphic_Object_Base> new_this_object){a_this_object=new_this_object;};
         inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
         inline void set_velocity(scls::Point_2D new_velocity){a_transform.get()->set_velocity(new_velocity);};
         inline bool should_delete() const {return a_should_delete || (a_deadline != -1 && a_live_time >= a_deadline);};
-        inline void set_width(scls::__Formula_Base::Formula new_width){a_transform.get()->set_scale_x(new_width);};
-        inline void set_x(scls::__Formula_Base::Formula new_x){a_transform.get()->set_x(new_x);};
-        inline void set_y(scls::__Formula_Base::Formula new_y){a_transform.get()->set_y(new_y);};
+        inline void set_width(double new_width){a_transform.get()->set_scale_x(new_width);};
+        inline void set_x(double new_x){a_transform.get()->set_x(new_x);};
+        inline void set_y(double new_y){a_transform.get()->set_y(new_y);};
         inline std::vector<std::string>& tags() {return a_tags;};
         inline std::shared_ptr<__Graphic_Object_Base> this_object_shared_ptr() const {return a_this_object.lock();};
         inline scls::Point_2D velocity() const {return a_transform.get()->velocity();};
         inline double velocity_x() const {return a_transform.get()->velocity_x();};
         inline double velocity_y() const {return a_transform.get()->velocity_y();};
         inline double width() const {return a_transform.get()->scale_x();};
-        inline scls::__Formula_Base::Formula width_formula() const {return a_transform.get()->scale_x_formula();};
         inline double x() const {return a_transform.get()->x();};
-        inline scls::__Formula_Base::Formula x_formula() const {return a_transform.get()->x_formula();};
         inline double y() const {return a_transform.get()->y();};
-        inline scls::__Formula_Base::Formula y_formula() const {return a_transform.get()->y_formula();};
 
         //******************
         // Hierarchy functions

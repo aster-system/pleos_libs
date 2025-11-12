@@ -351,7 +351,7 @@ namespace pleos {
             // Expression
             std::string result = std::string();
             if(to_express != std::string()) {
-                scls::__Formula_Base::Formula formula = scls::string_to_formula(to_express);
+                scls::__Formula formula = *scls::string_to_formula(to_express).get();
                 result = formula.to_mathml(0);
 
                 // Set the good balise
@@ -361,7 +361,7 @@ namespace pleos {
 
             // Solving
             if(to_solve != std::string()) {
-                scls::__Formula_Base::Formula formula = scls::string_to_formula(to_solve);
+                scls::__Formula formula = *scls::string_to_formula(to_solve).get();
                 solve_equation(formula, &result);
 
                 // Set the good balise

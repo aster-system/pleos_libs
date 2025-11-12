@@ -206,7 +206,7 @@ namespace pleos {
         };
 
         // Needed fragment shader for the function
-        static std::string graphic_function_fragment_shader(scls::Formula needed_formula);
+        static std::string graphic_function_fragment_shader(scls::__Formula needed_formula);
 
         // Datas set in a graphic
         class Datas_Set : public Graphic_Base_Object {
@@ -267,7 +267,7 @@ namespace pleos {
             inline scls::Fraction curve_area_start(int n){return a_curve_areas.at(n).area_start;};
             inline int curve_area_rectangle_number(int n){return a_curve_areas.at(n).rectangle_number;};
             inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set();};
-            inline scls::Formula& formula(){return *a_function_studied.get()->formula();};
+            inline scls::__Formula& formula(){return *a_function_studied.get()->formula();};
             inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
             inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
             inline std::string name() const {return a_function_studied.get()->name();};
@@ -363,8 +363,6 @@ namespace pleos {
         // Sets the middle of the base
         inline void set_middle(double middle_x, double middle_y){a_graphic_base.get()->a_middle_x = middle_x;a_graphic_base.get()->a_middle_y = middle_y;};
         // Sets the scale of the base
-        virtual void set_scale(scls::__Formula_Base::Formula width, scls::__Formula_Base::Formula height, bool width_used, bool height_used);
-        void set_scale(scls::__Formula_Base::Formula width, scls::__Formula_Base::Formula height);
         void set_scale(double width, double height, bool width_used, bool height_used);
         void set_scale(double width, double height);
 
@@ -420,12 +418,12 @@ namespace pleos {
         Circle* circle_by_name(std::string name);
         std::shared_ptr<Circle> circle_by_name_shared_ptr(std::string name);
         // Creates a new circle in the graphic
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, std::weak_ptr<__Graphic_Object_Base> parent, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius_x, scls::__Formula_Base::Formula radius_y){std::shared_ptr<T>created_circle=std::make_shared<T>(graphic_base_shared_ptr(), circle_name, x, y, radius_x, radius_y);created_circle.get()->set_this_object(created_circle);created_circle.get()->set_parent(parent);add_circle(created_circle);return created_circle;};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, __Graphic_Object_Base* parent, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius_x, scls::__Formula_Base::Formula radius_y){if(parent==0){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), x, y, radius_x, radius_y);}return new_circle<T>(circle_name, parent->this_object_shared_ptr(), x, y, radius_x, radius_y);};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, std::weak_ptr<__Graphic_Object_Base> parent, scls::Point_2D_Formula center, scls::__Formula_Base::Formula radius){return new_circle<T>(circle_name, parent, center.x(), center.y(), radius, radius.formula_copy());};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), x, y, radius, radius.formula_copy());};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D_Formula center, scls::__Formula_Base::Formula radius_x, scls::__Formula_Base::Formula radius_y){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), center.x(), center.y(), radius_x, radius_y);};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D_Formula center, scls::__Formula_Base::Formula radius){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), center.x(), center.y(), radius, radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, std::weak_ptr<__Graphic_Object_Base> parent, double x, double y, double radius_x, double radius_y){std::shared_ptr<T>created_circle=std::make_shared<T>(graphic_base_shared_ptr(), circle_name, x, y, radius_x, radius_y);created_circle.get()->set_this_object(created_circle);created_circle.get()->set_parent(parent);add_circle(created_circle);return created_circle;};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, __Graphic_Object_Base* parent, double x, double y, double radius_x, double radius_y){if(parent==0){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), x, y, radius_x, radius_y);}return new_circle<T>(circle_name, parent->this_object_shared_ptr(), x, y, radius_x, radius_y);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, std::weak_ptr<__Graphic_Object_Base> parent, scls::Point_2D center, double radius){return new_circle<T>(circle_name, parent, center.x(), center.y(), radius, radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, double x, double y, double radius){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), x, y, radius, radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D_Formula center, double radius_x, double radius_y){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), center.x()->value_to_double(), center.y()->value_to_double(), radius_x, radius_y);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D_Formula center, double radius){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), center.x()->value_to_double(), center.y()->value_to_double(), radius, radius);};
         template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, std::weak_ptr<__Graphic_Object_Base> parent){return new_circle<T>(circle_name, parent, 0, 0, 1, 1);};
         template <typename T> std::shared_ptr<T> new_circle(std::string circle_name){return new_circle<T>(circle_name, std::weak_ptr<__Graphic_Object_Base>(), 0, 0, 1, 1);};
         // Removes circle from the graphic
@@ -484,16 +482,16 @@ namespace pleos {
 
         // Handle lines
         // Creates and returns a line (and its points)
-        template <typename T = Form_2D> std::shared_ptr<T> new_line(std::string name, __Graphic_Object_Base* parent, scls::__Formula_Base::Formula x_1, scls::__Formula_Base::Formula y_1, scls::__Formula_Base::Formula x_2, scls::__Formula_Base::Formula y_2) {
+        template <typename T = Form_2D> std::shared_ptr<T> new_line(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2) {
             if(name == std::string()){name = std::string("line_");}
             std::shared_ptr<T>to_return;
             if(parent == 0){to_return = new_form<T>(name, std::shared_ptr<__Graphic_Object_Base>());}
             else{to_return = new_form<T>(name, parent->this_object_shared_ptr());}
-            double needed_distance = std::sqrt(std::pow((x_2 - x_1).value_to_double(), 2) + std::pow((y_2 - y_1).value_to_double(), 2));
-            scls::__Formula_Base::Formula needed_height = 1;
-            scls::__Formula_Base::Formula needed_width = needed_distance;
-            scls::__Formula_Base::Formula needed_x = (x_2 + x_1) / 2;
-            scls::__Formula_Base::Formula needed_y = (y_2 + y_1) / 2;
+            double needed_distance = std::sqrt(std::pow(x_2 - x_1, 2) + std::pow(y_2 - y_1, 2));
+            double needed_height = 1;
+            double needed_width = needed_distance;
+            double needed_x = (x_2 + x_1) / 2;
+            double needed_y = (y_2 + y_1) / 2;
             to_return.get()->set_height(needed_height);to_return.get()->set_width(needed_width);
             to_return.get()->set_x(needed_x);to_return.get()->set_y(needed_y);
             to_return.get()->set_rotation(-scls::vector_2d_angle(x_2 - x_1, y_2 - y_1) * SCLS_RADIANS_TO_ANGLE);
@@ -512,7 +510,7 @@ namespace pleos {
             add_form(to_return);__line_number++;
             return to_return;
         }
-        template <typename T = Form_2D> std::shared_ptr<T> new_line(std::string name, scls::__Formula_Base::Formula x_1, scls::__Formula_Base::Formula y_1, scls::__Formula_Base::Formula x_2, scls::__Formula_Base::Formula y_2){return new_line<T>(name, 0, x_1, y_1, x_2, y_2);};
+        template <typename T = Form_2D> std::shared_ptr<T> new_line(std::string name, double x_1, double y_1, double x_2, double y_2){return new_line<T>(name, 0, x_1, y_1, x_2, y_2);};
         std::shared_ptr<Form_2D> new_line(std::string name, std::shared_ptr<__Graphic_Object_Base> point_1, scls::Point_2D point_2);
         std::shared_ptr<Form_2D> new_line(std::string name, std::shared_ptr<__Graphic_Object_Base> point_1, std::shared_ptr<__Graphic_Object_Base> point_2);
 
@@ -523,8 +521,8 @@ namespace pleos {
         // Creates an another object
         template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name){std::shared_ptr<T> created_object = std::make_shared<T>(a_this_object);created_object.get()->set_name(name);created_object.get()->set_this_object(created_object);a_objects.push_back(created_object);return created_object;};
         template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name, __Graphic_Object_Base* parent){std::shared_ptr<T> created_object = new_object<T>(name);created_object.get()->set_parent(parent);return created_object;};
-        template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){std::shared_ptr<T> created_object = new_object<T>(name);created_object.get()->set_x(x);created_object.get()->set_y(y);return created_object;};
-        template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name, __Graphic_Object_Base* parent, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){std::shared_ptr<T> created_object = new_object<T>(name, x, y);created_object.get()->set_parent(parent);return created_object;};
+        template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name, double x, double y){std::shared_ptr<T> created_object = new_object<T>(name);created_object.get()->set_x(x);created_object.get()->set_y(y);return created_object;};
+        template <typename T = Graphic_Base_Object> std::shared_ptr<T> new_object(std::string name, __Graphic_Object_Base* parent, double x, double y){std::shared_ptr<T> created_object = new_object<T>(name, x, y);created_object.get()->set_parent(parent);return created_object;};
 
         //******************
         // Points
@@ -537,7 +535,7 @@ namespace pleos {
         Point_2D* point(std::string point_name);
         // Creates and returns a new point in the graphic
         template <typename T> std::shared_ptr<T> new_point(std::string name, scls::Fraction x, scls::Fraction y){std::shared_ptr<T>needed=std::make_shared<T>(graphic_base_shared_ptr(), name, x, y);needed.get()->set_type(Vector_Type::VT_Point);add_point(needed);return needed;};
-        std::shared_ptr<Point_2D> new_point(std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y);
+        std::shared_ptr<Point_2D> new_point(std::string name, double x, double y);
         std::shared_ptr<Point_2D> new_point(std::string name, scls::model_maker::Point* needed_point);
         std::shared_ptr<Point_2D> new_point(std::string name, scls::Point_2D needed_point);
 
@@ -560,8 +558,8 @@ namespace pleos {
         // Adds a texture to the graphic
         void add_texture_object(std::shared_ptr<Graphic_Texture> current_texture);
         // Creates and returns a new texture object
-        template <typename T> std::shared_ptr<T> new_texture_object(scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_x(x);current_texture->set_y(y);current_texture.get()->after_creation();return current_texture;};
-        template <typename T> std::shared_ptr<T> new_texture_object(std::string path, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){std::shared_ptr<T> current_texture=new_texture_object<T>(x, y);current_texture.get()->set_texture(path);return current_texture;};
+        template <typename T> std::shared_ptr<T> new_texture_object(double x, double y){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_x(x);current_texture->set_y(y);current_texture.get()->after_creation();return current_texture;};
+        template <typename T> std::shared_ptr<T> new_texture_object(std::string path, double x, double y){std::shared_ptr<T> current_texture=new_texture_object<T>(x, y);current_texture.get()->set_texture(path);return current_texture;};
         // Returns a texture object by its name
         std::shared_ptr<Graphic_Texture> texture_object_by_name(std::string needed_name);
 
@@ -613,8 +611,8 @@ namespace pleos {
         inline std::vector<std::shared_ptr<Form_2D>>& forms_2d(){return a_forms_2d;};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
-        inline scls::Fraction height() const {return a_graphic_base.get()->a_height.value_to_fraction(a_unknowns.get());};
-        inline scls::__Formula_Base::Formula height_formula() const {return a_graphic_base.get()->a_height;};
+        inline double height() const {return a_graphic_base.get()->a_height;};
+        inline scls::__Formula height_formula() const {return scls::__Formula(a_graphic_base.get()->a_height);};
         inline bool height_used() const {return a_graphic_base.get()->a_height_used;};
         inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& objects(){return a_objects;};
         inline void pixel_by_case_x_add(double value) {set_pixel_by_case_x(a_graphic_base.get()->a_pixel_by_case_x + value);};
@@ -638,8 +636,8 @@ namespace pleos {
         inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
         inline std::shared_ptr<scls::__Formula_Base::Unknowns_Container> unknowns_shared_ptr() const {return a_unknowns;};
         inline std::vector<std::shared_ptr<Point_2D>>& vectors(){return a_vectors;};
-        inline scls::Fraction width() const {return a_graphic_base.get()->a_width.value_to_fraction(a_unknowns.get());};
-        inline scls::__Formula_Base::Formula width_formula() const {return a_graphic_base.get()->a_width;};
+        inline double width() const {return a_graphic_base.get()->a_width;};
+        inline scls::__Formula width_formula() const {return scls::__Formula(a_graphic_base.get()->a_width);};
         inline bool width_used() const {return a_graphic_base.get()->a_width_used;};
         inline scls::_Window_Advanced_Struct* window_struct() const {return a_window_struct;};
 
@@ -697,7 +695,7 @@ namespace pleos {
             inline void update_raw_velocity(){a_attached_transform.lock().get()->update_raw_velocity();};
 
             // Moves the object
-            void __move(scls::Point_2D_Formula point){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->set_x(t->x_formula() + point.x());t->set_y(t->y_formula() + point.y());};
+            void __move(scls::Point_2D point){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->set_x(t->x() + point.x());t->set_y(t->y() + point.y());};
             void __move(){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());};
 
             // Precise next movement
@@ -727,7 +725,6 @@ namespace pleos {
             inline bool loaded_in_map() const {return a_loaded_in_map;};
             inline bool moved_during_this_frame() const {return attached_transform()->moved_during_this_frame();};
             inline scls::Point_2D position() const {return a_attached_transform.lock().get()->position();};
-            inline scls::Point_2D_Formula position_formula() const {return a_attached_transform.lock().get()->position_formula();};
             inline scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
             inline scls::Fraction raw_velocity_x() {return raw_velocity().x();};
             inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
@@ -738,7 +735,7 @@ namespace pleos {
             inline void set_save_to_xml_text(bool new_save_to_xml_text){a_save_to_xml_text = new_save_to_xml_text;};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
-            inline void set_velocity(scls::Point_2D_Formula new_velocity){attached_transform()->set_velocity(new_velocity);};
+            inline void set_velocity(scls::Point_2D new_velocity){attached_transform()->set_velocity(new_velocity);};
             inline void set_velocity_start(scls::Point_2D_Formula new_velocity){a_velocity_start = new_velocity;};
             inline void set_velocity_x(double new_velocity_x, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_x(new_velocity_x / a_delta_time.to_double());}else{a_attached_transform.lock().get()->set_velocity_x(new_velocity_x);}};
             inline void set_velocity_x(double new_velocity_x){set_velocity_x(new_velocity_x, false);};
@@ -747,7 +744,6 @@ namespace pleos {
             inline bool use_gravity() const {return a_use_gravity;};
             inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
             inline scls::Point_2D velocity() const {return a_attached_transform.lock().get()->velocity();};
-            inline scls::Point_2D_Formula velocity_formula() const {return a_attached_transform.lock().get()->velocity_formula();};
             inline double velocity_x() {return velocity().x();};
             inline double velocity_y() {return velocity().y();};
             inline scls::Fraction x() {return attached_transform()->x();};
@@ -852,8 +848,8 @@ namespace pleos {
         void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
 
         // Generates a new line from XML
-        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment){scls::__Formula_Base::Formula x_1;scls::__Formula_Base::Formula x_2;scls::__Formula_Base::Formula y_1;scls::__Formula_Base::Formula y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
-        void __new_line_xml(scls::__Formula_Base::Formula& x_1, scls::__Formula_Base::Formula& x_2, scls::__Formula_Base::Formula& y_1, scls::__Formula_Base::Formula& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment);
+        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment){double x_1;double x_2;double y_1;double y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
+        void __new_line_xml(double& x_1, double& x_2, double& y_1, double& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment);
 
         //******************
         //
@@ -1049,8 +1045,8 @@ namespace pleos {
 
         // Handle circles
         // Creates a new circle in the graphic
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y, scls::__Formula_Base::Formula radius){return a_datas.get()->new_circle<T>(circle_name, x, y, radius);};
-        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D_Formula center, scls::__Formula_Base::Formula radius){return a_datas.get()->new_circle<T>(circle_name, center, radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, double x, double y, double radius){return a_datas.get()->new_circle<T>(circle_name, x, y, radius);};
+        template <typename T> std::shared_ptr<T> new_circle(std::string circle_name, scls::Point_2D center, double radius){return a_datas.get()->new_circle<T>(circle_name, center, radius);};
         template <typename T> std::shared_ptr<T> new_circle(std::string circle_name){return a_datas.get()->new_circle<T>(circle_name);};
         // Removes circle from the graphic
         inline std::shared_ptr<Circle> remove_circle(std::string circle_name){return a_datas.get()->remove_circle(circle_name);};
@@ -1063,13 +1059,13 @@ namespace pleos {
         // Adds a points to the graphic
         inline void add_point(std::shared_ptr<Point_2D> needed_point){a_datas.get()->add_point(needed_point);};
         // Creates and returns a new point in the graphic
-        inline std::shared_ptr<Point_2D> new_point(std::string name, scls::__Formula_Base::Formula x, scls::__Formula_Base::Formula y){return a_datas.get()->new_point(name, x, y);};
+        inline std::shared_ptr<Point_2D> new_point(std::string name, double x, double y){return a_datas.get()->new_point(name, x, y);};
         inline std::shared_ptr<Point_2D> new_point(std::string name, scls::Point_2D needed_point){return a_datas.get()->new_point(name, needed_point.x(), needed_point.y());};
 
         // Handle vectors
         // Adds a vector to the graphic
         inline void add_vector(Point_2D needed_vector){a_datas.get()->add_vector(needed_vector);};
-        inline void add_vector(scls::Fraction x, scls::Fraction y){a_datas.get()->add_vector(Point_2D(graphic_base_shared_ptr(), std::string(), x, y));};
+        inline void add_vector(scls::Fraction x, scls::Fraction y){a_datas.get()->add_vector(Point_2D(graphic_base_shared_ptr(), std::string(), x.to_double(), y.to_double()));};
         // Draws a vector on the graphic
         inline void draw_vector(Point_2D* needed_point, std::shared_ptr<scls::__Image_Base> to_return){a_datas.get()->draw_vector(needed_point, to_return);};
 
