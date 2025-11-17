@@ -923,7 +923,14 @@ namespace pleos {
             bool action_terminated = false;
             double start_passed_time = structure->next_action()->passed_time;
             structure->next_action()->passed_time += used_delta_time;
-            if(structure->last_action_type() == ACTION_LOOP) {
+            if(structure->next_action_type() == ACTION_DELETE) {
+                // Delete the object
+                __Graphic_Object_Base::Action_Delete* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(structure->next_action());
+                if(l_a->to_delete == ACTION_DELETE_OBJECT){object->set_should_delete(true);}
+                else if(l_a->to_delete == ACTION_DELETE_PHYSIC){physic_object_by_attached_object(object)->delete_object();}
+                action_terminated = true;
+            }
+            else if(structure->next_action_type() == ACTION_LOOP) {
                 __Graphic_Object_Base::Action_Loop* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(structure->next_action());
                 __update_action(object, l_a, used_delta_time);
 
@@ -1131,6 +1138,7 @@ namespace pleos {
             if(attribute.value == std::string("static") || attribute.value == std::string("1")){physic.get()->set_static(true);}
             else{physic.get()->set_static(false);}
         }
+        else if(attribute.name == "restitution") {physic.get()->set_restitution(environment->value_double(attribute.value));}
         else if(attribute.name == "velocity") {physic.get()->set_velocity(environment->value_point_2d(attribute.value).to_point_2d(0));physic.get()->set_velocity_start(physic.get()->velocity());}
         else{return false;}return true;
     }
@@ -1139,7 +1147,7 @@ namespace pleos {
         if(attribute.name == "font_size") {text_style.set_font_size(environment->value_double(attribute.value));}
         else if(attribute.name == "height") {object.get()->set_height(environment->value_double(attribute.value));}
         else if(attribute.name == "width") {object.get()->set_width(environment->value_double(attribute.value));}
-        else if(attribute.name == "source" || attribute.name == "src" || attribute.name == "path") {object.get()->set_texture(attribute.value);}
+        else if(attribute.name == "source" || attribute.name == "src" || attribute.name == "path" || attribute.name == "texture") {object.get()->set_texture(attribute.value);}
         return graphic_from_xml_balise_attribute_object(attribute, object, environment, text_style);
     }
 
@@ -1611,7 +1619,7 @@ namespace pleos {
                 if(needed_object.get()==0){scls::print(std::string("PLEOS Graphic"), std::string("The object \"") + attributes[i].value + std::string("\" you want to add a move action does not exists."));}\
                 else{needed_objects = std::vector<std::shared_ptr<__Graphic_Object_Base>>(1, needed_object);}\
             }\
-            else if(attributes.at(i).name == std::string("special_object")){if(attributes[i].value == std::string("last_created_object")){needed_objects = std::vector<std::shared_ptr<__Graphic_Object_Base>>(1, objects().at(objects().size() - 1));}} \
+            else if(attributes.at(i).name == std::string("special_object")){if(attributes[i].value == std::string("last_object") || attributes[i].value == std::string("last_created_object")){needed_objects = std::vector<std::shared_ptr<__Graphic_Object_Base>>(1, objects().at(objects().size() - 1));}} \
             else if(attributes.at(i).name == std::string("tags")){needed_objects = objects_by_tag(attributes[i].value);} \
             else if(attributes.at(i).name == std::string("wait")){wait_time = attributes[i].value;break;}\
             else if(attributes.at(i).name == std::string("wait_until")){wait_until = environment->value_double(attributes[i].value);break;}\
@@ -1680,6 +1688,21 @@ namespace pleos {
                     }
                 }
             }
+        }
+        else if(current_balise_name == "action_delete" || current_balise_name == "delete_action") {
+            // Get the datas about the wait action
+            LOAD_PRENEEDED_DATAS
+            char type = 0;
+            for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(attributes[j].name == "type") {type = ("physic" ? 1 : 0);}}
+
+            // Add the action
+            if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Delete>(type));structure->last_action()->save_to_xml_text = true;}
+            else if(needed_objects.size() > 0){
+                for(int i = 0;i<static_cast<int>(needed_objects.size());i++) {
+                    needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Delete>(type));needed_objects.at(i).get()->last_action()->save_to_xml_text = true;
+                }
+            }
+            else{scls::print("PLEOS Graphic \"actions\"", std::string("An action of type \"") + current_balise_name + std::string("\" has no object specified."));}
         }
         else if(current_balise_name == "action_move" || current_balise_name == "move_action") {
             // Get the datas about a vector of the graphic
@@ -1949,6 +1972,10 @@ namespace pleos {
         if(!object->is_static()) {
             scls::Point_2D new_velocity;
             if(other_object->is_static()){
+                // Use the physics caracteristics
+                velocity_total *= other_object->restitution() * object->restitution();
+
+                // Calculate the new velocity
                 new_velocity = position_from_other * velocity_total;
                 if(circle_1_in_other){new_velocity = position_from_other * velocity_total;}
                 new_velocity -= velocity;
@@ -2031,7 +2058,7 @@ namespace pleos {
         // Return the result
         return Collision_Result(to_return_1, to_return_2);
     }
-    Collision_Result __check_collision_rect_rect(std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2, Graphic::Graphic_Physic* dynamic_object_1){
+    Collision_Result __check_collision_rect_rect(std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2, Graphic::Graphic_Physic* dynamic_object_1, Graphic::Graphic_Physic* object_2){
         // Check X
         bool x_1 = (collision_1->max_absolute_x_next() > collision_2->min_absolute_x_next() && collision_2->max_absolute_x_next() > collision_1->max_absolute_x_next());
         bool x_2 = (collision_2->max_absolute_x_next() > collision_1->min_absolute_x_next() && collision_1->max_absolute_x_next() > collision_2->max_absolute_x_next());
@@ -2083,8 +2110,18 @@ namespace pleos {
         }
 
         // Check the movement
-        if(to_return_1.get()->side_bottom || to_return_1.get()->side_top){to_return_1.get()->acceleration.set_y(-transform_1->velocity().y());}
-        to_return_1.get()->acceleration.set_x(-transform_1->velocity().x());
+        scls::Point_2D final_acceleration = scls::Point_2D(0, 0);
+        if(to_return_1.get()->side_bottom || to_return_1.get()->side_top){
+            // Handle the velocity
+            double final_y = (-transform_1->velocity().y()) * (1.0 + object_2->restitution());
+            final_acceleration.set_y(final_y);
+            final_acceleration.set_x(-transform_1->velocity().x() * (1.0 - object_2->restitution()));
+        }
+        else{
+            double final_x = -transform_1->velocity().x() * (1.0 + object_2->restitution());
+            final_acceleration.set_x(final_x);
+        }
+        to_return_1.get()->acceleration = final_acceleration;
 
         // Return the result
         return Collision_Result(to_return_1, to_return_2);
@@ -2256,7 +2293,7 @@ namespace pleos {
 
         // Both objects are rect
         if(collision_1->type() == Graphic_Collision_Type::GCT_Rect && collision_2->type() == Graphic_Collision_Type::GCT_Rect) {
-            Collision_Result current_result = __check_collision_rect_rect(collision_1, collision_2, object_1);
+            Collision_Result current_result = __check_collision_rect_rect(collision_1, collision_2, object_1, object_2);
             if(current_result.collision_1.get() == 0 || current_result.collision_1.get()->happens) {return current_result;}
         }
         else if(collision_1->type() == Graphic_Collision_Type::GCT_Rect && collision_2->type() == Graphic_Collision_Type::GCT_Line) {

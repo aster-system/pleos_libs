@@ -38,10 +38,8 @@
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
-    // Possible studied type
-    enum Studied_Type {ST_Sequence};
 
-    class Function_Studied {
+ 	class Function_Studied {
         // Datas about a studied function
 
     public:
@@ -91,8 +89,6 @@ namespace pleos {
         int a_function_number = 0;
         // Name of the unknown in the function
         std::string a_function_unknown = "x";
-        // Type of the studied function
-        Studied_Type a_type = Studied_Type::ST_Sequence;
 
         // Color of the curve
         scls::Color a_color = scls::Color(255, 0, 0);
@@ -135,11 +131,26 @@ namespace pleos {
     //
     //******************
 
+    // Gets the derivated polynomial of a polynomial
+    void polynomial_derivation(Function_Studied* function, std::string* redaction);
+
     // Gets the roots of a polynomial
-    void polynomial_roots(scls::__Formula formula, std::string* redaction);
+    void polynomial_roots(Function_Studied* function, std::string* redaction);
 
     // Solve an equation
-    void solve_equation(scls::__Formula formula, std::string* redaction);
+    void solve_equation(Function_Studied* function, std::string* redaction);
+
+    //******************
+	//
+	// Function handling
+	//
+	//******************
+
+    // Returns the definition set of a function
+    scls::Set_Number function_definition_set(Function_Studied* function, std::string* redaction);
+
+    // Calculate the derivated function of a function
+    void function_derivation(Function_Studied* function, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

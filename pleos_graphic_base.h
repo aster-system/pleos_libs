@@ -129,6 +129,7 @@ namespace pleos {
 
             // Action_Delete constructor
             Action_Delete():Action(ACTION_DELETE){};
+            Action_Delete(char object):Action_Delete(){to_delete = object;};
 
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();

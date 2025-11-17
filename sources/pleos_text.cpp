@@ -361,8 +361,9 @@ namespace pleos {
 
             // Solving
             if(to_solve != std::string()) {
-                scls::__Formula formula = *scls::string_to_formula(to_solve).get();
-                solve_equation(formula, &result);
+                std::shared_ptr<scls::__Formula> formula = scls::string_to_formula(to_solve);
+                std::shared_ptr<Function_Studied> function = Function_Studied::new_function_studied_shared_ptr(*formula.get());
+                solve_equation(function.get(), &result);
 
                 // Set the good balise
                 if(current_text.get()->balise_in_hierarchy("p")){current_text.get()->set_xml_balise_name(std::string(""));}

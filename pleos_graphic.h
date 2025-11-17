@@ -728,10 +728,12 @@ namespace pleos {
             inline scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
             inline scls::Fraction raw_velocity_x() {return raw_velocity().x();};
             inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
+            inline double restitution() const {return a_restitution;};
             inline bool save_to_xml_text() const {return a_save_to_xml_text;};
             inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
             inline void set_ignore_dynamic_collisions(bool new_ignore_dynamic_collisions){a_ignore_dynamic_collisions = new_ignore_dynamic_collisions;};
             inline void set_loaded_in_map(bool new_loaded_map){a_loaded_in_map = new_loaded_map;};
+            inline void set_restitution(double new_restitution){a_restitution = new_restitution;};
             inline void set_save_to_xml_text(bool new_save_to_xml_text){a_save_to_xml_text = new_save_to_xml_text;};
             inline void set_static(bool new_static) {a_static = new_static;}
             inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
@@ -763,6 +765,8 @@ namespace pleos {
             bool a_ignore_dynamic_collisions = false;
             // If the object is loaded in the map
             bool a_loaded_in_map = false;
+            // Standard restitution of the object
+            double a_restitution = 1;
             // If the physic should be saved or not
             bool a_save_to_xml_text = true;
             // If the object is static or not

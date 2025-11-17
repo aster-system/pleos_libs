@@ -35,6 +35,41 @@ namespace pleos {
     //
     //******************
 
+	// Gets the derivated polynomial of a polynomial
+	std::string __redaction_polynomial_derivation_0 = std::string("Cette forme est un simple polynôme, on peut obtenir facilement son polynôme dérivé grâce aux propriétés des polynômes.");
+	std::string __redaction_polynomial_derivation_final = std::string("Donc, le polynôme dérivé de \"<full_formula>\" est \"<derivated>\".");
+	void polynomial_derivation(Function_Studied* function, std::string* redaction) {
+    	scls::__Formula* formula = function->formula();
+		scls::Polynomial polynomial = *formula->polynomial();
+    	scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
+		std::string unknown_name = std::string("x");
+
+		// Set the good redaction
+		if(redaction != 0) {
+			(*redaction) += __redaction_polynomial_derivation_0;
+		}
+
+		// Get the derivated polynomial
+		scls::Polynomial polynomial_derivated = scls::Polynomial();
+		for(int i = 0;i<static_cast<int>(polynomial.monomonials().size());i++) {
+			scls::__Monomonial* current_monomonial = polynomial.monomonial(i);
+			scls::__Monomonial monomonial_derivated = *reinterpret_cast<scls::__Monomonial*>(current_monomonial->clone().get());
+			if(monomonial_derivated.unknown() == 0){continue;}
+
+			// Get the current monomonial
+			monomonial_derivated.set_factor(*monomonial_derivated.factor() * monomonial_derivated.unknown()->exponent());
+			monomonial_derivated.unknown()->set_exponent(monomonial_derivated.unknown()->exponent() - 1);
+			if(monomonial_derivated.unknown()->exponent() == 0){monomonial_derivated.unknowns().clear();}
+			polynomial_derivated += monomonial_derivated;
+		}
+
+		// Set the good redaction
+		if(redaction != 0) {
+			if(redaction->at(redaction->size() - 1) != ' '){(*redaction)+=std::string(" ");}
+			(*redaction) += scls::replace(scls::replace(__redaction_polynomial_derivation_final, std::string("<derivated>"), polynomial_derivated.to_std_string(&settings)), std::string("<full_formula>"), polynomial.to_std_string(&settings));
+		}
+    }
+
     // Gets the roots of a polynomial
     std::string __redaction_root_0 = std::string("Le polynôme \"<full_formula>\" est constamment égal à 0, il admet tout son ensemble de définition comme racine.");
     std::string __redaction_root_0_not_0 = std::string("Le polynôme \"<full_formula>\" est constant, il n'a pas de racines.");
@@ -44,8 +79,9 @@ namespace pleos {
     std::string __redaction_root_2_1r = std::string("Le discriminant est égal à 0, nous pouvons donc dénombrer 1 solution distincte : </br><math><mi>x</mi><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math>");
     std::string __redaction_root_2_0r = std::string("Le discriminant est inférieur à 0, nous n'avons pas de solutions réelles.");
     std::string __redaction_root_3_d = std::string("Le polynôme \"<full_formula>\" est de degré 3, utilisons la méthode de Cardan : </br><math><mdelta><mo>=</mo><mi>q'</mi><msup>2</msup><mo>+</mo><mi>p'</mi><msup>3</msup><mo>=</mo><polynomial_1><msup>2</msup><mo>-</mo><mi>4</mi><mo>*</mo><polynomial_2><mo>*</mo><polynomial_0><mo>=</mo><mi><solution_d></mi></math></br>");
-    void polynomial_roots(scls::__Formula formula, std::string* redaction) {
-        scls::Polynomial polynomial = *formula.polynomial();
+    void polynomial_roots(Function_Studied* function, std::string* redaction) {
+        scls::__Formula* formula = function->formula();
+    	scls::Polynomial polynomial = *formula->polynomial();
         scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
         std::string unknown_name = std::string("x");
 
@@ -150,10 +186,54 @@ namespace pleos {
     }
 
     // Solve an equation
-    void solve_equation(scls::__Formula formula, std::string* redaction) {
+    void solve_equation(Function_Studied* function, std::string* redaction) {
         // The formula is a polynomial
-        if(formula.is_simple_polynomial()){
-            polynomial_roots(formula, redaction);
+    	scls::__Formula* formula = function->formula();
+    	if(formula->is_simple_fraction()) {
+    		(*redaction) += std::string("Cette forme est une fraction, elle admet comme racine les mêmes racines que sont numérateur. ");
+
+    		std::shared_ptr<scls::__Formula_Base> numerator = formula->numerator();
+    		if(numerator != 0 && numerator.get()->is_simple_polynomial()) {
+    			std::shared_ptr<Function_Studied> new_function = Function_Studied::new_function_studied_shared_ptr(*numerator.get() , function);
+    			polynomial_roots(new_function.get(), redaction);
+    		}
+    	}
+    	else if(formula->is_simple_polynomial()){
+            polynomial_roots(function, redaction);
         }
     }
+
+    //******************
+	//
+	// Function handling
+	//
+	//******************
+
+	// Returns the definition set of a function
+    std::string __redaction_definition_set_polynomial = std::string("Cette formule est un polynôme : elle est définie sur tout R.");
+	scls::Set_Number function_definition_set(Function_Studied* function, std::string* redaction) {
+		scls::Set_Number to_return;
+
+		// Study the formula
+		scls::__Formula* formula = function->formula();
+		if(formula->is_simple_fraction()) {
+			(*redaction) += std::string("Cette forme est une fraction, elle admet comme ensemble de non-définition les mêmes racines que sont dénominateur. ");
+
+			std::shared_ptr<scls::__Formula_Base> denominator = formula->denominator();
+			if(denominator != 0 && denominator.get()->is_simple_polynomial()) {
+				std::shared_ptr<Function_Studied> new_function = Function_Studied::new_function_studied_shared_ptr(*denominator.get() , function);
+				polynomial_roots(new_function.get(), redaction);
+			}
+		}
+		else if(formula->is_simple_polynomial()){to_return = scls::Set_Number::real();(*redaction)+=__redaction_definition_set_polynomial;}
+
+		return to_return;
+	}
+
+	// Calculate the derivated function of a function
+	void function_derivation(Function_Studied* function, std::string* redaction) {
+		// Study the formula
+		scls::__Formula* formula = function->formula();
+		if(formula->is_simple_polynomial()){polynomial_derivation(function, redaction);}
+	}
 }
