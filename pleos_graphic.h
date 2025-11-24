@@ -268,6 +268,7 @@ namespace pleos {
             inline int curve_area_rectangle_number(int n){return a_curve_areas.at(n).rectangle_number;};
             inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set();};
             inline scls::__Formula& formula(){return *a_function_studied.get()->formula();};
+            inline Function_Studied* function()const{return a_function_studied.get();};
             inline scls::Fraction middle_x() const {return a_graphic_base.get()->a_middle_x;};
             inline scls::Fraction middle_y() const {return a_graphic_base.get()->a_middle_y;};
             inline std::string name() const {return a_function_studied.get()->name();};
@@ -342,8 +343,13 @@ namespace pleos {
         // Action handling
         //******************
 
+        // Adds a wait action
+        std::shared_ptr<__Graphic_Object_Base::Action_Wait> add_action_wait(double time);
         // Adds a move action
         std::shared_ptr<__Graphic_Object_Base::Action_Move> add_action_move(double x_end, double y_end, double needed_speed);
+
+        // Clears the actions of the graphic
+        void clear_actions();
 
         //******************
         // Graphic handling
@@ -658,6 +664,10 @@ namespace pleos {
                 inline void delete_static_object_collision(Graphic_Collision* object){for(int i=0;i<static_cast<int>(static_objects_collisions.size());i++){if(static_objects_collisions[i].lock().get()==object){static_objects_collisions.erase(static_objects_collisions.begin() + i);static_objects_collisions_physic.erase(static_objects_collisions_physic.begin() + i);break;}}};
                 std::vector<std::weak_ptr<Graphic_Collision>> static_objects_collisions;
                 std::vector<std::weak_ptr<Graphic_Physic>> static_objects_collisions_physic;
+
+                // Position
+                scls::Point_2D position;
+                inline int x(){return position.x();};
             };
 
             // Graphic_Physic constructor

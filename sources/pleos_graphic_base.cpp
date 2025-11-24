@@ -52,6 +52,11 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action::to_xml_text_name(){return std::string("action");}
     std::string __Graphic_Object_Base::Action::to_xml_text_object(std::string object_name){if(object_name == std::string()){return std::string();}return std::string(" object=\"") + object_name + std::string("\"");}
     std::string __Graphic_Object_Base::Action::to_xml_text_time() const{if(duration == 0){return std::string();}return std::string(" time=") + scls::Fraction::from_double(duration).to_std_string(0);}
+    // Action accelerate
+    std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_x() + to_xml_text_y() +  std::string(">");}
+    std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_name(){return std::string("action_accelerate");}
+    std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_x(){return std::string(" x=") + scls::Fraction::from_double(x).to_std_string(0);}
+    std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_y(){return std::string(" y=") + scls::Fraction::from_double(y).to_std_string(0);}
     // Action delete
     std::string __Graphic_Object_Base::Action_Delete::to_xml_text_name(){return std::string("action_delete");}
     // Action loop
@@ -137,7 +142,7 @@ namespace pleos {
     // Adds an action
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Structure::add_action(std::shared_ptr<__Graphic_Object_Base::Action> needed_action){a_actions.push_back(needed_action);return needed_action;}
     // Clears the actions
-    void __Graphic_Object_Base::Action_Structure::clear_actions(){a_actions.clear();};
+    void __Graphic_Object_Base::Action_Structure::clear_actions(){a_actions.clear();a_current_action = 0;};
     void __Graphic_Object_Base::clear_actions(){a_actions.get()->clear_actions();};
     // Deletes the last action
     void __Graphic_Object_Base::Action_Structure::delete_last_action(){if(a_actions.size() > 0){a_actions.erase(a_actions.begin());}};

@@ -131,8 +131,11 @@ namespace pleos {
     //
     //******************
 
+    // Gets the antiderivated polynomial of a polynomial
+    scls::Polynomial polynomial_antiderivation(Function_Studied* function, std::string* redaction);
+
     // Gets the derivated polynomial of a polynomial
-    void polynomial_derivation(Function_Studied* function, std::string* redaction);
+    scls::Polynomial polynomial_derivation(Function_Studied* function, std::string* redaction);
 
     // Gets the roots of a polynomial
     void polynomial_roots(Function_Studied* function, std::string* redaction);
@@ -146,11 +149,14 @@ namespace pleos {
 	//
 	//******************
 
+    // Calculate the antiderivated function of a function
+    std::shared_ptr<scls::__Formula_Base> function_antiderivation(Function_Studied* function, std::string* redaction);
+
     // Returns the definition set of a function
     scls::Set_Number function_definition_set(Function_Studied* function, std::string* redaction);
 
     // Calculate the derivated function of a function
-    void function_derivation(Function_Studied* function, std::string* redaction);
+    std::shared_ptr<scls::__Formula_Base> function_derivation(Function_Studied* function, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

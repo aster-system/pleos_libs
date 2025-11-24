@@ -86,6 +86,7 @@ namespace pleos {
 
         // Action than the robot can do
         struct Action {
+            #define ACTION_ACCELERATE -2
             #define ACTION_CONTAINER -1
             #define ACTION_DELETE 0
             #define ACTION_LOOP 1
@@ -122,6 +123,22 @@ namespace pleos {
         };
 
         // Possible actions
+        // Accelerate action
+        struct Action_Accelerate : public Action {
+            // Action_Accelerate constructor
+            Action_Accelerate():Action(ACTION_ACCELERATE){};
+            Action_Accelerate(double needed_x, double needed_y):Action_Accelerate(){x=needed_x;y=needed_y;};
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text(std::string object_name);
+            virtual std::string to_xml_text_name();
+            std::string to_xml_text_x();
+            std::string to_xml_text_y();
+
+            // Coordinates to go
+            double x = 0;double y = 0;
+            inline scls::Point_2D acceleration(){return scls::Point_2D(x, y);};
+        };
         // Delete action
         struct Action_Delete : public Action {
             #define ACTION_DELETE_OBJECT 0
@@ -285,6 +302,8 @@ namespace pleos {
             // Action_Container constructor
             Action_Container():Action_Structure(ACTION_CONTAINER){};
 
+            // Adds an accelerate action
+            void add_action_accelerate(double x, double y){std::shared_ptr<Action_Accelerate> action = std::make_shared<Action_Accelerate>(x, y);actions().push_back(action);};
             // Adds a delete action
             void add_action_delete(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();actions().push_back(action);};
             void add_action_delete_physic(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();action.get()->to_delete=ACTION_DELETE_PHYSIC;actions().push_back(action);};
@@ -303,7 +322,7 @@ namespace pleos {
             // Adds a structure action
             void add_action_structure(std::shared_ptr<Action_Structure> loop){actions().push_back(loop);};
             // Adds a wait action
-            void add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->duration=time_in_second;actions().push_back(action);};
+            std::shared_ptr<Action_Wait> add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->duration=time_in_second;actions().push_back(action);return action;};
 
             // Returns a last action
             Action_Delete* last_action_delete() const;

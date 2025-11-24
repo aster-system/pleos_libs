@@ -335,8 +335,13 @@ namespace pleos {
     // Action handling
     //******************
 
+    // Adds a wait action
+    std::shared_ptr<__Graphic_Object_Base::Action_Wait> Graphic::add_action_wait(double time){return a_actions.get()->add_action_wait(time);}
     // Adds a move action
     std::shared_ptr<__Graphic_Object_Base::Action_Move> Graphic::add_action_move(double x_end, double y_end, double needed_speed){return a_actions.get()->add_action_move(x_end, y_end, needed_speed);}
+
+    // Clears the actions of the graphic
+    void Graphic::clear_actions() {a_actions.get()->clear_actions();}
 
     //******************
     // Circles
@@ -783,6 +788,7 @@ namespace pleos {
     // Draw a function on the image
     void Graphic::image_draw_function(std::shared_ptr<scls::__Image_Base> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos) {
         // Asserts
+    	if(needed_function.get()->definition_set() == 0) {function_definition_set(needed_function.get()->function(), 0);}
         if(needed_function.get()->definition_set() == 0) {scls::print("Warning", "PLEOS Graphic", std::string("The \"") + needed_function.get()->name() + std::string("\" function has no definition interval calculated."));return;}
 
         // Get the values
@@ -923,7 +929,13 @@ namespace pleos {
             bool action_terminated = false;
             double start_passed_time = structure->next_action()->passed_time;
             structure->next_action()->passed_time += used_delta_time;
-            if(structure->next_action_type() == ACTION_DELETE) {
+            if(structure->next_action_type() == ACTION_ACCELERATE) {
+                // Delete the object
+                __Graphic_Object_Base::Action_Accelerate* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Accelerate*>(structure->next_action());
+                physic_object_by_attached_object(object)->accelerate(l_a->acceleration());
+                action_terminated = true;
+            }
+            else if(structure->next_action_type() == ACTION_DELETE) {
                 // Delete the object
                 __Graphic_Object_Base::Action_Delete* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(structure->next_action());
                 if(l_a->to_delete == ACTION_DELETE_OBJECT){object->set_should_delete(true);}
@@ -1005,7 +1017,7 @@ namespace pleos {
             bool action_terminated = false;
             double start_passed_time = a_actions.get()->next_action()->passed_time;
             a_actions.get()->next_action()->passed_time += used_delta_time;
-            if(a_actions.get()->last_action_type() == ACTION_MOVE) {
+            if(a_actions.get()->next_action_type() == ACTION_MOVE) {
                 // Move action
                 __Graphic_Object_Base::Action_Move* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Move*>(a_actions.get()->next_action());
                 scls::Point_2D direction_vector = (l_a->position_end() - middle()).normalized();
@@ -1014,6 +1026,16 @@ namespace pleos {
                 // Do the movement
                 if(direction_vector.norm() < l_a->position_end().distance(middle())){set_middle(middle() + direction_vector);}
                 else{set_middle(l_a->position_end());action_terminated=true;}
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_WAIT){
+                // Wait action
+                __Graphic_Object_Base::Action_Wait* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(a_actions.get()->next_action());
+                if(l_a->passed_time >= l_a->duration){action_terminated=true;}
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_WAIT_UNTIL){
+                // Wait until action
+                __Graphic_Object_Base::Action_Wait_Until* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait_Until*>(a_actions.get()->next_action());
+                if(graphic_base()->a_time.to_double() >= l_a->duration){action_terminated=true;}
             }
 
             // If the action is terminated
@@ -2533,7 +2555,7 @@ namespace pleos {
 
         // Create the cases
         a_physic_map = std::vector<std::vector<std::shared_ptr<Physic_Case>>>(width, std::vector<std::shared_ptr<Physic_Case>>(height));
-        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();}}
+        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();a_physic_map[i][j].get()->position = scls::Point_2D(i, j);}}
     }
 
     // Returns a physic case by its coordinates
@@ -2760,28 +2782,33 @@ namespace pleos {
             if(graphic()->physic_objects().at(i).get()->collisions().size() <= 0){continue;}
 
             if(!graphic()->physic_objects().at(i)->is_static()) {dynamic_objects_physic.push_back(graphic()->physic_objects().at(i));}
-            else if(!graphic()->physic_objects().at(i)->loaded_in_map() || graphic()->physic_objects().at(i)->moved_during_this_frame()) {
-                // Delete the last cases
-                graphic()->delete_physic_object_case(graphic()->physic_objects().at(i).get());
-
-                // Get the needed datas
-                graphic()->physic_objects().at(i)->set_loaded_in_map(true);
-                int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height();
-                int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width();
-                if(needed_height <= 0){needed_height = 1;};if(needed_width <= 0){needed_width = 1;};
+            else{
+                // Get the basic datas
                 int x_start = graphic()->physic_objects().at(i)->attached_object()->collision_x_start();
                 int y_start = graphic()->physic_objects().at(i)->attached_object()->collision_y_start();
+                bool good_position = (graphic()->physic_objects().at(i)->used_physic_case().size() > 0 && (graphic()->physic_objects().at(i)->used_physic_case().at(0)->x() != x_start));
 
-                // Add the cases
-                for(int j = 0;j<needed_width;j++) {
-                    for(int h = 0;h<needed_height;h++) {
-                        Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
-                        if(current_case != 0){
-                            for(int l = 0;l<static_cast<int>(graphic()->physic_objects().at(i)->collisions().size());l++){
-                                current_case->static_objects_collisions.push_back(graphic()->physic_objects().at(i)->collisions()[l]);
-                                current_case->static_objects_collisions_physic.push_back(graphic()->physic_objects().at(i));
+                if(!graphic()->physic_objects().at(i)->loaded_in_map() || graphic()->physic_objects().at(i)->moved_during_this_frame() || good_position) {
+                    // Delete the last cases
+                    graphic()->delete_physic_object_case(graphic()->physic_objects().at(i).get());
+
+                    // Get the needed datas
+                    graphic()->physic_objects().at(i)->set_loaded_in_map(true);
+                    int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height();
+                    int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width();
+                    if(needed_height <= 0){needed_height = 1;};if(needed_width <= 0){needed_width = 1;};
+
+                    // Add the cases
+                    for(int j = 0;j<needed_width;j++) {
+                        for(int h = 0;h<needed_height;h++) {
+                            Graphic::Physic_Case* current_case = physic_case(x_start + j, y_start + h);
+                            if(current_case != 0){
+                                for(int l = 0;l<static_cast<int>(graphic()->physic_objects().at(i)->collisions().size());l++){
+                                    current_case->static_objects_collisions.push_back(graphic()->physic_objects().at(i)->collisions()[l]);
+                                    current_case->static_objects_collisions_physic.push_back(graphic()->physic_objects().at(i));
+                                }
+                                graphic()->physic_objects().at(i)->used_physic_case().push_back(current_case);
                             }
-                            graphic()->physic_objects().at(i)->used_physic_case().push_back(current_case);
                         }
                     }
                 }

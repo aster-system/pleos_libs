@@ -35,10 +35,51 @@ namespace pleos {
     //
     //******************
 
+	// Gets the antiderivated polynomial of a polynomial
+	std::string __redaction_polynomial_antiderivation_0 = std::string("Cette forme est un simple polynôme, on peut obtenir facilement sa primitive grâce aux propriétés des polynômes.");
+	std::string __redaction_polynomial_antiderivation_final = std::string("Donc, une primitive de \"<full_formula>\" est \"<derivated>\".");
+	scls::Polynomial polynomial_antiderivation(Function_Studied* function, std::string* redaction) {
+    	scls::__Formula* formula = function->formula();
+		scls::Polynomial polynomial = *formula->polynomial();
+		scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
+		std::string unknown_name = std::string("x");
+
+		// Set the good redaction
+		if(redaction != 0) {
+			(*redaction) += __redaction_polynomial_antiderivation_0;
+		}
+
+		// Get the derivated polynomial
+		scls::Polynomial polynomial_antiderivated = scls::Polynomial();
+		for(int i = 0;i<static_cast<int>(polynomial.monomonials().size());i++) {
+			scls::__Monomonial* current_monomonial = polynomial.monomonial(i);
+			scls::__Monomonial monomonial_antiderivated = *reinterpret_cast<scls::__Monomonial*>(current_monomonial->clone().get());
+
+			// Get the current monomonial
+			if(monomonial_antiderivated.unknown() == 0){
+				monomonial_antiderivated.add_unknown("x", 1);
+			}
+			else {
+				monomonial_antiderivated.set_factor(*monomonial_antiderivated.factor() / (monomonial_antiderivated.unknown()->exponent() + 1));
+				monomonial_antiderivated.unknown()->set_exponent(monomonial_antiderivated.unknown()->exponent() + 1);
+			}
+			polynomial_antiderivated += monomonial_antiderivated;
+		}
+
+		// Set the good redaction
+		if(redaction != 0) {
+			if(redaction->at(redaction->size() - 1) != ' '){(*redaction)+=std::string(" ");}
+			(*redaction) += scls::replace(scls::replace(__redaction_polynomial_antiderivation_final, std::string("<derivated>"), polynomial_antiderivated.to_std_string(&settings)), std::string("<full_formula>"), polynomial.to_std_string(&settings));
+		}
+
+		// Return the result
+		return polynomial_antiderivated;
+    }
+
 	// Gets the derivated polynomial of a polynomial
 	std::string __redaction_polynomial_derivation_0 = std::string("Cette forme est un simple polynôme, on peut obtenir facilement son polynôme dérivé grâce aux propriétés des polynômes.");
 	std::string __redaction_polynomial_derivation_final = std::string("Donc, le polynôme dérivé de \"<full_formula>\" est \"<derivated>\".");
-	void polynomial_derivation(Function_Studied* function, std::string* redaction) {
+	scls::Polynomial polynomial_derivation(Function_Studied* function, std::string* redaction) {
     	scls::__Formula* formula = function->formula();
 		scls::Polynomial polynomial = *formula->polynomial();
     	scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
@@ -68,6 +109,9 @@ namespace pleos {
 			if(redaction->at(redaction->size() - 1) != ' '){(*redaction)+=std::string(" ");}
 			(*redaction) += scls::replace(scls::replace(__redaction_polynomial_derivation_final, std::string("<derivated>"), polynomial_derivated.to_std_string(&settings)), std::string("<full_formula>"), polynomial.to_std_string(&settings));
 		}
+
+		// Return the result
+		return polynomial_derivated;
     }
 
     // Gets the roots of a polynomial
@@ -209,6 +253,21 @@ namespace pleos {
 	//
 	//******************
 
+    // Calculate the antiderivated function of a function
+    std::shared_ptr<scls::__Formula_Base> function_antiderivation(Function_Studied* function, std::string* redaction) {
+		// Study the formula
+		scls::__Formula* formula = function->formula();
+		if(formula->is_simple_polynomial()){
+			scls::Polynomial derivated = polynomial_antiderivation(function, redaction);
+			std::shared_ptr<scls::__Formula_Base> to_return = formula->new_formula();
+			to_return.get()->set_polynomial(&derivated);
+			return to_return;
+		}
+
+		// Another case
+		return std::shared_ptr<scls::__Formula_Base>();
+	}
+
 	// Returns the definition set of a function
     std::string __redaction_definition_set_polynomial = std::string("Cette formule est un polynôme : elle est définie sur tout R.");
 	scls::Set_Number function_definition_set(Function_Studied* function, std::string* redaction) {
@@ -217,7 +276,7 @@ namespace pleos {
 		// Study the formula
 		scls::__Formula* formula = function->formula();
 		if(formula->is_simple_fraction()) {
-			(*redaction) += std::string("Cette forme est une fraction, elle admet comme ensemble de non-définition les mêmes racines que sont dénominateur. ");
+			if(redaction != 0){(*redaction) += std::string("Cette forme est une fraction, elle admet comme ensemble de non-définition les mêmes racines que sont dénominateur. ");}
 
 			std::shared_ptr<scls::__Formula_Base> denominator = formula->denominator();
 			if(denominator != 0 && denominator.get()->is_simple_polynomial()) {
@@ -225,15 +284,57 @@ namespace pleos {
 				polynomial_roots(new_function.get(), redaction);
 			}
 		}
-		else if(formula->is_simple_polynomial()){to_return = scls::Set_Number::real();(*redaction)+=__redaction_definition_set_polynomial;}
+		else if(formula->is_simple_polynomial()){to_return = scls::Set_Number::real();if(redaction!=0){(*redaction)+=__redaction_definition_set_polynomial;}}
 
+		// Return the result
+		function->set_definition_set(to_return);
 		return to_return;
 	}
 
+	// Calculate the derivation of a production of functions
+	void quotient_derivation(Function_Studied* numerator, Function_Studied* denominator, std::string* redaction) {
+		if(redaction != 0) {
+			(*redaction) += std::string("Appliquons la formule :</br><math><mi>(u / v)'</mi><mequal><mfrac><mrow><mi>u'v</mi><mo>-</mo><mi>uv'</mi></mrow><mrow><mi>u</mi><msup>2</msup></mrow></mfrac></math></br>");
+		}
+
+		// Do the calculation
+		std::shared_ptr<scls::__Formula_Base> derivated_1_shared_ptr = function_derivation(numerator, redaction);
+		derivated_1_shared_ptr.get()->__multiply(denominator->formula());
+		std::shared_ptr<scls::__Formula_Base> derivated_2_shared_ptr = numerator->formula()->clone();
+		derivated_2_shared_ptr.get()->__multiply(function_derivation(denominator, redaction).get());
+		derivated_1_shared_ptr.get()->__substract(derivated_2_shared_ptr.get());
+		derivated_2_shared_ptr = denominator->formula()->clone();
+		derivated_2_shared_ptr.get()->__multiply(derivated_2_shared_ptr.get());
+		derivated_1_shared_ptr.get()->__divide(derivated_2_shared_ptr.get());
+
+		if(redaction != 0) {
+			(*redaction) += std::string("</br>Donc, la forme dérivée de ce quotient est :</br><math>") + derivated_1_shared_ptr.get()->to_mathml(0) + ("</math></br>");
+		}
+	}
+
 	// Calculate the derivated function of a function
-	void function_derivation(Function_Studied* function, std::string* redaction) {
+	std::shared_ptr<scls::__Formula_Base> function_derivation(Function_Studied* function, std::string* redaction) {
 		// Study the formula
 		scls::__Formula* formula = function->formula();
-		if(formula->is_simple_polynomial()){polynomial_derivation(function, redaction);}
+		if(formula->is_simple_fraction()) {
+			(*redaction) += std::string("Cette forme est une fraction, sa dérivée s'obtient donc grâce à une formule déduite de la règle de la chaîne. ");
+
+			std::shared_ptr<scls::__Formula_Base> numerator = formula->numerator();
+			std::shared_ptr<scls::__Formula_Base> denominator = formula->denominator();
+			if(numerator.get() != 0 && denominator.get() != 0) {
+				std::shared_ptr<Function_Studied> new_function_1 = Function_Studied::new_function_studied_shared_ptr(*numerator.get() , function);
+				std::shared_ptr<Function_Studied> new_function_2 = Function_Studied::new_function_studied_shared_ptr(*denominator.get() , function);
+				quotient_derivation(new_function_1.get(), new_function_2.get(), redaction);
+			}
+		}
+		else if(formula->is_simple_polynomial()){
+			scls::Polynomial derivated = polynomial_derivation(function, redaction);
+			std::shared_ptr<scls::__Formula_Base> to_return = formula->new_formula();
+			to_return.get()->set_polynomial(&derivated);
+			return to_return;
+		}
+
+		// Another case
+		return std::shared_ptr<scls::__Formula_Base>();
 	}
 }
