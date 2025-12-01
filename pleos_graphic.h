@@ -564,6 +564,7 @@ namespace pleos {
         // Adds a texture to the graphic
         void add_texture_object(std::shared_ptr<Graphic_Texture> current_texture);
         // Creates and returns a new texture object
+        template <typename T> std::shared_ptr<T> new_texture_object(std::string object_name, __Graphic_Object_Base* parent){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_name(object_name);current_texture->set_parent(parent);current_texture.get()->after_creation();return current_texture;};
         template <typename T> std::shared_ptr<T> new_texture_object(double x, double y){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_x(x);current_texture->set_y(y);current_texture.get()->after_creation();return current_texture;};
         template <typename T> std::shared_ptr<T> new_texture_object(std::string path, double x, double y){std::shared_ptr<T> current_texture=new_texture_object<T>(x, y);current_texture.get()->set_texture(path);return current_texture;};
         // Returns a texture object by its name

@@ -259,8 +259,8 @@ namespace pleos {
 
         // Handle transformations
         if(rotation() != 0){needed_image.get()->rotate(rotation().to_double());}
-        double needed_x = graphic_x_to_pixel_x(x());
-        double needed_y = graphic_y_to_pixel_y_inversed(y()) + image_block.get()->datas()->max_last_line_bottom_offset;
+        double needed_x = graphic_x_to_pixel_x(absolute_x());
+        double needed_y = graphic_y_to_pixel_y_inversed(absolute_y()) + image_block.get()->datas()->max_last_line_bottom_offset;
         image.get()->paste(needed_image.get(), needed_x - needed_image.get()->width() / 2, needed_y - needed_image.get()->height() / 2);
     }
 
@@ -2555,7 +2555,7 @@ namespace pleos {
 
         // Create the cases
         a_physic_map = std::vector<std::vector<std::shared_ptr<Physic_Case>>>(width, std::vector<std::shared_ptr<Physic_Case>>(height));
-        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();a_physic_map[i][j].get()->position = scls::Point_2D(i, j);}}
+        for(int i = 0;i<width;i++){for(int j = 0;j<height;j++){a_physic_map[i][j]=std::make_shared<Physic_Case>();a_physic_map[i][j].get()->position = scls::Point_2D(a_physic_map_start_x + i, j);}}
     }
 
     // Returns a physic case by its coordinates
@@ -2784,18 +2784,19 @@ namespace pleos {
             if(!graphic()->physic_objects().at(i)->is_static()) {dynamic_objects_physic.push_back(graphic()->physic_objects().at(i));}
             else{
                 // Get the basic datas
-                int x_start = graphic()->physic_objects().at(i)->attached_object()->collision_x_start();
-                int y_start = graphic()->physic_objects().at(i)->attached_object()->collision_y_start();
+                int x_start = graphic()->physic_objects().at(i)->attached_object()->collision_x_start()-1;
+                int y_start = graphic()->physic_objects().at(i)->attached_object()->collision_y_start()-1;
                 bool good_position = (graphic()->physic_objects().at(i)->used_physic_case().size() > 0 && (graphic()->physic_objects().at(i)->used_physic_case().at(0)->x() != x_start));
 
                 if(!graphic()->physic_objects().at(i)->loaded_in_map() || graphic()->physic_objects().at(i)->moved_during_this_frame() || good_position) {
                     // Delete the last cases
+                    if(graphic()->physic_objects().at(i)->used_physic_case().size() > 0) std::cout << "M " << graphic()->physic_objects().at(i)->moved_during_this_frame() << " " << good_position << " " << graphic()->physic_objects().at(i)->used_physic_case().at(0)->x() << " " << x_start << std::endl;
                     graphic()->delete_physic_object_case(graphic()->physic_objects().at(i).get());
 
                     // Get the needed datas
                     graphic()->physic_objects().at(i)->set_loaded_in_map(true);
-                    int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height();
-                    int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width();
+                    int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height() + 1;
+                    int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width() + 1;
                     if(needed_height <= 0){needed_height = 1;};if(needed_width <= 0){needed_width = 1;};
 
                     // Add the cases

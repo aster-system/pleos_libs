@@ -212,7 +212,7 @@ namespace pleos {
 
     // Set the value of an std::string case
     std::shared_ptr<scls::__Image_Base> __Table_Case::case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){return tig->image_shared_ptr(value, needed_style);}
-    void __Table_Case::set_case_value(int x, int y, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = case_image_from_text(value, needed_style, tig);case_at(x, y)->content = value;case_at(x, y)->style = needed_style;};
+    void __Table_Case::set_case_value(int x, int y, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig){(*case_at(x, y)->image.get()) = case_image_from_text(value, needed_style, tig);case_at(x, y)->content = value;case_at(x, y)->style.merge_style(needed_style);};
     void __Table_Case::set_cases_value(int x, int y, int width, int height, std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig) {
         std::shared_ptr<scls::__Image_Base> img = case_image_from_text(value, needed_style, tig);
         (*case_at(x, y)->image.get()) = img;
@@ -333,7 +333,7 @@ namespace pleos {
 	    to_return.get()->set_loaded(to_load);
 	    if(cutted.size() > 0) {
             if(cutted.at(0) == std::string("arithmetic_base")) {
-                int height = 5; int width = 4;
+                //int height = 5; int width = 4;
 
                 // Create the parts
                 scls::Text_Style style = needed_style;
@@ -360,25 +360,34 @@ namespace pleos {
 
                 // Relation
                 bool parity_relation = false;
+                std::vector<std::string> set_1;
+                std::vector<std::string> set_2;
                 for(int i = 1;i<static_cast<int>(cutted.size());i++){
                     if(cutted.at(i) == std::string("parity")){parity_relation = true;}
+                    else if(cutted.at(i).size() > 6 && cutted.at(i).substr(0, 6) == std::string("set_1:")){set_1 = scls::cut_string(cutted.at(i).substr(6, cutted.at(i).size() - 6), std::string("-"));height=set_1.size();}
+                    else if(cutted.at(i).size() > 6 && cutted.at(i).substr(0, 6) == std::string("set_2:")){set_2 = scls::cut_string(cutted.at(i).substr(6, cutted.at(i).size() - 6), std::string("-"));width=set_2.size();}
                 }
+
+                // Default sets
+                if(set_1.size() <= 0){set_1 = std::vector<std::string>(height);for(int i = 0;i<static_cast<int>(set_1.size());i++){set_1[i] = std::to_string(i + 1);}}
+                if(set_2.size() <= 0){set_2 = std::vector<std::string>(width);for(int i = 0;i<static_cast<int>(set_2.size());i++){set_2[i] = std::to_string(i + 1);}}
 
                 // Create the parts
                 scls::Text_Style style = needed_style;
                 for(int i = 0;i<width + 1;i++) {
                     for(int j = 0;j<height + 1;j++) {
                         int needed_x = i;int needed_y = j;
-                        if(needed_x == 0 && needed_y != 0){to_return.get()->case_at(needed_x, needed_y)->style.set_background_color(scls::Color(255, 200, 200));style.set_background_color(scls::Color(255, 200, 200));to_return.get()->set_case_value(needed_x, needed_y, std::to_string(j), style.new_child(), &tig);}
-                        else if(needed_y == 0 && needed_x != 0){to_return.get()->case_at(needed_x, needed_y)->style.set_background_color(scls::Color(200, 200, 255));style.set_background_color(scls::Color(200, 200, 255));to_return.get()->set_case_value(needed_x, needed_y, std::to_string(i), style.new_child(), &tig);}
+                        if(needed_x == 0 && needed_y != 0){scls::Text_Style needed_style = style.new_child();needed_style.set_background_color(scls::Color(255, 200, 200));to_return.get()->set_case_value(needed_x, needed_y, set_1.at(j - 1), needed_style, &tig);}
+                        else if(needed_y == 0 && needed_x != 0){scls::Text_Style needed_style = style.new_child();needed_style.set_background_color(scls::Color(200, 200, 255));to_return.get()->set_case_value(needed_x, needed_y, set_2.at(i - 1), needed_style, &tig);}
                         else if(needed_x != 0 && needed_y != 0){
                             // Get the color by relation
                             scls::Color needed_color = scls::Color(255, 255, 255, 0);
                             if(parity_relation){if(i % 2 == j % 2){needed_color = scls::Color(200, 255, 200);}}
 
-                            to_return.get()->case_at(needed_x, needed_y)->style.set_background_color(needed_color);
-                            style.set_background_color(needed_color);
-                            to_return.get()->set_case_value(needed_x, needed_y, std::string("(") + std::to_string(j) + std::string(", ") + std::to_string(i) + std::string(")"), style.new_child(), &tig);
+                            // Set the text with the good style
+                            scls::Text_Style needed_style = style.new_child();
+                            needed_style.set_background_color(needed_color);
+                            to_return.get()->set_case_value(needed_x, needed_y, std::string("(") + set_1.at(j - 1) + std::string(", ") + set_2.at(i - 1) + std::string(")"), needed_style, &tig);
                         }
                     }
                 }

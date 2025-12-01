@@ -123,11 +123,12 @@ namespace pleos {
     std::string __redaction_root_2_1r = std::string("Le discriminant est égal à 0, nous pouvons donc dénombrer 1 solution distincte : </br><math><mi>x</mi><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math>");
     std::string __redaction_root_2_0r = std::string("Le discriminant est inférieur à 0, nous n'avons pas de solutions réelles.");
     std::string __redaction_root_3_d = std::string("Le polynôme \"<full_formula>\" est de degré 3, utilisons la méthode de Cardan : </br><math><mdelta><mo>=</mo><mi>q'</mi><msup>2</msup><mo>+</mo><mi>p'</mi><msup>3</msup><mo>=</mo><polynomial_1><msup>2</msup><mo>-</mo><mi>4</mi><mo>*</mo><polynomial_2><mo>*</mo><polynomial_0><mo>=</mo><mi><solution_d></mi></math></br>");
-    void polynomial_roots(Function_Studied* function, std::string* redaction) {
+    scls::Set_Number polynomial_roots(Function_Studied* function, std::string* redaction) {
         scls::__Formula* formula = function->formula();
     	scls::Polynomial polynomial = *formula->polynomial();
         scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
-        std::string unknown_name = std::string("x");
+        scls::Set_Number to_return;
+        std::string unknown_name = function->unknown();
 
         // Get the good method
         scls::Complex max_degree = polynomial.degree(unknown_name);
@@ -143,6 +144,7 @@ namespace pleos {
             scls::Complex a = *polynomial.monomonial(unknown_name, 1)->factor();
             scls::Complex b = polynomial.known_monomonial_factor();
             scls::Complex solution = (b * -1) / a;
+            to_return.add_number(solution);
 
             // Set redaction
             if(redaction != 0) {
@@ -227,10 +229,12 @@ namespace pleos {
                 //(*redaction) = scls::replace(*redaction, std::string("<solution_0>"), solution.to_std_string_simple(&settings));
             }
         }
+
+        return to_return;
     }
 
     // Solve an equation
-    void solve_equation(Function_Studied* function, std::string* redaction) {
+    scls::Set_Number solve_equation(Function_Studied* function, std::string* redaction) {
         // The formula is a polynomial
     	scls::__Formula* formula = function->formula();
     	if(formula->is_simple_fraction()) {
@@ -239,12 +243,101 @@ namespace pleos {
     		std::shared_ptr<scls::__Formula_Base> numerator = formula->numerator();
     		if(numerator != 0 && numerator.get()->is_simple_polynomial()) {
     			std::shared_ptr<Function_Studied> new_function = Function_Studied::new_function_studied_shared_ptr(*numerator.get() , function);
-    			polynomial_roots(new_function.get(), redaction);
+    			return polynomial_roots(new_function.get(), redaction);
     		}
     	}
     	else if(formula->is_simple_polynomial()){
-            polynomial_roots(function, redaction);
+            return polynomial_roots(function, redaction);
         }
+
+    	return scls::Set_Number();
+    }
+
+    // Solve a system of equation
+    bool __linear(Function_Studied* function){
+    	// Check if the function is a formula
+    	if(!function->formula()->is_simple_polynomial()){return false;}
+
+    	// Browse the polynomial
+    	scls::Polynomial* polynomial = function->formula()->polynomial();
+    	for(int i = 0;i<static_cast<int>(polynomial->monomonials().size());i++) {
+    		scls::__Monomonial* monomonial = polynomial->monomonial(i);
+    		if(static_cast<int>(monomonial->unknowns().size()) > 1){return false;}
+    		else if(static_cast<int>(monomonial->unknowns().size()) == 1 && (monomonial->unknown() != 0 && monomonial->unknown()->exponent().real() > 1)){return false;};
+    	}
+    	return true;
+    }
+    void solve_system(std::vector<Function_Studied*> functions, std::string* redaction) {
+    	// Check if the functions are linear
+    	bool is_linear = true;
+    	for(int i = 0;i<static_cast<int>(functions.size());i++){
+    		Function_Studied* function = functions.at(i);
+    		if(!__linear(function)){is_linear=false;break;}
+    	}
+
+    	if(is_linear) {
+    		// If the system is linear
+    		if(redaction != 0){(*redaction) += std::string("Nous étudions un système linéaire.");}
+
+    		// Get the unknowns
+    		std::vector<std::string> unknowns;
+    		for(int i = 0;i<static_cast<int>(functions.size());i++){
+    			std::vector<std::string> current_unknowns = functions.at(i)->formula()->all_unknowns();
+    			for(int j = 0;j<static_cast<int>(current_unknowns.size());j++){
+    				bool in = false;
+    				for(int k = 0;k<static_cast<int>(unknowns.size());k++){
+						if(current_unknowns.at(j) == unknowns.at(k)){in = true;break;}
+					}
+    				if(!in){unknowns.push_back(current_unknowns.at(j));}
+    			}
+    		}
+
+    		// Same number of unknowns and of equations
+    		if(unknowns.size() == functions.size()) {
+    			// Basic datas
+    			std::vector<std::shared_ptr<scls::__Formula>> values = std::vector<std::shared_ptr<scls::__Formula>>(unknowns.size());
+    			std::vector<char> values_found = std::vector<char>(unknowns.size(), 0);
+    			for(int i = 0;i<static_cast<int>(values.size());i++){values[i] = std::make_shared<scls::__Formula>(0);}
+
+    			int a = 0;
+    			while(a < 3){
+    				// Check the normal equations
+					for(int i = 0;i<static_cast<int>(functions.size());i++){
+						std::vector<std::string> current_unknowns = functions.at(i)->formula()->all_unknowns();
+						if(current_unknowns.size() == 1){
+							// Get the solution
+							if(redaction != 0){(*redaction)+=std::string("</br>");}
+							Function_Studied f;f.set_formula(*functions.at(i)->formula());f.set_function_unknown(current_unknowns.at(0));
+							scls::Set_Number n = solve_equation(&f, redaction);
+							scls::Fraction solution = n.number();
+
+							// Put the solution
+							for(int j = 0;j<static_cast<int>(unknowns.size());j++){
+								if(unknowns.at(j) == current_unknowns.at(0)){
+									(*values[j].get()) = scls::Complex(solution);values_found[j] = 1;
+								}
+							}
+						}
+					}
+
+					// Substitution
+					for(int j = 0;j<static_cast<int>(unknowns.size());j++){
+						if(values_found.at(j) == 1){
+							for(int k = 0;k<static_cast<int>(functions.size());k++){
+								if(functions.at(k)->formula()->is_null()){continue;}
+								std::shared_ptr<scls::__Formula> substitued = functions.at(k)->formula()->replace_unknown(unknowns.at(j), values.at(j).get());
+								functions.at(k)->set_formula(*substitued.get());
+								values_found[j] = 2;
+							}
+						}
+					}
+
+					a++;
+    			}
+
+    			for(int j = 0;j<static_cast<int>(values.size());j++){std::cout << values.at(j).get()->to_std_string(0) << std::endl;}
+    		}
+    	}
     }
 
     //******************

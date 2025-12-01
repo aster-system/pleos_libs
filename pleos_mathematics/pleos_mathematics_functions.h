@@ -44,7 +44,8 @@ namespace pleos {
 
     public:
         // Constructor of a studied function
-        Function_Studied(){};
+ 		Function_Studied(){};
+ 		Function_Studied(std::shared_ptr<scls::__Formula> formula){set_formula(*formula.get());};
 
         // Returns the introduction for this function
         std::string introduction(scls::Textual_Math_Settings* settings) const{return std::string();};
@@ -138,10 +139,13 @@ namespace pleos {
     scls::Polynomial polynomial_derivation(Function_Studied* function, std::string* redaction);
 
     // Gets the roots of a polynomial
-    void polynomial_roots(Function_Studied* function, std::string* redaction);
+    scls::Set_Number polynomial_roots(Function_Studied* function, std::string* redaction);
 
     // Solve an equation
-    void solve_equation(Function_Studied* function, std::string* redaction);
+    scls::Set_Number solve_equation(Function_Studied* function, std::string* redaction);
+
+    // Solve a system of equation
+    void solve_system(std::vector<Function_Studied*> functions, std::string* redaction);
 
     //******************
 	//
