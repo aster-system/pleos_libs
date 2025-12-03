@@ -117,7 +117,7 @@ namespace pleos {
     // Gets the roots of a polynomial
     std::string __redaction_root_0 = std::string("Le polynôme \"<full_formula>\" est constamment égal à 0, il admet tout son ensemble de définition comme racine.");
     std::string __redaction_root_0_not_0 = std::string("Le polynôme \"<full_formula>\" est constant, il n'a pas de racines.");
-    std::string __redaction_root_1 = std::string("Le polynôme \"<full_formula>\" est linéaire, il admet comme solution : <math><mi>s</mi><mo>=</mo><mfrac><mi>-b</mi><mi>a</mi></mfrac><mo>=</mo><mfrac><mi>-<polynomial_0></mi><mi><polynomial_1></mi></mfrac><mo>=</mo><mi><solution_0></mi></math>");
+    std::string __redaction_root_1 = std::string("Le polynôme \"<full_formula>\" est linéaire, il admet comme solution :</br><math><mi>s</mi><mo>=</mo><mfrac><mi>-b</mi><mi>a</mi></mfrac><mo>=</mo><mfrac><mi>-<polynomial_0></mi><mi><polynomial_1></mi></mfrac><mo>=</mo><mi><solution_0></mi></math>");
     std::string __redaction_root_2_d = std::string("Le polynôme \"<full_formula>\" est de degré 2, utilisons la formule du discriminant : </br><math><mdelta><mo>=</mo><mi>b</mi><msup>2</msup><mi>-4ac</mi><mo>=</mo><polynomial_1><msup>2</msup><mo>-</mo><mi>4</mi><mo>*</mo><polynomial_2><mo>*</mo><polynomial_0><mo>=</mo><mi><solution_d></mi></math></br>");
     std::string __redaction_root_2_2r = std::string("Le discriminant est supérieur à 0, nous pouvons donc dénombrer 2 solutions distinctes : </br><math><mi>x</mi><msub>1</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>+</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math><math><mi>x</mi><msub>2</msub><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1><mo>-</mo><msqrt><solution_d></msqrt></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_2></mi></math>");
     std::string __redaction_root_2_1r = std::string("Le discriminant est égal à 0, nous pouvons donc dénombrer 1 solution distincte : </br><math><mi>x</mi><mo>=</mo><mfrac><mrow><mi>-</mi><polynomial_1></mrow><mrow><mi>2</mi><mo>*</mo><polynomial_2></mrow></mfrac><mo>=</mo><mi><solution_1></mi></math>");
@@ -299,8 +299,8 @@ namespace pleos {
     			std::vector<char> values_found = std::vector<char>(unknowns.size(), 0);
     			for(int i = 0;i<static_cast<int>(values.size());i++){values[i] = std::make_shared<scls::__Formula>(0);}
 
-    			int a = 0;
-    			while(a < 3){
+    			int a = 0;int max_value = static_cast<int>(values.size()) * static_cast<int>(values.size());
+    			while(a < max_value){
     				// Check the normal equations
 					for(int i = 0;i<static_cast<int>(functions.size());i++){
 						std::vector<std::string> current_unknowns = functions.at(i)->formula()->all_unknowns();
@@ -323,6 +323,9 @@ namespace pleos {
 					// Substitution
 					for(int j = 0;j<static_cast<int>(unknowns.size());j++){
 						if(values_found.at(j) == 1){
+                            // Redaction
+                            if(redaction != 0){(*redaction) += std::string("</br>On substitue l'inconnu ") + unknowns.at(j) + std::string(" par ") + values.at(j).get()->to_std_string(0) + std::string(".</br>");}
+
 							for(int k = 0;k<static_cast<int>(functions.size());k++){
 								if(functions.at(k)->formula()->is_null()){continue;}
 								std::shared_ptr<scls::__Formula> substitued = functions.at(k)->formula()->replace_unknown(unknowns.at(j), values.at(j).get());
@@ -332,6 +335,12 @@ namespace pleos {
 						}
 					}
 
+					// Check value
+					bool good = true;
+					for(int j = 0;j<static_cast<int>(values_found.size());j++){
+						if(values_found.at(j) <= 0){good=false;break;}
+					}
+					if(good){break;}
 					a++;
     			}
 

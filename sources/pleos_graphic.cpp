@@ -2790,13 +2790,12 @@ namespace pleos {
 
                 if(!graphic()->physic_objects().at(i)->loaded_in_map() || graphic()->physic_objects().at(i)->moved_during_this_frame() || good_position) {
                     // Delete the last cases
-                    if(graphic()->physic_objects().at(i)->used_physic_case().size() > 0) std::cout << "M " << graphic()->physic_objects().at(i)->moved_during_this_frame() << " " << good_position << " " << graphic()->physic_objects().at(i)->used_physic_case().at(0)->x() << " " << x_start << std::endl;
                     graphic()->delete_physic_object_case(graphic()->physic_objects().at(i).get());
 
                     // Get the needed datas
                     graphic()->physic_objects().at(i)->set_loaded_in_map(true);
-                    int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height() + 1;
-                    int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width() + 1;
+                    int needed_height = graphic()->physic_objects().at(i)->attached_object()->collision_height() + 2;
+                    int needed_width = graphic()->physic_objects().at(i)->attached_object()->collision_width() + 2;
                     if(needed_height <= 0){needed_height = 1;};if(needed_width <= 0){needed_width = 1;};
 
                     // Add the cases
