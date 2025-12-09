@@ -144,7 +144,7 @@ namespace pleos {
             scls::Complex a = *polynomial.monomonial(unknown_name, 1)->factor();
             scls::Complex b = polynomial.known_monomonial_factor();
             scls::Complex solution = (b * -1) / a;
-            to_return.add_number(solution);
+            to_return.add_number(solution.real());
 
             // Set redaction
             if(redaction != 0) {
@@ -263,9 +263,25 @@ namespace pleos {
     	for(int i = 0;i<static_cast<int>(polynomial->monomonials().size());i++) {
     		scls::__Monomonial* monomonial = polynomial->monomonial(i);
     		if(static_cast<int>(monomonial->unknowns().size()) > 1){return false;}
-    		else if(static_cast<int>(monomonial->unknowns().size()) == 1 && (monomonial->unknown() != 0 && monomonial->unknown()->exponent().real() > 1)){return false;};
+    		else if(static_cast<int>(monomonial->unknowns().size()) == 1 && (monomonial->unknown() != 0 && monomonial->unknown()->exponent() > 1)){return false;};
     	}
     	return true;
+    }
+    void __substitution(int position, std::vector<Function_Studied*>& functions, std::vector<std::shared_ptr<scls::__Formula>>& values, std::vector<char>& values_found, std::vector<std::string>& unknowns, std::string* redaction) {
+        // Substitution
+        std::string needed_unknown = std::string();
+        if(values_found.at(position) == 1 || values_found.at(position) < 0){
+            // Redaction
+            needed_unknown = unknowns.at(position);
+            if(redaction != 0){(*redaction) += std::string("</br>On substitue l'inconnu ") + needed_unknown + std::string(" par ") + values.at(position).get()->to_std_string(0) + std::string(".</br>");}
+
+            for(int k = 0;k<static_cast<int>(functions.size());k++){
+                if(functions.at(k)->formula()->is_null() || -(values_found.at(position) + 1) == k){continue;}
+                std::shared_ptr<scls::__Formula> substitued = functions.at(k)->formula()->replace_unknown(needed_unknown, values.at(position).get());
+                functions.at(k)->set_formula(*substitued.get());
+                if(values_found.at(position) == 1){values_found[position] = 2;}
+            }
+        }
     }
     void solve_system(std::vector<Function_Studied*> functions, std::string* redaction) {
     	// Check if the functions are linear
@@ -277,7 +293,10 @@ namespace pleos {
 
     	if(is_linear) {
     		// If the system is linear
-    		if(redaction != 0){(*redaction) += std::string("Nous étudions un système linéaire.");}
+    		if(redaction != 0){
+                (*redaction) += std::string("<p>Nous étudions un système linéaire :</p>");
+                for(int i = 0;i<static_cast<int>(functions.size());i++) {(*redaction) += std::string("<math>") + functions.at(i)->formula()->to_mathml(0) + std::string("<mo>=</mo><mi>0</mi></math>");(*redaction)+=std::string("</br>");}
+    		}
 
     		// Get the unknowns
     		std::vector<std::string> unknowns;
@@ -304,34 +323,57 @@ namespace pleos {
     				// Check the normal equations
 					for(int i = 0;i<static_cast<int>(functions.size());i++){
 						std::vector<std::string> current_unknowns = functions.at(i)->formula()->all_unknowns();
+						std::string needed_unknown = std::string();
 						if(current_unknowns.size() == 1){
 							// Get the solution
+							needed_unknown = current_unknowns.at(0);
 							if(redaction != 0){(*redaction)+=std::string("</br>");}
-							Function_Studied f;f.set_formula(*functions.at(i)->formula());f.set_function_unknown(current_unknowns.at(0));
+							Function_Studied f;f.set_formula(*functions.at(i)->formula());f.set_function_unknown(needed_unknown);
 							scls::Set_Number n = solve_equation(&f, redaction);
 							scls::Fraction solution = n.number();
 
 							// Put the solution
-							for(int j = 0;j<static_cast<int>(unknowns.size());j++){
-								if(unknowns.at(j) == current_unknowns.at(0)){
-									(*values[j].get()) = scls::Complex(solution);values_found[j] = 1;
+							int j = 0;
+							for(;j<static_cast<int>(unknowns.size());j++){
+								if(unknowns.at(j) == needed_unknown){
+									(*values[j].get()) = scls::Complex(solution);values_found[j] = 1;break;
 								}
 							}
-						}
-					}
 
-					// Substitution
-					for(int j = 0;j<static_cast<int>(unknowns.size());j++){
-						if(values_found.at(j) == 1){
+							// Substitution
+                            __substitution(j, functions, values, values_found, unknowns, redaction);
+
                             // Redaction
-                            if(redaction != 0){(*redaction) += std::string("</br>On substitue l'inconnu ") + unknowns.at(j) + std::string(" par ") + values.at(j).get()->to_std_string(0) + std::string(".</br>");}
+                            if(redaction != 0){
+                                (*redaction) += std::string("<p>Après ce passage, le système devient : </p>");
+                                for(int i = 0;i<static_cast<int>(functions.size());i++) {(*redaction) += std::string("<math>") + functions.at(i)->formula()->to_mathml(0) + std::string("<mo>=</mo><mi>0</mi></math>");(*redaction)+=std::string("</br>");}
+                            }
+						}
+						else if(current_unknowns.size() > 0) {
+                            // Get the solution
+							needed_unknown = current_unknowns.at(0);
+							if(redaction != 0){(*redaction)+=std::string("</br>");}
+							scls::__Formula total = *functions.at(i)->formula();
+							scls::__Formula m = total.monomonial(needed_unknown);
+							m.multiply(-1);total.__add(&m);
+							total.divide(m.monomonial()->factor());
 
-							for(int k = 0;k<static_cast<int>(functions.size());k++){
-								if(functions.at(k)->formula()->is_null()){continue;}
-								std::shared_ptr<scls::__Formula> substitued = functions.at(k)->formula()->replace_unknown(unknowns.at(j), values.at(j).get());
-								functions.at(k)->set_formula(*substitued.get());
-								values_found[j] = 2;
+							// Put the solution
+							int j = 0;
+							for(;j<static_cast<int>(unknowns.size());j++){
+								if(unknowns.at(j) == needed_unknown){
+									(*values[j].get()) = total;values_found[j] = -i - 1;break;
+								}
 							}
+
+							// Substitution
+                            __substitution(j, functions, values, values_found, unknowns, redaction);
+
+                            // Redaction
+                            if(redaction != 0){
+                                (*redaction) += std::string("<p>Après ce passage, le système devient : </p>");
+                                for(int i = 0;i<static_cast<int>(functions.size());i++) {(*redaction) += std::string("<math>") + functions.at(i)->formula()->to_mathml(0) + std::string("<mo>=</mo><mi>0</mi></math>");(*redaction)+=std::string("</br>");}
+                            }
 						}
 					}
 
@@ -344,7 +386,11 @@ namespace pleos {
 					a++;
     			}
 
-    			for(int j = 0;j<static_cast<int>(values.size());j++){std::cout << values.at(j).get()->to_std_string(0) << std::endl;}
+    			// Redaction
+                if(redaction != 0){
+                    (*redaction) += std::string("<p>Finalement :</p>");
+                    for(int i = 0;i<static_cast<int>(unknowns.size());i++) {(*redaction) += std::string("<math><mi>") + unknowns.at(i) + std::string("</mi><mo>=</mo>") + values.at(i).get()->to_mathml(0) + std::string("</math>");(*redaction)+=std::string("</br>");}
+                }
     		}
     	}
     }

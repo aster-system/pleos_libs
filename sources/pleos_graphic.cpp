@@ -478,8 +478,10 @@ namespace pleos {
     }
 
     // Creates and returns a form (and its point)
-    std::shared_ptr<Form_2D> Graphic::new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4) {
-        std::shared_ptr<Form_2D>to_return=new_form(name, parent);
+    std::shared_ptr<Form_2D> Graphic::__new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4) {
+        std::shared_ptr<Form_2D>to_return;
+        if(parent == 0){to_return = __new_form<Form_2D>(name, std::weak_ptr<__Graphic_Object_Base>());}
+        else{to_return = __new_form<Form_2D>(name, parent->this_object_shared_ptr());}
 
         // Arrange the points
         double max_x = x_1;double min_x = x_1;
@@ -510,6 +512,7 @@ namespace pleos {
         current_point.get()->set_save_to_xml_text(false);to_return.get()->add_point(current_point);
         return to_return;
     }
+    std::shared_ptr<Form_2D> Graphic::new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4) {std::shared_ptr<Form_2D>to_return=__new_form(name, parent, x_1, y_1, x_2, y_2, x_3, y_3, x_4, y_4);add_form(to_return);return to_return;}
     std::shared_ptr<Form_2D> Graphic::new_form(std::string name, std::vector<std::shared_ptr<pleos::Point_2D>> points) {
         // Create the form
         std::shared_ptr<Form_2D>to_return=new_form<Form_2D>(name, std::weak_ptr<__Graphic_Object_Base>());
@@ -574,8 +577,9 @@ namespace pleos {
     }
 
     // Creates and returns a square (and its point)
+    std::shared_ptr<Form_2D> Graphic::__new_rect(std::string name, __Graphic_Object_Base* parent, double x, double y, double width, double height){return __new_form(name, parent, x, y, x + width, y, x + width, y + height, x, y + height);}
     std::shared_ptr<Form_2D> Graphic::new_rect(std::string name, __Graphic_Object_Base* parent, double x, double y, double width, double height){return new_form(name, parent, x, y, x + width, y, x + width, y + height, x, y + height);}
-    std::shared_ptr<Form_2D> Graphic::new_rect(std::string name, double x, double y, double width, double height){return new_form(name, x, y, x + width, y, x + width, y + height, x, y + height);}
+    std::shared_ptr<Form_2D> Graphic::new_rect(std::string name, double x, double y, double width, double height){return new_rect(name, 0, x, y, width, height);}
 
     //******************
     // Texts
@@ -1139,7 +1143,11 @@ namespace pleos {
         if(attribute.name == "height") {object.get()->set_height(environment->value_double(attribute.value));}
         else if(attribute.name == "name") {std::string needed_name = graphic_from_xml_name(attribute, object.get()->to_xml_text_object_name(), environment);object.get()->set_name(needed_name);}
         else if(attribute.name == "opacity") {object.get()->set_opacity(environment->value_double(attribute.value));}
-        else if(attribute.name == "parent") {object.get()->set_parent(object_by_name_shared_ptr(attribute.value));}
+        else if(attribute.name == "parent") {
+            scls::Function_Called_Text called_function = scls::parse_function_call(attribute.value);
+            if(called_function.error == 0){if(called_function.name == std::string("last_object")){object.get()->set_parent(objects().at(objects().size() - (std::stoi(called_function.parameters.at(0)) + 1)));}}
+            else{object.get()->set_parent(object_by_name_shared_ptr(attribute.value));}
+        }
         else if(attribute.name == "rotation") {object.get()->set_rotation(environment->value_double(attribute.value));}
         else if(attribute.name == "tag" || attribute.name == "tags") {object.get()->load_tags(attribute.value);}
         else if(attribute.name == "width") {object.get()->set_width(environment->value_double(attribute.value));}
@@ -1488,7 +1496,7 @@ namespace pleos {
             scls::Fraction height = 0;scls::Fraction width = 0;
 
             // Create the form
-            std::shared_ptr<Form_2D> created_form = new_rect(std::string(""), 0, -0.5, -0.5, 1, 1);
+            std::shared_ptr<Form_2D> created_form = __new_rect(std::string(""), 0, -0.5, -0.5, 1, 1);
             std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
@@ -1509,6 +1517,7 @@ namespace pleos {
             created_form.get()->set_y(created_form.get()->y() + height.to_double() / 2);
             created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius(border_radius.to_double());
             created_form.get()->set_color(color);
+            add_form(created_form);
         }
         else if(current_balise_name == "random_object") {
             // Create random objects
@@ -1872,13 +1881,8 @@ namespace pleos {
             if(utility.type == SCLS_BALISE_IF) {
                 // Condition to do this structure
                 __Graphic_Object_Base* needed_object = last_object();
-                double d = needed_object->position().distance(scls::Point_2D(0, 0));
-                if(d > 1.0 && d < 2.7){needed_object->set_parameter("color", "(random()*20,230+20*random(),random()*20)");}
-                scls::Point_2D random_point = scls::Point_2D(scls::random_fraction(-2, 2, 3).to_double(), scls::random_fraction(-2, 2, 3).to_double());
-                scls::Point_2D velocity = random_point - needed_object->absolute_position();
-                if(random_point.x() < 0){needed_object->set_x(random_point.x() - 3);}else{needed_object->set_x(random_point.x() + 3);}
-                if(random_point.y() < 0){needed_object->set_y(random_point.y() - 3);}else{needed_object->set_y(random_point.y() + 3);}
-                needed_object->actions()->add_action_move((velocity - random_point) * -1, 2).get()->save_to_xml_text = true;
+                if(scls::random_int_between_included(0, 1) == 0){needed_object->add_tag("r");needed_object->set_parameter("color", "(255,100,100)");}
+                else{needed_object->add_tag("b");}
 
                 Graphic::__graphic_from_xml_balises(xml->sub_texts().at(i), environment, text_style, graphic_width_in_pixel, graphic_height_in_pixel);
             }
@@ -2148,7 +2152,7 @@ namespace pleos {
         // Return the result
         return Collision_Result(to_return_1, to_return_2);
     };
-    Collision_Result __check_collision_circle_line_maths(double x_circle, double y_circle, double width_circle, scls::Point_2D position_next_circle, scls::Point_2D velocity_circle, double x_1, double y_1, double x_2, double y_2, std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2, Graphic::Graphic_Physic* object_circle, Graphic::Graphic_Physic* object_rect){
+    Collision_Result __check_collision_circle_line_maths(double x_circle, double y_circle, double width_circle, scls::Point_2D position_next_circle, scls::Point_2D velocity_circle, double x_1, double y_1, double x_2, double y_2, std::shared_ptr<Graphic_Collision> collision_1, std::shared_ptr<Graphic_Collision> collision_2, Graphic::Graphic_Physic* object_circle, Graphic::Graphic_Physic* object_line){
         // Get the angle
         scls::Point_2D line_end = scls::Point_2D(x_2, y_2);
         scls::Point_2D line_start = scls::Point_2D(x_1, y_1);
@@ -2172,7 +2176,7 @@ namespace pleos {
                 std::shared_ptr<Collision_Circle> to_return_2 = std::make_shared<Collision_Circle>(collision_2);
 
                 // Calculate the collision in the objects
-                __check_collision_circle_circle_maths(position_1, line_start, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_rect, to_return_1);
+                __check_collision_circle_circle_maths(position_1, line_start, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
 
                 // Return the result
                 return Collision_Result(to_return_1, to_return_2);
@@ -2184,7 +2188,7 @@ namespace pleos {
                 std::shared_ptr<Collision_Circle> to_return_2 = std::make_shared<Collision_Circle>(collision_2);
 
                 // Calculate the collision in the objects
-                __check_collision_circle_circle_maths(position_1, line_end, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_rect, to_return_1);
+                __check_collision_circle_circle_maths(position_1, line_end, scls::Point_2D(width_circle, width_circle), scls::Point_2D(0.1, 0.1), velocity_circle, scls::Point_2D(0, 0), 0, object_circle, object_line, to_return_1);
 
                 // Return the result
                 return Collision_Result(to_return_1, to_return_2);
@@ -2214,7 +2218,7 @@ namespace pleos {
 
         // Calculate the velocity of the object 1
         double multiplier = velocity_from_1.norm();
-        scls::Point_2D new_velocity = new_velocity_direction * multiplier;
+        scls::Point_2D new_velocity = new_velocity_direction * multiplier * object_line->restitution();
         to_return_1.get()->acceleration = velocity_circle * -1 + new_velocity;
 
         // Return the result

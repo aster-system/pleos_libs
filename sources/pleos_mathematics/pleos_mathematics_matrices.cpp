@@ -43,7 +43,7 @@ namespace pleos {
             int total_width = 0;
             for(int i = 0;i<number;i++) {
                 // Get each images
-                std::shared_ptr<scls::__Image_Base> current_image = generator->image_shared_ptr(matrice.at(i).to_mathml(), style);
+                std::shared_ptr<scls::__Image_Base> current_image = generator->image_shared_ptr(matrice.at(i).to_mathml(0), style);
                 images.push_back(current_image);
                 if(max_height < current_image.get()->height()){max_height = current_image.get()->height();}
                 total_width += current_image.get()->width();

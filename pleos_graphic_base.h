@@ -498,6 +498,8 @@ namespace pleos {
         bool contains_tag(std::string tag);
         // Loads the tags
         void load_tags(std::string new_tags);
+        // Removes a tag to the object
+        void remove_tag(std::string needed_tag);
 
         // Returns an introduction of the object
         std::string introduction(scls::Textual_Math_Settings* settings) const;

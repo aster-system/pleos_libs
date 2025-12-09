@@ -229,6 +229,9 @@ namespace pleos {
     // Loads the tags
     void __Graphic_Object_Base::load_tags(std::string new_tags){a_tags = scls::cut_string(new_tags, std::string(";"));}
 
+    // Remvoes a tag to the object
+    void __Graphic_Object_Base::remove_tag(std::string needed_tag){for(int i = 0;i<static_cast<int>(a_tags.size());i++){if(a_tags.at(i) == needed_tag){a_tags.erase(a_tags.begin() + i);break;}}}
+
     // Annoying functions to draw the image
     int __Graphic_Object_Base::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x) * pixel_by_case_x() + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
     int __Graphic_Object_Base::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - scls::Fraction::from_double(graphic_base()->a_middle_x)) * pixel_by_case_x() + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
@@ -258,7 +261,7 @@ namespace pleos {
 
     // Sets the parent of the object
     void __Graphic_Object_Base::__delete_children(__Graphic_Object_Base* object_to_delete){for(int i = 0;i<static_cast<int>(a_children.size());i++){if(a_children.at(i).get()==object_to_delete){a_children.erase(a_children.begin() + i);break;}}}
-    void __Graphic_Object_Base::set_parent(__Graphic_Object_Base* new_parent){set_parent(new_parent->this_object_shared_ptr());}
+    void __Graphic_Object_Base::set_parent(__Graphic_Object_Base* new_parent){if(new_parent==0){set_parent(std::weak_ptr<__Graphic_Object_Base>());}else{set_parent(new_parent->this_object_shared_ptr());}}
     void __Graphic_Object_Base::set_parent(std::weak_ptr<__Graphic_Object_Base> new_parent) {
         // Reset the old parent
         if(parent() != 0){parent()->__delete_children(this);}
@@ -274,6 +277,7 @@ namespace pleos {
             //move_x(-parent()->absolute_x());
             //move_y(-parent()->absolute_y());
         }
+        else{a_parent.reset();attached_transform()->set_parent(std::shared_ptr<scls::Transform_Object_2D>());}
     }
 
     // Returns the needed XML text to generate this object

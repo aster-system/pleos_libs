@@ -470,17 +470,20 @@ namespace pleos {
 
         // Creates and returns a form (and its point)
         void __new_form_xml(Form_2D* needed_form_2d, std::shared_ptr<scls::__XML_Text_Base> xml);
+        std::shared_ptr<Form_2D> __new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, std::vector<std::shared_ptr<Point_2D>> points);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent);
         std::shared_ptr<Form_2D> new_form(std::string name, std::string points);
-        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);to_return.get()->set_unknowns(unknowns_shared_ptr());add_form(to_return);return to_return;};
+        template <typename T = Form_2D> std::shared_ptr<T> __new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);to_return.get()->set_unknowns(unknowns_shared_ptr());return to_return;};
+        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return = __new_form<T>(name, parent);add_form(to_return);return to_return;};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name){return new_form(name, std::weak_ptr<__Graphic_Object_Base>());};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::shared_ptr<scls::__XML_Text_Base> xml){std::shared_ptr<T> created_form = new_form<T>(std::string(), std::weak_ptr<__Graphic_Object_Base>());__new_form_xml(created_form.get(), xml);return created_form;};
         // Creates and returns a form as a polygon
         std::shared_ptr<Form_2D> new_form_polygon(std::string name, int point_number);
         // Creates and returns a rect / square (and its point)
+        std::shared_ptr<Form_2D> __new_rect(std::string name, __Graphic_Object_Base* parent, double x, double y, double width, double height);
         std::shared_ptr<Form_2D> new_rect(std::string name, __Graphic_Object_Base* parent, double x, double y, double width, double height);
         std::shared_ptr<Form_2D> new_rect(std::string name, double x, double y, double width, double height);
         // Creates and returns a triangle (and its point)
