@@ -75,6 +75,12 @@ namespace pleos {
 
     // Returns an erathostene sieve
     scls::Image erathostene_sieve(int image_width, int start_number, int end_number);
+
+    // Converts an algebric compelx number to this polar form
+    scls::Complex_Polar complex_algebric_to_polar(scls::Complex c, std::string* redaction);
+
+    // Get the root of a complex number
+    void complex_root(scls::Complex c, int n, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_NUMBERS

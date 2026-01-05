@@ -138,6 +138,9 @@ namespace pleos {
     // Gets the derivated polynomial of a polynomial
     scls::Polynomial polynomial_derivation(Function_Studied* function, std::string* redaction);
 
+    // Gets the division of two polynomials
+    void polynomial_division(scls::Polynomial* polynomial_1, scls::Polynomial* polynomial_2, std::string* redaction);
+
     // Gets the roots of a polynomial
     scls::Set_Number polynomial_roots(Function_Studied* function, std::string* redaction);
 

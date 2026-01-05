@@ -89,19 +89,23 @@ namespace pleos {
             #define ACTION_ACCELERATE -2
             #define ACTION_CONTAINER -1
             #define ACTION_DELETE 0
-            #define ACTION_LOOP 1
-            #define ACTION_MOVE 2
-            #define ACTION_ROTATE 3
-            #define ACTION_SET_PARAMETER 4
-            #define ACTION_STOP 5
-            #define ACTION_STRUCTURE 6
-            #define ACTION_WAIT 7
-            #define ACTION_WAIT_UNTIL 8
+            #define ACTION_FUNCTION 1
+            #define ACTION_FUNCTION_CALL 2
+            #define ACTION_LOOP 3
+            #define ACTION_MOVE 4
+            #define ACTION_ROTATE 5
+            #define ACTION_SET_PARAMETER 6
+            #define ACTION_STOP 7
+            #define ACTION_STRUCTURE 8
+            #define ACTION_WAIT 9
+            #define ACTION_WAIT_UNTIL 10
 
             // Action constructor
             Action(short action_type):type(action_type){};
 
-            // Soft-resets the ction
+            // Clone the action
+            virtual std::shared_ptr<Action> clone() = 0;
+            // Soft-resets the action
             virtual void soft_reset(){};
 
             // Returns the action to a XML text
@@ -129,6 +133,9 @@ namespace pleos {
             Action_Accelerate():Action(ACTION_ACCELERATE){};
             Action_Accelerate(double needed_x, double needed_y):Action_Accelerate(){x=needed_x;y=needed_y;};
 
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
@@ -148,6 +155,9 @@ namespace pleos {
             Action_Delete():Action(ACTION_DELETE){};
             Action_Delete(char object):Action_Delete(){to_delete = object;};
 
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();
 
@@ -159,6 +169,9 @@ namespace pleos {
             // Action_Move constructor
             Action_Move():Action(ACTION_MOVE){};
             Action_Move(double needed_x, double needed_y, double needed_speed):Action_Move(){speed=needed_speed;x_end=needed_x;y_end=needed_y;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
@@ -177,6 +190,9 @@ namespace pleos {
             Action_Rotate():Action(ACTION_ROTATE){};
             Action_Rotate(double needed_rotation, double needed_speed):Action_Rotate(){rotation_end=needed_rotation;speed=needed_speed;};
 
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
             // Soft-resets the ction
             virtual void soft_reset(){Action::soft_reset();__rotated=0;};
 
@@ -194,6 +210,10 @@ namespace pleos {
             // Action_Set_Parameter constructor
             Action_Set_Parameter():Action(ACTION_SET_PARAMETER){};
             Action_Set_Parameter(std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;duration = needed_duration;};
+            Action_Set_Parameter(std::string needed_target, std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;target=needed_target;duration = needed_duration;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
@@ -206,11 +226,16 @@ namespace pleos {
             std::string parameter_value = std::string();
             // Start parameter
             std::string parameter_start = std::string();
+            // Target
+            std::string target = std::string();
         };
         // Stop action
         struct Action_Stop : public Action {
             // Action_Stop constructor
             Action_Stop(double needed_duration):Action(ACTION_STOP){duration = needed_duration;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();
@@ -221,6 +246,9 @@ namespace pleos {
             Action_Wait():Action(ACTION_WAIT){};
             Action_Wait(double time):Action_Wait(){duration = time;};
 
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
             virtual std::string to_xml_text_name();
@@ -230,6 +258,9 @@ namespace pleos {
             // Action_Wait_Until constructor
             Action_Wait_Until():Action(ACTION_WAIT_UNTIL){};
             Action_Wait_Until(double time):Action_Wait_Until(){duration = time;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text(std::string object_name);
@@ -263,6 +294,11 @@ namespace pleos {
             Action* next_action() const;
             short next_action_type() const;
 
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+            virtual std::shared_ptr<Action_Structure> clone_as_structure();
+            void clone_content(std::shared_ptr<Action_Structure> target);
+
             // Returns the action to a XML text
             std::string to_xml_text_content();
             virtual std::string to_xml_text(std::string object_name);
@@ -277,12 +313,53 @@ namespace pleos {
             int a_current_action = 0;
         };
 
+        // Function action
+        struct Action_Function : public Action_Structure {
+            // Action function
+
+            // Action_Function constructor
+            Action_Function():Action_Structure(ACTION_LOOP){};
+            Action_Function(std::string needed_function_name):Action_Function(){function_name = needed_function_name;};
+
+            // Clones the action
+            virtual std::shared_ptr<Action_Structure> clone_as_structure();
+            std::shared_ptr<Action_Function> clone_as_function();
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+            // Name of the function
+            std::string function_name = std::string();
+        };
+        struct Action_Function_Call : public Action {
+            // Action function call
+
+            // Action_Wait constructor
+            Action_Function_Call():Action(ACTION_FUNCTION_CALL){};
+            Action_Function_Call(std::string needed_function_name):Action_Function_Call(){function_name = needed_function_name;};
+
+            // Clones the action
+            virtual std::shared_ptr<Action> clone();
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text(std::string object_name);
+            virtual std::string to_xml_text_name();
+            std::string to_xml_text_function_name();
+
+            // Name of the function
+            std::string function_name = std::string();
+            // Pointer to the action
+            std::shared_ptr<Action_Function> needed_function;
+        };
         // Loop action
         struct Action_Loop : public Action_Structure {
             // Action loop
 
             // Action_Loop constructor
             Action_Loop():Action_Structure(ACTION_LOOP){};
+
+            // Clones the action
+            virtual std::shared_ptr<Action_Structure> clone_as_structure();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();
@@ -313,6 +390,8 @@ namespace pleos {
             std::shared_ptr<Action_Move> add_action_move(scls::Point_2D position, double needed_speed){return add_action_move(position.x(), position.y(), needed_speed);};
             std::shared_ptr<Action_Move> add_action_move(scls::Point_2D position){return add_action_move(position.x(), position.y());};
             // Adds a set_parameter action
+            void add_action_set_parameter_with_target(std::string target_name, std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;action.get()->target=target_name;actions().push_back(action);};
+            void add_action_set_parameter_with_target(std::string target_name, std::string parameter_name, std::string parameter_value){add_action_set_parameter_with_target(target_name, parameter_name, parameter_value, 0);};
             void add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;actions().push_back(action);};
             void add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
             void add_action_set_parameter(std::string parameter_name, double parameter_value){add_action_set_parameter(parameter_name, std::to_string(parameter_value), 0);};
@@ -323,6 +402,7 @@ namespace pleos {
             void add_action_structure(std::shared_ptr<Action_Structure> loop){actions().push_back(loop);};
             // Adds a wait action
             std::shared_ptr<Action_Wait> add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->duration=time_in_second;actions().push_back(action);return action;};
+            std::shared_ptr<Action_Wait_Until> add_action_wait_until(double time){std::shared_ptr<Action_Wait_Until> action = std::make_shared<Action_Wait_Until>(time);actions().push_back(action);return action;};
 
             // Returns a last action
             Action_Delete* last_action_delete() const;
@@ -360,127 +440,31 @@ namespace pleos {
         // Collision handling
         //******************
 
-        // Collision in a graphic object
-        enum Graphic_Collision_Type {GCT_Circle, GCT_Line, GCT_Rect};
-        class Graphic_Collision {
-            // Class representating a collision in a graphic object
+        // Physic in a graphic object
+        class Graphic_Collision_Event{
+            // Class representating a collision event for the graphic
         public:
 
-            // Base of a collision
-            struct Collision {
-                // Collision constructor
-                Collision(std::weak_ptr<Graphic_Collision> collision_parent):a_collision_parent(collision_parent){}
-
-                // This object
-                Graphic_Collision* collision_parent() const {return a_collision_parent.lock().get();};
-                std::weak_ptr<Graphic_Collision> collision_parent_weak_ptr() const {return a_collision_parent;};
-                __Graphic_Object_Base* object() const {return collision_parent()->attached_object();};
-
-                // If the collision happens or not
-                bool happens = false;
-
-                // Other collided object
-                Collision* other_collision(){return a_other_collision.lock().get();};
-                std::weak_ptr<__Graphic_Object_Base> __other_object;
-                template <typename T = __Graphic_Object_Base> T* other_object() const {return reinterpret_cast<T*>(__other_object.lock().get());};
-                void set_other_collision(std::weak_ptr<Collision> new_other_collision){a_other_collision = new_other_collision;};
-
-                // Acceleration generated by the force
-                scls::Point_2D acceleration;
-                // Type of the collision
-                Graphic_Collision_Type type = Graphic_Collision_Type::GCT_Rect;
-
-            private:
-                // Parent collision of this object
-                std::weak_ptr<Graphic_Collision> a_collision_parent;
-
-                // Other collision object
-                std::weak_ptr<Collision> a_other_collision;
-            };
-
-            // Datas for a circle collision
-            struct Collision_Circle : public Collision {
-                // Collision_Circle constructor
-                Collision_Circle(std::weak_ptr<Graphic_Collision> collision_parent):Collision(collision_parent){type = Graphic_Collision_Type::GCT_Circle;};
-
-                // Angle of the collision
-                double angle;
-            };
-
-            // Datas for a rect collision
-            struct Collision_Rect_Rect : public Collision {
-                // Possible side for collision
-                #define PLEOS_PHYSIC_RECT_COLLISION_BOTTOM 3
-                #define PLEOS_PHYSIC_RECT_COLLISION_LEFT 2
-                #define PLEOS_PHYSIC_RECT_COLLISION_RIGHT 4
-                #define PLEOS_PHYSIC_RECT_COLLISION_TOP 1
-
-                // Collision_Rect_Rect constructor
-                Collision_Rect_Rect(std::weak_ptr<Graphic_Collision> collision_parent):Collision(collision_parent){type = Graphic_Collision_Type::GCT_Rect;};
-
-                // Distance between the colliding side
-                double distance;
-                // Sides of the collision
-                bool side_bottom = false;
-                bool side_left = false;
-                bool side_right = false;
-                bool side_top = false;
-            };
-
-            // Graphic_Collision constructor
-            Graphic_Collision(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_object(attached_object),a_attached_transform(attached_transform){};
+            // Graphic_Collision_Event constructor
+            Graphic_Collision_Event(scls::Collision::Collision_Event* collision):a_collision(collision){};
 
             // Getters and setters
-            scls::Fraction absolute_height() const;
-            scls::Point_2D absolute_scale() const;
-            scls::Fraction absolute_width() const;
-            double absolute_x() const;
-            double absolute_x_1() const;
-            double absolute_x_2() const;
-            double absolute_y() const;
-            double absolute_y_1() const;
-            double absolute_y_2() const;
-            __Graphic_Object_Base* attached_object()const;
-            std::weak_ptr<__Graphic_Object_Base> attached_object_weak_ptr()const;
-            scls::Transform_Object_2D* attached_transform()const;
-            double direct_x_1() const;
-            double direct_x_2() const;
-            double direct_y_1() const;
-            double direct_y_2() const;
-            double max_absolute_x() const;
-            double max_absolute_y() const;
-            double min_absolute_x() const;
-            double min_absolute_y() const;
-            double max_absolute_x_next() const;
-            double max_absolute_y_next() const;
-            double min_absolute_x_next() const;
-            double min_absolute_y_next() const;
-            scls::Point_2D position_next() const;
-            void set_type(Graphic_Collision_Type new_type);
-            void set_x_1(scls::Fraction new_x_1);
-            void set_x_2(scls::Fraction new_x_2);
-            void set_y_1(scls::Fraction new_y_1);
-            void set_y_2(scls::Fraction new_y_2);
-            Graphic_Collision_Type type()const;
-            double x_1() const;
-            double x_2() const;
-            double y_1() const;
-            double y_2() const;
+            inline scls::Collision::Collision_Event* collision_event() const {return a_collision;};
+            inline __Graphic_Object_Base* other_object() const {return a_other_object.lock().get();};
+            inline void set_object(std::weak_ptr<__Graphic_Object_Base> needed_object){a_object = needed_object;};
+            inline void set_other_object(std::weak_ptr<__Graphic_Object_Base> needed_object){a_other_object = needed_object;};
 
         private:
-            // Attached object
-            std::weak_ptr<__Graphic_Object_Base> a_attached_object;
-            std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
-            // Type of the collision
-            Graphic_Collision_Type a_type = Graphic_Collision_Type::GCT_Rect;
+            // Collision
+            scls::Collision::Collision_Event* a_collision;
 
-            // Two points (needed for lines)
-            scls::Fraction a_x_1 = 0;scls::Fraction a_y_1 = 0;
-            scls::Fraction a_x_2 = 0;scls::Fraction a_y_2 = 0;
+            // Objects
+            std::weak_ptr<__Graphic_Object_Base> a_object;
+            std::weak_ptr<__Graphic_Object_Base> a_other_object;
         };
 
         // Getters and setters
-        inline std::vector<Graphic_Collision::Collision*>& collisions_this_frame() {return a_collisions_this_frame;};
+        inline std::vector<scls::Collision::Collision_Event*>& collisions_this_frame() {return a_collisions_this_frame;};
 
         //******************
         // The base of graphic objects
@@ -652,10 +636,8 @@ namespace pleos {
         virtual void after_creation(){};
         // Function called after the XML load
         virtual void after_xml_loading(){};
-        // Convert a collision to a collision circle
-        static Graphic_Collision::Collision_Circle* collision_circle(Graphic_Collision::Collision* collision){if(collision == 0 || collision->type != Graphic_Collision_Type::GCT_Circle){return 0;} return reinterpret_cast<Graphic_Collision::Collision_Circle*>(collision);};
         // Draws the object on an image
-        virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>){};
+        virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
         // Applies a tranformation to the object
         virtual void apply_transformation(double pourcentage){};
@@ -680,7 +662,7 @@ namespace pleos {
         virtual int collision_x_start(){return std::floor(min_absolute_x_next());};
         virtual int collision_y_start(){return std::floor(min_absolute_y_next());};
         // Function called when a collision occurs
-        virtual void when_collision(Graphic_Collision::Collision* collision){a_collisions_this_frame.push_back(collision);};
+        virtual void when_collision(Graphic_Collision_Event* collision){a_collisions_this_frame.push_back(collision->collision_event());};
 
     protected:
 
@@ -738,13 +720,9 @@ namespace pleos {
         std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
 
         // Collisions this frame
-        std::vector<Graphic_Collision::Collision*> a_collisions_this_frame = std::vector<Graphic_Collision::Collision*>();
+        std::vector<scls::Collision::Collision_Event*> a_collisions_this_frame = std::vector<scls::Collision::Collision_Event*>();
     };
-    typedef __Graphic_Object_Base::Graphic_Collision Graphic_Collision;
-    typedef __Graphic_Object_Base::Graphic_Collision::Collision Collision;
-    typedef __Graphic_Object_Base::Graphic_Collision_Type Graphic_Collision_Type;
-    typedef __Graphic_Object_Base::Graphic_Collision::Collision_Circle Collision_Circle;
-    typedef __Graphic_Object_Base::Graphic_Collision::Collision_Rect_Rect Collision_Rect_Rect;
+    typedef __Graphic_Object_Base::Graphic_Collision_Event Graphic_Collision_Event;
 }
 
 #endif // PLEOS_GRAPHIC_BASE

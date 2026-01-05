@@ -343,6 +343,10 @@ namespace pleos {
         // Action handling
         //******************
 
+        // Returns an action function by its name
+        __Graphic_Object_Base::Action_Function* action_function_by_name(std::string needed_name);
+        std::shared_ptr<__Graphic_Object_Base::Action_Function> action_function_by_name_shared_ptr(std::string needed_name);
+
         // Adds a wait action
         std::shared_ptr<__Graphic_Object_Base::Action_Wait> add_action_wait(double time);
         // Adds a move action
@@ -398,6 +402,8 @@ namespace pleos {
         // Draw a function on the image
         void image_draw_function(std::shared_ptr<scls::__Image_Base> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos);
 
+        // Sets an object at the background object
+        void set_background_object(__Graphic_Object_Base* object);
         // Sets an object at the foreground object
         void set_foreground_object(std::vector<std::shared_ptr<__Graphic_Object_Base>> objects);
         void set_foreground_object(std::shared_ptr<__Graphic_Object_Base> object);
@@ -499,8 +505,8 @@ namespace pleos {
             double needed_distance = std::sqrt(std::pow(x_2 - x_1, 2) + std::pow(y_2 - y_1, 2));
             double needed_height = 1;
             double needed_width = needed_distance;
-            double needed_x = (x_2 + x_1) / 2;
-            double needed_y = (y_2 + y_1) / 2;
+            double needed_x = (x_2 + x_1) / 2.0;
+            double needed_y = (y_2 + y_1) / 2.0;
             to_return.get()->set_height(needed_height);to_return.get()->set_width(needed_width);
             to_return.get()->set_x(needed_x);to_return.get()->set_y(needed_y);
             to_return.get()->set_rotation(-scls::vector_2d_angle(x_2 - x_1, y_2 - y_1) * SCLS_RADIANS_TO_ANGLE);
@@ -658,165 +664,47 @@ namespace pleos {
         //******************
 
         // Physic in a graphic object
-        class Graphic_Physic {
+        class Graphic_Physic : public scls::Graphic_Physic {
             // Class representating a physic handler in a graphic object
         public:
 
-            // Physic case
-            struct Physic_Case{
-                // Static objects in the case
-                inline void delete_static_object_collision(Graphic_Collision* object){for(int i=0;i<static_cast<int>(static_objects_collisions.size());i++){if(static_objects_collisions[i].lock().get()==object){static_objects_collisions.erase(static_objects_collisions.begin() + i);static_objects_collisions_physic.erase(static_objects_collisions_physic.begin() + i);break;}}};
-                std::vector<std::weak_ptr<Graphic_Collision>> static_objects_collisions;
-                std::vector<std::weak_ptr<Graphic_Physic>> static_objects_collisions_physic;
-
-                // Position
-                scls::Point_2D position;
-                inline int x(){return position.x();};
-            };
-
             // Graphic_Physic constructor
-            Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):a_attached_object(attached_object),a_attached_transform(attached_transform){};
+            Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):scls::Graphic_Physic(attached_transform){a_attached_object = attached_object;};
             Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object):Graphic_Physic(attached_object, attached_object.lock().get()->attached_transform_shared_ptr()){};
-
-            // Deletes the object
-            void delete_object();
-            // If the object should be deleted or not
-            bool should_delete() const;
-            // Softs reset the object
-            virtual void soft_reset();
-
-            // Add a line / rect collision to the graphic object
-            void add_collision(std::shared_ptr<Graphic_Collision> collision);
-            void add_collision(scls::Fraction x_1, scls::Fraction y_1, scls::Fraction x_2, scls::Fraction y_2);
-            // Checks if a collision occurs with an another collision
-            void check_collision(std::shared_ptr<Graphic_Collision> collision, Graphic::Graphic_Physic* other_object);
-            // Returns a new a collision to the graphic object
-            std::shared_ptr<Graphic_Collision> new_collision(Graphic_Collision_Type type);
-            std::shared_ptr<Graphic_Collision> new_collision(){return new_collision(Graphic_Collision_Type::GCT_Rect);};
-
-            // Accelerates the object
-            inline void accelerate(scls::Point_2D_Formula acceleration){a_attached_transform.lock().get()->accelerate(acceleration);};
-            inline void accelerate(scls::Point_2D acceleration){a_attached_transform.lock().get()->accelerate(acceleration);};
-            inline void accelerate_x(double acceleration){a_attached_transform.lock().get()->accelerate_x(acceleration);};
-            inline void accelerate_y(double acceleration){a_attached_transform.lock().get()->accelerate_y(acceleration);};
-            // Next movement generated by the velocity
-            inline double next_movement_x()const{return a_attached_transform.lock().get()->next_movement_x();};
-            inline double next_movement_y()const{return a_attached_transform.lock().get()->next_movement_y();};
-            // Remove the X / Y velocity
-            inline void remove_x_velocity(){a_attached_transform.lock().get()->set_velocity_x(0);};
-            inline void remove_y_velocity(){a_attached_transform.lock().get()->set_velocity_y(0);};
-            // Updates raw velocity
-            inline void update_raw_velocity(){a_attached_transform.lock().get()->update_raw_velocity();};
-
-            // Moves the object
-            void __move(scls::Point_2D point){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->set_x(t->x() + point.x());t->set_y(t->y() + point.y());};
-            void __move(){scls::Transform_Object_2D* t=a_attached_transform.lock().get();t->add_x(next_movement_x());t->add_y(next_movement_y());};
-
-            // Precise next movement
-            inline double max_absolute_x_next() const {return attached_transform()->max_absolute_x_next();};
-            inline double max_absolute_y_next() const {return attached_transform()->max_absolute_y_next();};
-            inline double min_absolute_x_next() const {return attached_transform()->min_absolute_x_next();};
-            inline double min_absolute_y_next() const {return attached_transform()->min_absolute_y_next();};
-            inline scls::Point_2D position_next() const {return attached_transform()->position_next();};
-            inline double x_next() const {return attached_transform()->x_next();};
-            inline double y_next() const {return attached_transform()->y_next();};
-
-            // Returns the needed XML text to generate this graphic
-            virtual std::string to_xml_text();
-
-            // Calculates the point of the trajectory of the function
-            std::vector<scls::Point_2D> trajectory_points(int point_number, double time_separation);
 
             // Getters and setters
             inline __Graphic_Object_Base* attached_object()const{return a_attached_object.lock().get();};
             inline std::shared_ptr<__Graphic_Object_Base> attached_object_shared_ptr()const{return a_attached_object.lock();};
-            inline scls::Transform_Object_2D* attached_transform()const{return a_attached_transform.lock().get();};
-            inline std::vector<std::shared_ptr<Graphic_Collision>>& collisions(){return a_collisions;};
-            inline std::vector<std::shared_ptr<Graphic_Collision::Collision>>& current_collisions_results(){return a_current_collisions_results;};
-            inline scls::Fraction delta_time() const {return a_delta_time;};
-            inline bool ignore_dynamic_collisions() const {return a_ignore_dynamic_collisions;};
-            inline bool is_static() const {return a_static;};
-            inline bool loaded_in_map() const {return a_loaded_in_map;};
-            inline bool moved_during_this_frame() const {return attached_transform()->moved_during_this_frame();};
-            inline scls::Point_2D position() const {return a_attached_transform.lock().get()->position();};
-            inline scls::Point_2D raw_velocity() const {return a_attached_transform.lock().get()->raw_velocity();};
-            inline scls::Fraction raw_velocity_x() {return raw_velocity().x();};
-            inline scls::Fraction raw_velocity_y() {return raw_velocity().y();};
-            inline double restitution() const {return a_restitution;};
-            inline bool save_to_xml_text() const {return a_save_to_xml_text;};
-            inline void set_delta_time(scls::Fraction new_delta_time){a_delta_time = new_delta_time;attached_transform()->set_delta_time(new_delta_time);for(int i = 0;i<static_cast<int>(a_collisions.size());i++){a_collisions.at(i).get()->attached_transform()->set_delta_time(new_delta_time);}};
-            inline void set_ignore_dynamic_collisions(bool new_ignore_dynamic_collisions){a_ignore_dynamic_collisions = new_ignore_dynamic_collisions;};
-            inline void set_loaded_in_map(bool new_loaded_map){a_loaded_in_map = new_loaded_map;};
-            inline void set_restitution(double new_restitution){a_restitution = new_restitution;};
-            inline void set_save_to_xml_text(bool new_save_to_xml_text){a_save_to_xml_text = new_save_to_xml_text;};
-            inline void set_static(bool new_static) {a_static = new_static;}
-            inline void set_use_gravity(bool new_use_gravity){a_use_gravity = new_use_gravity;};
-            inline void set_velocity(scls::Point_2D new_velocity){attached_transform()->set_velocity(new_velocity);};
-            inline void set_velocity_start(scls::Point_2D_Formula new_velocity){a_velocity_start = new_velocity;};
-            inline void set_velocity_x(double new_velocity_x, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_x(new_velocity_x / a_delta_time.to_double());}else{a_attached_transform.lock().get()->set_velocity_x(new_velocity_x);}};
-            inline void set_velocity_x(double new_velocity_x){set_velocity_x(new_velocity_x, false);};
-            inline void set_velocity_y(double new_velocity_y, bool with_delta_time){if(with_delta_time){a_attached_transform.lock().get()->set_velocity_y(new_velocity_y / a_delta_time.to_double());}else{a_attached_transform.lock().get()->set_velocity_y(new_velocity_y);}};
-            inline void set_velocity_y(double new_velocity_y){set_velocity_y(new_velocity_y, false);};
-            inline bool use_gravity() const {return a_use_gravity;};
-            inline std::vector<Physic_Case*>& used_physic_case(){return a_used_physic_case;};
-            inline scls::Point_2D velocity() const {return a_attached_transform.lock().get()->velocity();};
-            inline double velocity_x() {return velocity().x();};
-            inline double velocity_y() {return velocity().y();};
-            inline scls::Fraction x() {return attached_transform()->x();};
-            inline scls::Fraction y() {return attached_transform()->y();};
         private:
             // Attached object
             std::weak_ptr<__Graphic_Object_Base> a_attached_object;
-            std::weak_ptr<scls::Transform_Object_2D> a_attached_transform;
-            // Collisions in the physic object
-            std::vector<std::shared_ptr<Graphic_Collision>> a_collisions;
-            // Current collision of the object
-            std::vector<std::shared_ptr<Graphic_Collision::Collision>> a_current_collisions_results;
-
-            // Delta time of the object
-            scls::Fraction a_delta_time = scls::Fraction(1, 100);
-            // If the dynamic collision should be ignored or not
-            bool a_ignore_dynamic_collisions = false;
-            // If the object is loaded in the map
-            bool a_loaded_in_map = false;
-            // Standard restitution of the object
-            double a_restitution = 1;
-            // If the physic should be saved or not
-            bool a_save_to_xml_text = true;
-            // If the object is static or not
-            bool a_static = true;
-            // If the object use gravity or not
-            bool a_use_gravity = true;
-            // Velocity at the start of the animation
-            scls::Point_2D_Formula a_velocity_start = scls::Point_2D_Formula(0, 0);
-            // Used physic cases
-            std::vector<Physic_Case*> a_used_physic_case;
         };
-        typedef Graphic_Physic::Physic_Case Physic_Case;
 
         // Adds a physic object
-        void add_physic_object(std::shared_ptr<Graphic_Physic> new_object){a_physic_objects.push_back(new_object);}
+        void add_physic_object(std::shared_ptr<Graphic_Physic> new_object){a_physic_engine.add_physic_object(new_object);}
         // Deletes the physic in a case
         void delete_physic_object_case(Graphic::Graphic_Physic* to_delete);
         // Loads 100 X 100 physic map
-        void load_physic_map(int middle_loading_x, int middle_loading_y);
+        void load_physic_map(int middle_loading_x, int middle_loading_y){a_physic_engine.load_physic_map(middle_loading_x, middle_loading_y);};
         // Creates and return a new physic object
         std::shared_ptr<Graphic_Physic> new_physic_object(std::shared_ptr<__Graphic_Object_Base> object);
         // Returns a physic case by its coordinates
-        Physic_Case* physic_case(int x, int y);
+        scls::Physic_Case* physic_case(int x, int y);
+        // Returns a converted physic object
+        Graphic_Physic* physic_object(int position){return reinterpret_cast<Graphic_Physic*>(physic_objects().at(position).get());};
         // Returns a physic object by its attached object
         Graphic_Physic* physic_object_by_attached_object(__Graphic_Object_Base* attached_object);
-        std::shared_ptr<Graphic_Physic> physic_object_by_attached_object_shared_ptr(__Graphic_Object_Base* attached_object);
+        std::shared_ptr<scls::Graphic_Physic> physic_object_by_attached_object_shared_ptr(__Graphic_Object_Base* attached_object);
         // Returns a list of physic object in a rectr
-        std::vector<std::shared_ptr<Graphic_Physic>> physic_objects_in_rect(double x, double y, double width, double height);
+        std::vector<Graphic_Physic*> physic_objects_in_rect(double x, double y, double width, double height);
 
         // Raycasts the map
-        struct Raycast_Result{std::shared_ptr<Collision> collision;};
-        Raycast_Result raycast(double x_start, double y_start, double x_direction, double y_direction, double distance);
+        scls::Physic_Engine::Raycast_Result raycast(double x_start, double y_start, double x_direction, double y_direction, double distance);
 
         // Getters and setters
-        inline std::vector<std::vector<std::shared_ptr<Physic_Case>>>& physic_map(){return a_physic_map;};
-        inline std::vector<std::shared_ptr<Graphic_Physic>>& physic_objects(){return a_physic_objects;};
+        inline scls::Physic_Engine* physic_engine() {return &a_physic_engine;};
+        inline std::vector<std::vector<std::shared_ptr<scls::Physic_Case>>>& physic_map(){return a_physic_engine.physic_map();};
+        inline std::vector<std::shared_ptr<scls::Graphic_Physic>>& physic_objects(){return a_physic_engine.physic_objects();};
 
         //******************
         //
@@ -876,7 +764,7 @@ namespace pleos {
         //******************
 
         // Creates a number line
-        void number_line(scls::Fraction x, scls::Fraction y, scls::Fraction length);
+        void number_line(scls::Fraction x, scls::Fraction y, scls::Fraction length, scls::Fraction number_start, scls::Fraction number_end);
 
     protected:
 
@@ -896,6 +784,8 @@ namespace pleos {
 
         // Actions to do
         std::shared_ptr<__Graphic_Object_Base::Action_Container> a_actions = std::make_shared<__Graphic_Object_Base::Action_Container>();
+        // Actions function
+        std::vector<std::shared_ptr<__Graphic_Object_Base::Action_Function>> a_actions_functions = std::vector<std::shared_ptr<__Graphic_Object_Base::Action_Function>>();
 
         //******************
         // Texture handling
@@ -942,12 +832,15 @@ namespace pleos {
         //
         //******************
 
+        // Physic engine
+        scls::Physic_Engine a_physic_engine;
+
         // Physic map
-        std::vector<std::vector<std::shared_ptr<Physic_Case>>> a_physic_map;
-        int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;
+        //std::vector<std::vector<std::shared_ptr<Physic_Case>>> a_physic_map;
+        //int a_physic_map_start_x = 0;int a_physic_map_start_y = 0;
 
         // Physic objects
-        std::vector<std::shared_ptr<Graphic_Physic>> a_physic_objects;
+        //std::vector<std::shared_ptr<Graphic_Physic>> a_physic_objects;
 
         //******************
         //
@@ -982,7 +875,7 @@ namespace pleos {
             void scale(Graphic* graphic, int image_width, int image_height);
 
             // Sets the physic object
-            inline void set_physic_object(bool is_static){a_physic_object=std::make_shared<Graphic::Graphic_Physic>(this_object_shared_ptr());a_physic_object.get()->set_static(is_static);a_physic_object.get()->set_use_gravity(!is_static);graphic()->add_physic_object(a_physic_object);};
+            inline void set_physic_object(bool is_static){a_physic_object=std::make_shared<Graphic::Graphic_Physic>(this_object_shared_ptr());a_physic_object.get()->set_this_object(a_physic_object);a_physic_object.get()->set_static(is_static);a_physic_object.get()->set_use_gravity(!is_static);graphic()->add_physic_object(a_physic_object);};
 
             // Getters and setters
             inline Graphic_Object* graphic_object() const {return a_graphic_object;};
@@ -1159,12 +1052,14 @@ namespace pleos {
         // Loads 100 X 100 physic map
         inline void load_physic_map(int middle_loading_x, int middle_loading_y){a_datas.get()->load_physic_map(middle_loading_x, middle_loading_y);};
         // Returns a physic case by its coordinates
-        inline Graphic::Physic_Case* physic_case(int x, int y){return a_datas.get()->physic_case(x, y);};
+        inline scls::Physic_Case* physic_case(int x, int y){return a_datas.get()->physic_case(x, y);};
+        // Returns a converted physic object
+        Graphic::Graphic_Physic* physic_object(int position){return a_datas.get()->physic_object(position);};
         // Updates the physic
         int update_physic(double multiplier);
 
         // Getters and setters
-        inline std::vector<std::shared_ptr<Graphic::Graphic_Physic>>& physic_objects(){return a_datas.get()->physic_objects();};
+        inline std::vector<std::shared_ptr<scls::Graphic_Physic>>& physic_objects(){return a_datas.get()->physic_objects();};
 
     private:
 

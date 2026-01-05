@@ -329,6 +329,7 @@ namespace pleos {
     std::string Circle::parameter(std::string parameter_name){
         if(parameter_name == std::string("angle_end")){return angle_end_formula().to_std_string(0);}
         else if(parameter_name == std::string("angle_start")){return angle_start_formula().to_std_string(0);}
+        else if(parameter_name == std::string("color")){return color().to_std_string(0);}
         return __Graphic_Object_Base::parameter(parameter_name);
     }
 

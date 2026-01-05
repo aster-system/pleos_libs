@@ -456,9 +456,9 @@ namespace pleos {
                 scls::Text_Style case_style = needed_style.new_child();case_style.set_border_width(0);
                 int height = 1;int width = 1;bool right_border = true;int x = 0;int y = 0;
                 for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-                    if(!scls::text_style_from_xml_attribute(&attributes[i], case_style)) {
-                        if(attributes[i].name == std::string("background_color")){background_color = scls::Color::from_std_string(attributes[i].value);}
-                        else if(attributes[i].name == std::string("color")){color = scls::Color::from_std_string(attributes[i].value);color_used=true;}
+                    if(attributes[i].name == std::string("background_color")){background_color = scls::Color::from_std_string(attributes[i].value);}
+                    else if(!scls::text_style_from_xml_attribute(&attributes[i], case_style)) {
+                        if(attributes[i].name == std::string("color")){color = scls::Color::from_std_string(attributes[i].value);color_used=true;}
                         else if(attributes[i].name == std::string("content")){content = attributes[i].value;content_used=true;}
                         else if(attributes[i].name == std::string("height")){height = std::stoi(attributes[i].value);}
                         else if(attributes[i].name == std::string("right_border")){if(attributes[i].value==std::string("0")||attributes[i].value==std::string("false")||attributes[i].value==std::string("no")){right_border=false;}}
@@ -479,9 +479,13 @@ namespace pleos {
                     }
                     to_return.get()->set_case_value(x, y, content, case_style, &tig);
                 }
-                to_return.get()->case_at(x, y)->right_border = right_border;
-                to_return.get()->case_at(x, y)->set_background_color(background_color);
+
+                // Set the style
+                case_style.set_background_color(background_color);
                 to_return.get()->case_at(x, y)->style = case_style;
+
+                // Final settings
+                to_return.get()->case_at(x, y)->right_border = right_border;
                 to_return.get()->merge_cases(x, y, width, height);
             }
             else if(current_balise_name == "cases"){to_return.get()->load_cases(xml->sub_texts()[i], needed_style.new_child(), &tig);}

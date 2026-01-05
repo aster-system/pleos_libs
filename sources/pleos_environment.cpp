@@ -44,6 +44,9 @@ namespace pleos {
         std::shared_ptr<scls::Balise_Style_Datas> current_balise;
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("action_function", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
         defined_balises.get()->set_defined_balise("action_loop", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;

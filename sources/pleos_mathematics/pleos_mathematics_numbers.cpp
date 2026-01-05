@@ -311,5 +311,55 @@ namespace pleos {
         // Returns the result
         return sieve.get()->to_image();
     }
+
+    // Converts an algebric compelx number to this polar form
+    scls::Complex_Polar complex_algebric_to_polar(scls::Complex c, std::string* redaction) {
+    	std::shared_ptr<scls::__Formula> module = std::make_shared<scls::__Formula>(c.real() *  c.real() + c.imaginary() * c.imaginary());
+    	module.get()->set_applied_function<scls::__Sqrt_Function>();
+    	double module_approximation = module.get()->value_to_double();
+
+    	std::shared_ptr<scls::__Formula> argument = std::make_shared<scls::__Formula>(c.real().abs());
+    	argument.get()->__divide(module.get());
+    	argument.get()->set_applied_function<scls::__Arccos_Function>();
+    	double argument_approximation = argument.get()->value_to_double();
+
+    	if(redaction != 0){
+    		(*redaction) += std::string("Le module de ce nombre complexe est :</br><math><mi>m</mi><mo>=</mo><msqrt><mi>a</mi><msup>2</msup><mo>+</mo><mi>b</mi><msup>2</msup></msqrt><mo>=</mo>") + module.get()->to_mathml(0) + std::string("<mapproximatively>") + scls::format_number_to_text(module_approximation, 3) + std::string("</math></br>");
+    		(*redaction) += std::string("L'argument de ce nombre complexe est :</br><math><mi>a</mi><mo>=</mo><mi>arccos</mi><mo>(</mo><mfrac><mi>r</mi><mi>m</mi></mfrac><mo>)</mo><mo>=</mo>") + argument.get()->to_mathml(0) + std::string("<mapproximatively>") + scls::format_number_to_text(argument_approximation, 3) + std::string("</math></br>");
+    	}
+
+    	return scls::Complex_Polar(argument, module);
+    }
+
+    // Get the root of a complex number
+    void complex_root(scls::Complex c, int n, std::string* redaction) {
+    	scls::Complex_Polar polar = complex_algebric_to_polar(c, redaction);
+    	if(redaction != 0){(*redaction) += std::string("Analysons les racines base ") + std::to_string(n) + (" du nombre complexe ") + c.to_std_string_simple(0) + std::string(".</br>");}
+
+    	// Calculate the modulus
+    	std::shared_ptr<scls::__Formula> modulus = polar.modulus()->clone();
+    	modulus.get()->sub_place();
+    	modulus.get()->set_applied_function<scls::__Root_Function>(n);
+    	if(redaction != 0){(*redaction) += std::string("Les racines de ce nombres ont un module de :</br><math><mi>m</mi><mo>=</mo>") + modulus.get()->to_mathml(0) + std::string("<mapproximatively><mi>") + scls::format_number_to_text(modulus.get()->value_to_double(), 3) + std::string("</mi></math></br>");}
+
+    	// Calculate the argument
+    	std::shared_ptr<scls::__Formula> argument = polar.argument()->clone();
+    	std::vector<scls::Complex_Polar> arguments = std::vector<scls::Complex_Polar>();
+    	argument.get()->divide(n);scls::Fraction divisor = scls::Fraction::from_double(SCLS_PI * 2.0) / scls::Fraction(n);
+    	for(int i = 0;i<n;i++) {
+    		std::shared_ptr<scls::__Formula> current_argument = argument.get()->clone();
+    		current_argument.get()->add(divisor * i);arguments.push_back(scls::Complex_Polar(current_argument, modulus.get()->clone()));
+    		if(redaction != 0){(*redaction) += std::string("Un argument d'une racine de ce nombre est :</br><math><mi>a</mi><msub>") + std::to_string(i) + ("</msub><mo>=</mo>") + current_argument.get()->to_mathml(0) + std::string("<mapproximatively><mi>") + scls::format_number_to_text(current_argument.get()->value_to_double(), 3) + std::string("</mi></math></br>");}
+    	}
+
+    	// Redaction
+    	if(redaction != 0) {
+    		(*redaction) += std::string("Les racines de ce nombre sont donc :</br>");
+    		scls::Textual_Math_Settings s;s.set_complex_double(3);
+    		for(int i = 0;i<static_cast<int>(arguments.size());i++) {
+    			(*redaction) += std::string("<math><mi>r</mi><msub>") + std::to_string(i) + ("</msub><mapprox>") + arguments.at(i).to_complex().to_mathml(&s) + std::string("</math></br>");
+			}
+    	}
+    }
 }
 

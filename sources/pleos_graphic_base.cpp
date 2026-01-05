@@ -46,6 +46,25 @@ namespace pleos {
     scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, int needed_height){return scls::Fraction::from_double(a_middle_y) + ((scls::Fraction(y) - scls::Fraction(needed_height, 2)) / scls::Fraction::from_double(a_pixel_by_case_y));}
     scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());}
 
+    // Clone actions
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Accelerate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Accelerate> new_action = std::make_shared<__Graphic_Object_Base::Action_Accelerate>();new_action.get()->duration = duration;new_action.get()->x = x;new_action.get()->y = y;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Delete::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Delete> new_action = std::make_shared<__Graphic_Object_Base::Action_Delete>();new_action.get()->duration = duration;new_action.get()->to_delete = to_delete;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Function_Call::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Function_Call> new_action = std::make_shared<__Graphic_Object_Base::Action_Function_Call>();new_action.get()->duration = duration;new_action.get()->function_name = function_name;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Move::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Move> new_action = std::make_shared<__Graphic_Object_Base::Action_Move>();new_action.get()->duration = duration;new_action.get()->speed = speed;new_action.get()->x_end = x_end;new_action.get()->y_end = y_end;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Rotate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Rotate> new_action = std::make_shared<__Graphic_Object_Base::Action_Rotate>();new_action.get()->duration = duration;new_action.get()->rotation_end = rotation_end;new_action.get()->speed = speed;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Set_Parameter::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Set_Parameter> new_action = std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>();new_action.get()->duration = duration;new_action.get()->parameter_name = parameter_name;new_action.get()->parameter_value = parameter_value;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Stop::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Stop> new_action = std::make_shared<__Graphic_Object_Base::Action_Stop>(duration);return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Wait::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait>();new_action.get()->duration = duration;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Wait_Until::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait_Until> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait_Until>();new_action.get()->duration = duration;return new_action;}
+    // Clone a structure
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Structure::clone(){return clone_as_structure();}
+    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Structure::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Structure> new_action = std::make_shared<__Graphic_Object_Base::Action_Structure>(type);clone_content(new_action);return new_action;}
+    void __Graphic_Object_Base::Action_Structure::clone_content(std::shared_ptr<Action_Structure> target){for(int i = 0;i<static_cast<int>(a_actions.size());i++){target.get()->add_action(a_actions.at(i).get()->clone());}}
+    // Complex structures
+    std::shared_ptr<__Graphic_Object_Base::Action_Function> __Graphic_Object_Base::Action_Function::clone_as_function() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Function::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Loop::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Loop> new_action = std::make_shared<__Graphic_Object_Base::Action_Loop>();new_action.get()->a_repetition = a_repetition;clone_content(new_action);return new_action;}
+
     // Returns the action to a XML text
     // Action
     std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_time() + std::string(">");}
@@ -59,6 +78,11 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_y(){return std::string(" y=") + scls::Fraction::from_double(y).to_std_string(0);}
     // Action delete
     std::string __Graphic_Object_Base::Action_Delete::to_xml_text_name(){return std::string("action_delete");}
+    // Action function
+    std::string __Graphic_Object_Base::Action_Function::to_xml_text_name(){return std::string("action_function");}
+    std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_function_name() +  std::string(">");}
+    std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text_name(){return std::string("action_function_call");}
+    std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text_function_name(){return std::string(" function=") + function_name;}
     // Action loop
     std::string __Graphic_Object_Base::Action_Loop::to_xml_text_name(){return std::string("action_loop");}
     // Action move
@@ -88,43 +112,6 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_duration() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text_duration(){return std::string(" duration=") + scls::Fraction::from_double(duration).to_std_string(0);}
     std::string __Graphic_Object_Base::Action_Wait_Until::to_xml_text_name(){return std::string("action_wait_until");}
-
-    // Getters and setters
-    scls::Fraction __Graphic_Object_Base::Graphic_Collision::absolute_height() const {return attached_transform()->absolute_scale_y();};
-    scls::Point_2D __Graphic_Object_Base::Graphic_Collision::absolute_scale() const {return attached_transform()->absolute_scale();};
-    scls::Fraction __Graphic_Object_Base::Graphic_Collision::absolute_width() const {return attached_transform()->absolute_scale_x();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_x() const {return attached_transform()->absolute_x();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_x_1() const{return a_x_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_x_2() const{return a_x_2.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_y() const {return attached_transform()->absolute_y();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_y_1() const{return a_y_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::absolute_y_2() const{return a_y_2.to_double();};
-    __Graphic_Object_Base* __Graphic_Object_Base::Graphic_Collision::attached_object()const{return a_attached_object.lock().get();};
-    std::weak_ptr<__Graphic_Object_Base> __Graphic_Object_Base::Graphic_Collision::attached_object_weak_ptr()const{return a_attached_object;};
-    scls::Transform_Object_2D* __Graphic_Object_Base::Graphic_Collision::attached_transform()const{return a_attached_transform.lock().get();};
-    double __Graphic_Object_Base::Graphic_Collision::direct_x_1() const {return a_x_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::direct_x_2() const {return a_x_2.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::direct_y_1() const {return a_y_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::direct_y_2() const {return a_y_2.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::max_absolute_x() const {return attached_transform()->max_absolute_x();};
-    double __Graphic_Object_Base::Graphic_Collision::max_absolute_x_next() const {return attached_transform()->max_absolute_x_next();};
-    double __Graphic_Object_Base::Graphic_Collision::max_absolute_y() const {return attached_transform()->max_absolute_y();};
-    double __Graphic_Object_Base::Graphic_Collision::max_absolute_y_next() const {return attached_transform()->max_absolute_y_next();};
-    double __Graphic_Object_Base::Graphic_Collision::min_absolute_x() const {return attached_transform()->min_absolute_x();};
-    double __Graphic_Object_Base::Graphic_Collision::min_absolute_x_next() const {return attached_transform()->min_absolute_x_next();};
-    double __Graphic_Object_Base::Graphic_Collision::min_absolute_y() const {return attached_transform()->min_absolute_y();};
-    double __Graphic_Object_Base::Graphic_Collision::min_absolute_y_next() const {return attached_transform()->min_absolute_y_next();};
-    scls::Point_2D __Graphic_Object_Base::Graphic_Collision::position_next() const {return attached_transform()->position_next();};
-    void __Graphic_Object_Base::Graphic_Collision::set_type(Graphic_Collision_Type new_type){a_type = new_type;};
-    void __Graphic_Object_Base::Graphic_Collision::set_x_1(scls::Fraction new_x_1){a_x_1 = new_x_1;};
-    void __Graphic_Object_Base::Graphic_Collision::set_x_2(scls::Fraction new_x_2){a_x_2 = new_x_2;};
-    void __Graphic_Object_Base::Graphic_Collision::set_y_1(scls::Fraction new_y_1){a_y_1 = new_y_1;};
-    void __Graphic_Object_Base::Graphic_Collision::set_y_2(scls::Fraction new_y_2){a_y_2 = new_y_2;};
-    Graphic_Collision_Type __Graphic_Object_Base::Graphic_Collision::type()const{return a_type;};
-    double __Graphic_Object_Base::Graphic_Collision::x_1() const {return attached_transform()->x() + a_x_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::x_2() const {return attached_transform()->x() + a_x_2.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::y_1() const {return attached_transform()->y() + a_y_1.to_double();};
-    double __Graphic_Object_Base::Graphic_Collision::y_2() const {return attached_transform()->y() + a_y_2.to_double();};
 
     // __Graphic_Object_Base constructor
     int __current_id = 0;
@@ -178,6 +165,9 @@ namespace pleos {
     // Returns a color adapted with the needed opacity
     scls::Color __Graphic_Object_Base::color_with_absolute_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * absolute_opacity());return needed_color;};
     scls::Color __Graphic_Object_Base::color_with_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * a_opacity);return needed_color;};
+
+    // Draws the object on an image
+    void __Graphic_Object_Base::draw_on_image(std::shared_ptr<scls::__Image_Base>){};
 
     // Returns an introduction of the object
     std::string __Graphic_Object_Base::introduction(scls::Textual_Math_Settings* settings) const {return std::string("Nous avons l'object \"") + name() + std::string("\".");};

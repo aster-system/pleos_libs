@@ -114,6 +114,50 @@ namespace pleos {
 		return polynomial_derivated;
     }
 
+	// Gets the division of two polynomials
+	void polynomial_division(scls::Polynomial* polynomial_1, scls::Polynomial* polynomial_2, std::string* redaction){
+		std::shared_ptr<scls::Polynomial_Base> current = polynomial_1->clone();
+		std::shared_ptr<scls::Polynomial> quotient = std::make_shared<scls::Polynomial>(0);
+
+		// Redaction
+		if(redaction != 0) {
+			(*redaction) += "<p>Nous cherchons à diviser les polynômes suivants :</p>";
+			(*redaction) += std::string("<math><mi>P</mi><mequal><mi>R</mi><mequal>") + polynomial_1->to_mathml(0) + std::string("</math></br>");
+			(*redaction) += std::string("<math><mi>Q</mi><mequal>") + polynomial_2->to_mathml(0) + std::string("</math></br>");
+			(*redaction) += std::string("<p>Utilisons un algorithme de division.</p>");
+		}
+
+		while(current.get()->degree("x") >= polynomial_2->degree("x")) {
+			std::shared_ptr<scls::Polynomial_Base> to_substract = polynomial_2->clone();
+			scls::__Monomonial* bigger = reinterpret_cast<scls::__Monomonial*>(polynomial_2->__bigger_monomonial());
+			scls::__Monomonial* bigger_current = reinterpret_cast<scls::__Monomonial*>(current.get()->__bigger_monomonial());
+			std::shared_ptr<scls::Polynomial> current_monomonial = std::make_shared<scls::Polynomial>(*(bigger_current->factor()) / *(bigger->factor()));
+			if(bigger_current->unknown() != 0 && bigger_current->unknown()->exponent() - bigger->unknown()->exponent() > 0){
+				std::shared_ptr<scls::Polynomial> current_monomonial_unknown = std::make_shared<scls::Polynomial>(1, "x", bigger_current->unknown()->exponent() - bigger->unknown()->exponent());
+				current_monomonial.get()->__multiply(current_monomonial_unknown.get());
+			}
+			to_substract.get()->__multiply(current_monomonial.get());
+			current.get()->__substract(to_substract.get());
+
+			quotient.get()->__add(current_monomonial.get());
+
+			// Redaction
+			if(redaction != 0) {
+				(*redaction) += "<p>Multiplions le quotient par :</p>";
+				(*redaction) += std::string("<math><mi>M</mi><mequal>") + current_monomonial->to_mathml(0) + std::string("</math></br>");
+				(*redaction) += std::string("<math><mi>Q * M</mi><mequal>") + to_substract.get()->to_mathml(0) + std::string("</math></br>");
+				(*redaction) += std::string("<math><mi>R - (Q * M)</mi><mequal>") + current.get()->to_mathml(0) + std::string("</math></br>");
+				(*redaction) += "<p>R sera maintenant égal à cette valeur.</p>";
+			}
+		}
+
+		// Redaction
+		if(redaction != 0) {
+			(*redaction) += "<p>Donc :</p>";
+			(*redaction) += std::string("<math><mi>P</mi><mequal><mo>(</mo>") + polynomial_2->to_mathml(0) + std::string("<mo>)</mo><mo>*</mo><mo>(</mo>") + quotient.get()->to_mathml(0) + std::string("<mo>)</mo><mo>+</mo><mo>(</mo>") + current.get()->to_mathml(0) + std::string("<mo>)</mo></math></br>");
+		}
+    }
+
     // Gets the roots of a polynomial
     std::string __redaction_root_0 = std::string("Le polynôme \"<full_formula>\" est constamment égal à 0, il admet tout son ensemble de définition comme racine.");
     std::string __redaction_root_0_not_0 = std::string("Le polynôme \"<full_formula>\" est constant, il n'a pas de racines.");
