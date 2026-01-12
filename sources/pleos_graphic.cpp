@@ -1562,7 +1562,7 @@ namespace pleos {
             std::shared_ptr<Form_2D> created_form = __new_rect(std::string(""), 0, -0.5, -0.5, 1, 1);
             std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-                if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = scls::Color::from_std_string(attributes[j].value);}
+                if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = environment->value_color(attributes[j].value);}
                 else if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "border_radius" || attributes[j].name == "border_width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "height") {height = scls::Fraction::from_std_string(attributes[j].value);}
