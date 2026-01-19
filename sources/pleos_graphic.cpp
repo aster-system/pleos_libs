@@ -1452,7 +1452,7 @@ namespace pleos {
             // Get the datas about a vector of the graphic
             scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
             std::string needed_name = std::string();double needed_proportion = 1;
-            bool use_collision = false;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
+            double restitution = 1;bool use_collision = false;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = environment->value_color(attributes[j].value);}
                 else if(attributes[j].name == "border_radius" || attributes[j].name == "border_width" || attributes[j].name == "width") {border_radius = environment->value_double(attributes[j].value);}
@@ -1460,6 +1460,7 @@ namespace pleos {
                 else if(attributes[j].name == "name") {needed_name = graphic_from_xml_name(attributes[j], std::string("line"), environment);}
                 else if(attributes[j].name == "physic") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
                 else if(attributes[j].name == "proportion") {needed_proportion = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                else if(attributes[j].name == "restitution") {restitution = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
 
             // Add the form
@@ -1473,6 +1474,7 @@ namespace pleos {
                 if(physic_map().size() <= 0){load_physic_map(0, 0);}
                 std::shared_ptr<pleos::Graphic::Graphic_Physic> physic = new_physic_object(created_form);
                 physic.get()->set_use_gravity(use_gravity);physic.get()->set_static(use_physic == 1);
+                physic.get()->set_restitution(restitution);
                 if(use_collision){
                     // Needed coordinates
                     double x_1 = created_form.get()->points().at(0).get()->absolute_x();
