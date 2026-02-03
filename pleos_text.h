@@ -31,7 +31,6 @@
 #include "../../scls-graphic-benoit/scls_graphic.h"
 #include "pleos_graphic.h"
 #include "pleos_it.h"
-#include "pleos_table.h"
 
 // Define a macro to easily add an object
 // Create the object
@@ -55,20 +54,20 @@ namespace pleos {
 	//*********
 
 	// Creates and returns a graphic from an std::string
-    std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style);
+    std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
 
 	// Creates and returns a linked-list from an std::string
-	std::shared_ptr<Linked_List> linked_list_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style);
+	std::shared_ptr<Linked_List> linked_list_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
 
 	// Creates and returns a tree from an std::string
-	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style);
+	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
 	inline std::shared_ptr<Tree<std::string>> tree_from_xml(std::string xml, scls::Text_Style needed_style, std::shared_ptr<scls::__Balise_Container> balise){return tree_from_xml(scls::xml(balise, xml), needed_style);};
 	inline std::shared_ptr<Tree<std::string>> tree_from_xml(std::string xml, std::shared_ptr<scls::__Balise_Container> balise){return tree_from_xml(scls::xml(balise, xml), scls::Text_Style());};
 
 	// Creates an image for a PLEOS text
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment);
-	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::__XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::__XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment);
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> possible_environment);
+	std::shared_ptr<scls::__Image_Base> generate_text_image(std::shared_ptr<scls::XML_Text_Base> current_text, scls::Text_Style needed_style, std::shared_ptr<scls::XML_Text_Base> parent_text, std::shared_ptr<Text_Environment> possible_environment);
 
 	// Returns if a balise is a special PLEOS balise
 	int is_special_pleos_balise(std::string name);
@@ -81,7 +80,7 @@ namespace pleos {
         virtual std::shared_ptr<Text_Image_Block> __create_block(std::shared_ptr<scls::Block_Datas> needed_datas){std::shared_ptr<Text> to_return = new_text_image_block<Text>(defined_balises_shared_ptr(), needed_datas);return to_return;};
 
         // Generates a piece of math in the block
-        virtual std::shared_ptr<scls::__Math_Part_Image> __generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::__XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, scls::Text_Image_Block* block);
+        virtual std::shared_ptr<scls::__Math_Part_Image> __generate_maths_one_balise(std::string needed_balise_name, int& bottom_offset, std::shared_ptr<scls::XML_Text_Base> content, scls::Text_Style current_style, int& needed_height, int& needed_middle_bottom_offset, int& needed_middle_top_offset, std::vector<std::shared_ptr<scls::__Math_Part_Image>>& needed_parts, int& needed_width, int& top_offset, scls::Text_Image_Block* block);
 
         // Creates and returns a block
         virtual std::shared_ptr<scls::Text_Image_Block> __generate_block(std::shared_ptr<scls::Block_Datas> block_datas);
@@ -94,10 +93,10 @@ namespace pleos {
     };
 
     // Final Table
-    class Table : public __Table_Case {
+    class Table : public scls::__Table_Case {
     public:
         // Table constructor
-        Table():__Table_Case(){};
+        Table():scls::__Table_Case(){};
 
         // Set the value of an std::string case
         virtual std::shared_ptr<scls::__Image_Base> case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig);

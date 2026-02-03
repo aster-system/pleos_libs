@@ -29,7 +29,6 @@
 
 // Include SCLS Graphic Benoit
 #include "../../../scls-graphic-benoit/scls_graphic.h"
-#include "../pleos_table.h"
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {

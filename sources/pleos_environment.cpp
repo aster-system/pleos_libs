@@ -168,7 +168,7 @@ namespace pleos {
     Text_Environment::Text_Environment():scls::Text_Environment(){};
 
     // Loads the definitions
-    void Text_Environment::__load_definition_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text) {
+    void Text_Environment::__load_definition_from_xml(std::shared_ptr<scls::XML_Text_Base> current_text) {
         // Handle the attributes
         std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
         std::string definition_name = std::string();
@@ -209,14 +209,14 @@ namespace pleos {
 
         // Loads the definitions
         std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();load_balises_pleos(balises);
-        std::shared_ptr<scls::__XML_Text_Base> content = scls::xml(balises, total);
+        std::shared_ptr<scls::XML_Text_Base> content = scls::xml(balises, total);
         for(int i = 0;i<static_cast<int>(content.get()->sub_texts().size());i++) {
             if(content.get()->sub_texts().at(i).get()->xml_balise_name() == std::string("new_definition")){__load_definition_from_xml(content.get()->sub_texts().at(i));}
         }
     }
 
     // Loads the scientists
-	void Text_Environment::__load_scientist_from_xml(std::shared_ptr<scls::__XML_Text_Base> current_text) {
+	void Text_Environment::__load_scientist_from_xml(std::shared_ptr<scls::XML_Text_Base> current_text) {
 		// Handle the attributes
 		std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
 		std::string scientist_birth = std::string();
@@ -247,7 +247,7 @@ namespace pleos {
 
         // Loads the definitions
         std::shared_ptr<scls::_Balise_Style_Container> balises = std::make_shared<scls::_Balise_Style_Container>();load_balises_pleos(balises);
-        std::shared_ptr<scls::__XML_Text_Base> content = scls::xml(balises, total);
+        std::shared_ptr<scls::XML_Text_Base> content = scls::xml(balises, total);
         for(int i = 0;i<static_cast<int>(content.get()->sub_texts().size());i++) {
             if(content.get()->sub_texts().at(i).get()->xml_balise_name() == std::string("metadata")){__load_scientist_from_xml(content.get()->sub_texts().at(i));}
         }

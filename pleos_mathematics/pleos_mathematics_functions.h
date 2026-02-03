@@ -164,6 +164,9 @@ namespace pleos {
 
     // Calculate the derivated function of a function
     std::shared_ptr<scls::__Formula_Base> function_derivation(Function_Studied* function, std::string* redaction);
+
+    // Studies precisely a function
+    void study_function(scls::__Formula* formula, std::string* redaction);
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

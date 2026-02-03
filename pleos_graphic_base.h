@@ -124,6 +124,8 @@ namespace pleos {
             unsigned short step = 0;
             // Type of the action
             const short type = -1;
+            // If the action should directly pass to the other at the end
+            bool direct_pass_at_end = false;
         };
 
         // Possible actions
@@ -392,10 +394,10 @@ namespace pleos {
             // Adds a set_parameter action
             void add_action_set_parameter_with_target(std::string target_name, std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;action.get()->target=target_name;actions().push_back(action);};
             void add_action_set_parameter_with_target(std::string target_name, std::string parameter_name, std::string parameter_value){add_action_set_parameter_with_target(target_name, parameter_name, parameter_value, 0);};
-            void add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;actions().push_back(action);};
-            void add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
-            void add_action_set_parameter(std::string parameter_name, double parameter_value){add_action_set_parameter(parameter_name, std::to_string(parameter_value), 0);};
-            void add_action_set_parameter(std::string parameter_name, std::string parameter_value){add_action_set_parameter(parameter_name, parameter_value, 0);};
+            std::shared_ptr<Action_Set_Parameter> add_action_set_parameter(std::string parameter_name, std::string parameter_value, double duration){std::shared_ptr<Action_Set_Parameter> action = std::make_shared<Action_Set_Parameter>();action.get()->duration=duration;action.get()->parameter_name=parameter_name;action.get()->parameter_value=parameter_value;actions().push_back(action);return action;};
+            std::shared_ptr<Action_Set_Parameter> add_action_set_parameter(std::string parameter_name, double parameter_value, double duration){return add_action_set_parameter(parameter_name, std::to_string(parameter_value), duration);};
+            std::shared_ptr<Action_Set_Parameter> add_action_set_parameter(std::string parameter_name, double parameter_value){return add_action_set_parameter(parameter_name, std::to_string(parameter_value), 0);};
+            std::shared_ptr<Action_Set_Parameter> add_action_set_parameter(std::string parameter_name, std::string parameter_value){return add_action_set_parameter(parameter_name, parameter_value, 0);};
             // Adds a stop action
             void add_action_stop(){std::shared_ptr<Action_Stop> action = std::make_shared<Action_Stop>(0);actions().push_back(action);};
             // Adds a structure action
@@ -450,6 +452,7 @@ namespace pleos {
 
             // Getters and setters
             inline scls::Collision::Collision_Event* collision_event() const {return a_collision;};
+            inline __Graphic_Object_Base* object() const {return a_object.lock().get();};
             inline __Graphic_Object_Base* other_object() const {return a_other_object.lock().get();};
             inline void set_object(std::weak_ptr<__Graphic_Object_Base> needed_object){a_object = needed_object;};
             inline void set_other_object(std::weak_ptr<__Graphic_Object_Base> needed_object){a_other_object = needed_object;};
@@ -605,7 +608,7 @@ namespace pleos {
         inline void set_live_time(double new_live_time){a_live_time = new_live_time;};
         inline void set_object_name(std::string new_object_name){a_object_name = new_object_name;};
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
-        inline void set_position(scls::Point_2D_Formula new_position){attached_transform()->set_position(new_position);};
+        inline void set_position(scls::Point_2D new_position){attached_transform()->set_position(new_position);};
         inline void set_name(std::string new_name) {a_name = new_name;};
         inline void set_rotation(double new_rotation){a_transform.get()->set_rotation(scls::Fraction::from_double(new_rotation));};
         inline void set_rotation(scls::__Fraction_Base new_rotation){a_transform.get()->set_rotation(new_rotation);};

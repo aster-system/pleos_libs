@@ -102,7 +102,7 @@ namespace pleos {
 
             // Apply the proportion
             int line_width = border_radius();
-            image.get()->draw_line(last_x + needed_move_x_minus + line_width / 2.0, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color_with_absolute_opacity(border_color()), line_width);
+            image.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color_with_absolute_opacity(border_color()), line_width);
             return;
         }
 
@@ -322,7 +322,9 @@ namespace pleos {
         double current_radius_y = radius_y().to_double();current_radius_y = current_radius_y * pixel_by_case_y();
         double needed_x = graphic_x_to_pixel_x(current_center.x());
         double needed_y = graphic_y_to_pixel_y_inversed(current_center.y());
-        image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation().to_double(), angle_start(), angle_end(), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
+        if(needed_x + current_radius_x > 0 && needed_y + current_radius_y > 0 && needed_y < image.get()->height()){
+            image.get()->fill_circle(needed_x, needed_y, current_radius_x, current_radius_y, rotation().to_double(), angle_start(), angle_end(), color_with_absolute_opacity(color()), border_radius(), color_with_absolute_opacity(border_color()));
+        }
     }
 
     // Returns a parameter by its name

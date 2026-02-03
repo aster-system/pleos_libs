@@ -529,4 +529,29 @@ namespace pleos {
 		// Another case
 		return std::shared_ptr<scls::__Formula_Base>();
 	}
+
+    // Studies precisely a function
+	void study_function(scls::__Formula* formula, std::string* redaction) {
+		(*redaction) += std::string("<p>Étudions la forme ") + formula->to_std_string(0) + std::string(". ");
+		std::shared_ptr<Function_Studied> function = Function_Studied::new_function_studied_shared_ptr(*formula);
+
+		(*redaction) += std::string("Commençons par étudier l'ensemble de définition. ");
+		pleos::function_definition_set(function.get(), redaction);
+
+		(*redaction) += std::string("</br>");
+		(*redaction) += std::string("Ensuite, étudions les racines. ");
+		pleos::solve_equation(function.get(), redaction);
+
+		(*redaction) += std::string("</br>");
+		(*redaction) += std::string("Ensuite, étudions la dérivée de cette fonction. ");
+		pleos::function_derivation(function.get(), redaction);
+
+		(*redaction) += std::string("</br>");
+		(*redaction) += std::string("Ensuite, étudions la primitive de cette fonction. ");
+		pleos::function_antiderivation(function.get(), redaction);
+
+		(*redaction) += std::string("</br>");
+		(*redaction) += std::string("Ensuite, étudions la représentation graphique de cette fonction.</p>");
+		(*redaction) += std::string("<graphic><function expression=\"") + formula->to_std_string(0) + std::string("\"></graphic>");
+	}
 }

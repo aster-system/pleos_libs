@@ -186,8 +186,8 @@ namespace pleos {
             std::string to_xml_text_loaded() const;
 
             // Getters and setters
-            inline void set_table(std::shared_ptr<__Table_Case> new_table){a_table = new_table;};
-            inline __Table_Case* table() const {return a_table.get();};
+            inline void set_table(std::shared_ptr<scls::__Table_Case> new_table){a_table = new_table;};
+            inline scls::__Table_Case* table() const {return a_table.get();};
 
             // TEMP
             void set_xml(std::string new_xml){a_xml = new_xml;};
@@ -200,7 +200,7 @@ namespace pleos {
             virtual bool update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects);
         private:
             // Needed table
-            std::shared_ptr<__Table_Case> a_table = __Table_Case::new_table();
+            std::shared_ptr<scls::__Table_Case> a_table = scls::__Table_Case::new_table();
             // XML code for this table (TEMP)
             std::string a_xml;
         };
@@ -299,7 +299,7 @@ namespace pleos {
             void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
 
             // Returns the final content in the object
-            std::shared_ptr<scls::__XML_Text_Base> final_content();
+            std::shared_ptr<scls::XML_Text_Base> final_content();
 
             // Returns the name of the object
             virtual std::string to_displayed_text();
@@ -379,8 +379,8 @@ namespace pleos {
         // Soft reset the graphic
         virtual void soft_reset();
         // Updates the object
-        void __update_action(__Graphic_Object_Base* object, double used_delta_time);
-        void __update_action(__Graphic_Object_Base* object, __Graphic_Object_Base::Action_Structure* structure, double used_delta_time);
+        bool __update_action(__Graphic_Object_Base* object, double used_delta_time);
+        bool __update_action(__Graphic_Object_Base* object, __Graphic_Object_Base::Action_Structure* structure, double used_delta_time);
         void update_delete();
         virtual void update(double used_delta_time);
 
@@ -475,7 +475,7 @@ namespace pleos {
         void set_form_polygon(Form_2D* needed_form, int polygon);
 
         // Creates and returns a form (and its point)
-        void __new_form_xml(Form_2D* needed_form_2d, std::shared_ptr<scls::__XML_Text_Base> xml);
+        void __new_form_xml(Form_2D* needed_form_2d, std::shared_ptr<scls::XML_Text_Base> xml);
         std::shared_ptr<Form_2D> __new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4);
@@ -485,7 +485,7 @@ namespace pleos {
         template <typename T = Form_2D> std::shared_ptr<T> __new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);to_return.get()->set_unknowns(unknowns_shared_ptr());return to_return;};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return = __new_form<T>(name, parent);add_form(to_return);return to_return;};
         template <typename T = Form_2D> std::shared_ptr<T> new_form(std::string name){return new_form(name, std::weak_ptr<__Graphic_Object_Base>());};
-        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::shared_ptr<scls::__XML_Text_Base> xml){std::shared_ptr<T> created_form = new_form<T>(std::string(), std::weak_ptr<__Graphic_Object_Base>());__new_form_xml(created_form.get(), xml);return created_form;};
+        template <typename T = Form_2D> std::shared_ptr<T> new_form(std::shared_ptr<scls::XML_Text_Base> xml){std::shared_ptr<T> created_form = new_form<T>(std::string(), std::weak_ptr<__Graphic_Object_Base>());__new_form_xml(created_form.get(), xml);return created_form;};
         // Creates and returns a form as a polygon
         std::shared_ptr<Form_2D> new_form_polygon(std::string name, int point_number);
         // Creates and returns a rect / square (and its point)
@@ -664,12 +664,12 @@ namespace pleos {
         //******************
 
         // Physic in a graphic object
-        class Graphic_Physic : public scls::Graphic_Physic {
+        class Graphic_Physic : public scls::Physic_Object {
             // Class representating a physic handler in a graphic object
         public:
 
             // Graphic_Physic constructor
-            Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):scls::Graphic_Physic(attached_transform){a_attached_object = attached_object;};
+            Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object, std::weak_ptr<scls::Transform_Object_2D> attached_transform):scls::Physic_Object(attached_transform){a_attached_object = attached_object;};
             Graphic_Physic(std::weak_ptr<__Graphic_Object_Base> attached_object):Graphic_Physic(attached_object, attached_object.lock().get()->attached_transform_shared_ptr()){};
 
             // Getters and setters
@@ -693,8 +693,10 @@ namespace pleos {
         // Returns a converted physic object
         Graphic_Physic* physic_object(int position){return reinterpret_cast<Graphic_Physic*>(physic_objects().at(position).get());};
         // Returns a physic object by its attached object
+        __Graphic_Object_Base* object_by_physic_object(scls::Physic_Object* attached_object);
+        std::shared_ptr<__Graphic_Object_Base> object_by_physic_object_shared_ptr(scls::Physic_Object* attached_object);
         Graphic_Physic* physic_object_by_attached_object(__Graphic_Object_Base* attached_object);
-        std::shared_ptr<scls::Graphic_Physic> physic_object_by_attached_object_shared_ptr(__Graphic_Object_Base* attached_object);
+        std::shared_ptr<scls::Physic_Object> physic_object_by_attached_object_shared_ptr(__Graphic_Object_Base* attached_object);
         // Returns a list of physic object in a rectr
         std::vector<Graphic_Physic*> physic_objects_in_rect(double x, double y, double width, double height);
 
@@ -704,7 +706,7 @@ namespace pleos {
         // Getters and setters
         inline scls::Physic_Engine* physic_engine() {return &a_physic_engine;};
         inline std::vector<std::vector<std::shared_ptr<scls::Physic_Case>>>& physic_map(){return a_physic_engine.physic_map();};
-        inline std::vector<std::shared_ptr<scls::Graphic_Physic>>& physic_objects(){return a_physic_engine.physic_objects();};
+        inline std::vector<std::shared_ptr<scls::Physic_Object>>& physic_objects(){return a_physic_engine.physic_objects();};
 
         //******************
         //
@@ -746,16 +748,16 @@ namespace pleos {
         bool graphic_from_xml_balise_attribute_texture_object(scls::XML_Attribute& attribute, std::shared_ptr<Graphic_Texture> object, Text_Environment* environment, scls::Text_Style text_style);
 
         // Balises in the graphic
-        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style);
-        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise_action(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, __Graphic_Object_Base::Action_Structure* structure);
-        virtual void __graphic_from_xml_balises(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
-        virtual void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-        void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-        void graphic_from_xml(std::shared_ptr<scls::__XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
+        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style);
+        virtual std::shared_ptr<pleos::__Graphic_Object_Base> graphic_from_xml_balise_action(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, __Graphic_Object_Base::Action_Structure* structure);
+        virtual void __graphic_from_xml_balises(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, int graphic_width_in_pixel, int graphic_height_in_pixel);
+        virtual void graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+        void graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+        void graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment);
 
         // Generates a new line from XML
-        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment){double x_1;double x_2;double y_1;double y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
-        void __new_line_xml(double& x_1, double& x_2, double& y_1, double& y_2, std::shared_ptr<scls::__XML_Text_Base> xml, Text_Environment* environment);
+        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment){double x_1;double x_2;double y_1;double y_2;__new_line_xml(x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);return created_line;}
+        void __new_line_xml(double& x_1, double& x_2, double& y_1, double& y_2, std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment);
 
         //******************
         //
@@ -1059,7 +1061,7 @@ namespace pleos {
         int update_physic(double multiplier);
 
         // Getters and setters
-        inline std::vector<std::shared_ptr<scls::Graphic_Physic>>& physic_objects(){return a_datas.get()->physic_objects();};
+        inline std::vector<std::shared_ptr<scls::Physic_Object>>& physic_objects(){return a_datas.get()->physic_objects();};
 
     private:
 
