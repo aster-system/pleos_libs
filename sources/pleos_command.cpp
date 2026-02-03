@@ -67,6 +67,25 @@ namespace pleos {
             scls::to_image(redaction, s).get()->save_png(file_output);
             return 1;
         }
+        else if(command == std::string_view("stats")) {
+            // Stats command
+
+            // Asserts
+            if(parameters.size() < 1){return PLEOS_COMMAND_NOT_ENOUGH_PARAMETERS;}
+            else if(parameters.size() > 1){return PLEOS_COMMAND_TOO_MUCH_PARAMETERS;}
+
+            // Solve the equation
+            std::string to_solve = parameters.at(0);
+            std::shared_ptr<scls::Statistics> stats = std::make_shared<scls::Statistics>();
+            stats.get()->load_from_xml(to_solve);
+
+            // Write the result
+            scls::Text_Style s;s.set_max_width(600);
+            scls::Text_Image_Generator tig;
+            pleos::load_balises_pleos(tig.balises_shared_ptr());
+            scls::histogram(stats.get()).save_png(file_output);
+            return 1;
+        }
         else if(command == std::string_view("study")) {
             // Solve command
 
