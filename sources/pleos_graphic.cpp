@@ -670,9 +670,16 @@ namespace pleos {
             // Precise points
             std::vector<std::string> cutted = scls::cut_string(points_value, ";");
             for(int i = 0;i<static_cast<int>(cutted.size());i++){
-                std::shared_ptr<__Graphic_Object_Base> needed_point = object_by_name_shared_ptr(cutted[i]);
-                if(needed_point.get() != 0){needed_form->add_point(needed_point);}
-                else{scls::print(std::string("PLEOS Graphic"), std::string("Unknown point \"") + cutted.at(i) + std::string("\" for the form \"") + needed_form->name() + "\".");}
+                scls::Function_Called_Text f = scls::parse_function_call(cutted[i]);
+                if(f.error == SCLS_FUNCTION_CALLED_TEXT_NOT_FUNCTION) {
+                    std::shared_ptr<__Graphic_Object_Base> needed_point = object_by_name_shared_ptr(cutted[i]);
+                    if(needed_point.get() != 0){needed_form->add_point(needed_point);}
+                    else{scls::print(std::string("PLEOS Graphic"), std::string("Unknown point \"") + cutted.at(i) + std::string("\" for the form \"") + needed_form->name() + "\".");}
+                }
+                else if(f.name == std::string_view("last_object")) {
+                    int p = scls::string_to_double(f.parameters.at(0));
+                    needed_form->add_point_external(a_objects.at(a_objects.size() - (1 + p)));
+                }
             }
         }
     };
