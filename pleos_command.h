@@ -30,13 +30,15 @@
 // Include SCLS Graphic Benoit
 #include "pleos_text.h"
 
+// Possible errors
+constexpr int PLEOS_COMMAND_NOT_ENOUGH_PARAMETERS = -1;
+constexpr int PLEOS_COMMAND_TOO_MUCH_PARAMETERS = -2;
+constexpr int PLEOS_COMMAND_UNKNOWN_COMMAND = -3;
+
+constexpr int PLEOS_COMMAND_INTERNAL_ERROR = -100000;
+
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
-
-    // Possible errors
-    constexpr int PLEOS_COMMAND_NOT_ENOUGH_PARAMETERS = -1;
-    constexpr int PLEOS_COMMAND_TOO_MUCH_PARAMETERS = -2;
-    constexpr int PLEOS_COMMAND_UNKNOWN_COMMAND = -3;
 
     // Executes a command
     int execute(std::string command, std::string file_output, std::vector<std::string> parameters);
