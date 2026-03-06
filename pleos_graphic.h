@@ -29,6 +29,7 @@
 
 // Include SCLS Graphic Benoit
 #include "pleos_mathematics.h"
+#include <list>
 
 // The namespace "pleos" is used to simplify the all.
 namespace pleos {
@@ -355,6 +356,12 @@ namespace pleos {
         // Clears the actions of the graphic
         void clear_actions();
 
+        // Adds a signal
+        void add_signal(std::string new_signal);
+
+        // Returns if the graphic contains a signal
+        bool contains_signal(std::string signal_to_test);
+
         //******************
         // Graphic handling
         //******************
@@ -479,7 +486,7 @@ namespace pleos {
         std::shared_ptr<Form_2D> __new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3,double x_4, double y_4);
         std::shared_ptr<Form_2D> new_form(std::string name, double x_1, double y_1, double x_2, double y_2, double x_3, double y_3, double x_4, double y_4);
-        std::shared_ptr<Form_2D> new_form(std::string name, std::vector<std::shared_ptr<Point_2D>> points);
+        std::shared_ptr<Form_2D> new_form(std::string name, std::vector<std::shared_ptr<__Graphic_Object_Base>> points);
         std::shared_ptr<Form_2D> new_form(std::string name, __Graphic_Object_Base* parent);
         std::shared_ptr<Form_2D> new_form(std::string name, std::string points);
         template <typename T = Form_2D> std::shared_ptr<T> __new_form(std::string name, std::weak_ptr<__Graphic_Object_Base> parent){std::shared_ptr<T>to_return;to_return.reset(new T(graphic_base_shared_ptr(), name));to_return.get()->set_this_object(to_return);to_return.get()->set_parent(parent);to_return.get()->set_unknowns(unknowns_shared_ptr());return to_return;};
@@ -624,6 +631,7 @@ namespace pleos {
         inline bool draw_base() const {return a_draw_base;};
         inline bool draw_sub_bases() const {return a_draw_sub_bases;};
         inline bool eco_mode() const {return a_graphic_base.get()->a_eco_mode;};
+        inline std::shared_ptr<pleos::Text_Environment> environment_shared_ptr() const {return graphic_base()->a_environment;};
         inline std::vector<std::shared_ptr<Form_2D>>& forms_2d(){return a_forms_2d;};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
@@ -785,9 +793,12 @@ namespace pleos {
         //******************
 
         // Actions to do
-        std::shared_ptr<__Graphic_Object_Base::Action_Container> a_actions = std::make_shared<__Graphic_Object_Base::Action_Container>();
+        std::shared_ptr<__Graphic_Object_Base::Action_Thread> a_actions = std::make_shared<__Graphic_Object_Base::Action_Thread>();
         // Actions function
         std::vector<std::shared_ptr<__Graphic_Object_Base::Action_Function>> a_actions_functions = std::vector<std::shared_ptr<__Graphic_Object_Base::Action_Function>>();
+
+        // Signal system
+        std::list<std::string> a_signals = std::list<std::string>();
 
         //******************
         // Texture handling
@@ -1080,6 +1091,10 @@ namespace pleos {
         // Current object
         std::shared_ptr<Form_2D> a_current_form_2d;
     };
+
+    // Creates a graphic from XML
+    std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
+    scls::Image graphic_image_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
 }
 
 #endif // PLEOS_GRAPHIC

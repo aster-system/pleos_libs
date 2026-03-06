@@ -53,10 +53,6 @@ namespace pleos {
 	//
 	//*********
 
-	// Creates and returns a graphic from an std::string
-    std::shared_ptr<Graphic> graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, int& graphic_width_in_pixel, int& graphic_height_in_pixel);
-	std::shared_ptr<scls::__Image_Base> graphic_image_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
-
 	// Creates and returns a linked-list from an std::string
 	std::shared_ptr<Linked_List> linked_list_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style);
 

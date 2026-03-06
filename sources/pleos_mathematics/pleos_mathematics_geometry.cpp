@@ -194,6 +194,14 @@ namespace pleos {
         else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
     }
 
+    // Sets a lof of external points
+    void Form_2D::set_external_points(std::vector<std::shared_ptr<__Graphic_Object_Base>> new_points) {
+        a_points.clear();
+        for(std::size_t i = 0;i<new_points.size();i++) {
+            add_point_external(new_points.at(i));
+        }
+    }
+
     // Returns this object to an XML text
     std::string Form_2D::to_displayed_text(){return std::string("forme");}
     std::string Form_2D::to_xml_text() {

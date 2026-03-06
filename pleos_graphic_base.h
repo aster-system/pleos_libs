@@ -87,18 +87,19 @@ namespace pleos {
         // Action than the robot can do
         struct Action {
             #define ACTION_ACCELERATE -2
-            #define ACTION_CONTAINER -1
+            #define ACTION_THREAD -1
             #define ACTION_DELETE 0
-            #define ACTION_FUNCTION 1
-            #define ACTION_FUNCTION_CALL 2
-            #define ACTION_LOOP 3
-            #define ACTION_MOVE 4
-            #define ACTION_ROTATE 5
-            #define ACTION_SET_PARAMETER 6
-            #define ACTION_STOP 7
-            #define ACTION_STRUCTURE 8
-            #define ACTION_WAIT 9
-            #define ACTION_WAIT_UNTIL 10
+            #define ACTION_EXECUTE 1
+            #define ACTION_FUNCTION 2
+            #define ACTION_FUNCTION_CALL 3
+            #define ACTION_LOOP 4
+            #define ACTION_MOVE 5
+            #define ACTION_ROTATE 6
+            #define ACTION_SET_PARAMETER 7
+            #define ACTION_STOP 8
+            #define ACTION_STRUCTURE 9
+            #define ACTION_WAIT 10
+            #define ACTION_WAIT_UNTIL 11
 
             // Action constructor
             Action(short action_type):type(action_type){};
@@ -165,6 +166,22 @@ namespace pleos {
 
             // To delete
             char to_delete = ACTION_DELETE_OBJECT;
+        };
+        // Execute action
+        struct Action_Execute : public Action {
+
+            // Action_Execute constructor
+            Action_Execute():Action(ACTION_EXECUTE){};
+            Action_Execute(std::shared_ptr<scls::XML_Text_Base> execute):Action_Execute(){to_execute = execute;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+            // Content to execute
+            std::shared_ptr<scls::XML_Text_Base> to_execute;
         };
         // Move action
         struct Action_Move : public Action {
@@ -374,12 +391,12 @@ namespace pleos {
             int a_repetition = 1;
         };
 
-        // Container of actions
-        struct Action_Container : public Action_Structure {
-            // Action container
+        // Thread of actions
+        struct Action_Thread : public Action_Structure {
+            // Action thread
 
-            // Action_Container constructor
-            Action_Container():Action_Structure(ACTION_CONTAINER){};
+            // Action_Thread constructor
+            Action_Thread():Action_Structure(ACTION_THREAD){};
 
             // Adds an accelerate action
             void add_action_accelerate(double x, double y){std::shared_ptr<Action_Accelerate> action = std::make_shared<Action_Accelerate>(x, y);actions().push_back(action);};
@@ -435,7 +452,7 @@ namespace pleos {
         short next_action_type() const;
 
         // Getters and setters
-        inline Action_Container* actions() {return a_actions.get();};
+        inline Action_Thread* actions() {return a_actions.get();};
         inline std::vector<std::shared_ptr<Action>>& actions_list(){return a_actions.get()->actions();};
 
         //******************
@@ -678,7 +695,7 @@ namespace pleos {
         //******************
 
         // Actions to do
-        std::shared_ptr<Action_Container> a_actions = std::make_shared<Action_Container>();
+        std::shared_ptr<Action_Thread> a_actions = std::make_shared<Action_Thread>();
 
         //******************
         // Main attributes

@@ -49,6 +49,7 @@ namespace pleos {
     // Clone actions
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Accelerate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Accelerate> new_action = std::make_shared<__Graphic_Object_Base::Action_Accelerate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->x = x;new_action.get()->y = y;return new_action;}
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Delete::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Delete> new_action = std::make_shared<__Graphic_Object_Base::Action_Delete>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_delete = to_delete;return new_action;}
+    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Execute::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Execute> new_action = std::make_shared<__Graphic_Object_Base::Action_Execute>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_execute = to_execute.get()->clone();return new_action;}
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Function_Call::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Function_Call> new_action = std::make_shared<__Graphic_Object_Base::Action_Function_Call>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->function_name = function_name;return new_action;}
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Move::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Move> new_action = std::make_shared<__Graphic_Object_Base::Action_Move>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->speed = speed;new_action.get()->x_end = x_end;new_action.get()->y_end = y_end;return new_action;}
     std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Rotate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Rotate> new_action = std::make_shared<__Graphic_Object_Base::Action_Rotate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->rotation_end = rotation_end;new_action.get()->speed = speed;return new_action;}
@@ -78,6 +79,8 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_y(){return std::string(" y=") + scls::Fraction::from_double(y).to_std_string(0);}
     // Action delete
     std::string __Graphic_Object_Base::Action_Delete::to_xml_text_name(){return std::string("action_delete");}
+    // Action execute
+    std::string __Graphic_Object_Base::Action_Execute::to_xml_text_name(){return std::string("action_execute");}
     // Action function
     std::string __Graphic_Object_Base::Action_Function::to_xml_text_name(){return std::string("action_function");}
     std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_function_name() +  std::string(">");}
@@ -142,19 +145,19 @@ namespace pleos {
     // Returns a last action
     __Graphic_Object_Base::Action* __Graphic_Object_Base::last_action() const {return a_actions.get()->last_action();};
     __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::last_action() const {if(static_cast<int>(a_actions.size()) <= 0){return 0;}return a_actions.at(0).get();};
-    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::Action_Container::last_action_delete() const{if(last_action() == 0 || last_action()->type != ACTION_DELETE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(last_action());};
+    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::Action_Thread::last_action_delete() const{if(last_action() == 0 || last_action()->type != ACTION_DELETE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(last_action());};
     __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::last_action_delete() const{return a_actions.get()->last_action_delete();};
-    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::Action_Container::last_action_loop() const{if(last_action() == 0 || last_action()->type != ACTION_LOOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(last_action());}
+    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::Action_Thread::last_action_loop() const{if(last_action() == 0 || last_action()->type != ACTION_LOOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(last_action());}
     __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::last_action_loop() const{return a_actions.get()->last_action_loop();}
-    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::Action_Container::last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Move*>(last_action());};
+    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::Action_Thread::last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Move*>(last_action());};
     __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::last_action_move() const {return a_actions.get()->last_action_move();};
-    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::Action_Container::last_action_set_parameter() const {if(last_action() == 0 || last_action()->type != ACTION_SET_PARAMETER){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(last_action());};
+    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::Action_Thread::last_action_set_parameter() const {if(last_action() == 0 || last_action()->type != ACTION_SET_PARAMETER){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(last_action());};
     __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::last_action_set_parameter() const {return a_actions.get()->last_action_set_parameter();};
-    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::Action_Container::last_action_stop() const {if(last_action() == 0 || last_action()->type != ACTION_STOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Stop*>(last_action());};
+    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::Action_Thread::last_action_stop() const {if(last_action() == 0 || last_action()->type != ACTION_STOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Stop*>(last_action());};
     __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::last_action_stop() const {return a_actions.get()->last_action_stop();};
     short __Graphic_Object_Base::Action_Structure::last_action_type() const {return last_action()->type;};
     short __Graphic_Object_Base::last_action_type() const {return a_actions.get()->last_action_type();};
-    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::Action_Container::last_action_wait() const {if(last_action() == 0 || last_action()->type != ACTION_WAIT){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(last_action());};
+    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::Action_Thread::last_action_wait() const {if(last_action() == 0 || last_action()->type != ACTION_WAIT){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(last_action());};
     __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::last_action_wait() const {return a_actions.get()->last_action_wait();};
     // Returns the next action
     __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::next_action() const{if(static_cast<int>(a_actions.size()) <= a_current_action){return 0;}return a_actions.at(a_current_action).get();}

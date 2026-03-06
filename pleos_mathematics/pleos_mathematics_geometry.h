@@ -118,6 +118,8 @@ namespace pleos {
         // Sets a parameter by its name
         virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_name, double proportion);
 
+        // Sets a lof of external points
+        void set_external_points(std::vector<std::shared_ptr<__Graphic_Object_Base>> new_points);
         // Returns a list of the points triangulated
         void triangulate_points_external();
         std::vector<std::shared_ptr<Point_2D>> triangulated_points_external();

@@ -48,6 +48,20 @@ namespace pleos {
             g.to_image().get()->save_png(file_output);
             return 1;
         }
+        else if(command == std::string_view("graphic")) {
+            // Solve command
+
+            // Asserts
+            if(parameters.size() < 1){return PLEOS_COMMAND_NOT_ENOUGH_PARAMETERS;}
+            else if(parameters.size() > 1){return PLEOS_COMMAND_TOO_MUCH_PARAMETERS;}
+
+            // Write the result
+            std::string to_solve = parameters.at(0);
+            std::shared_ptr<scls::_Balise_Style_Container> b = std::make_shared<scls::_Balise_Style_Container>();
+            pleos::load_balises_pleos(b);scls::Text_Style s;
+            pleos::graphic_image_from_xml(scls::xml(b, to_solve), s).save_png(file_output);
+            return 1;
+        }
         else if(command == std::string_view("solve")) {
             // Solve command
 
@@ -105,6 +119,20 @@ namespace pleos {
             scls::Text_Image_Generator tig;
             pleos::load_balises_pleos(tig.balises_shared_ptr());
             tig.image_shared_ptr<pleos::Text>(redaction, s).get()->save_png(file_output);
+            return 1;
+        }
+        else if(command == std::string_view("table")) {
+            // Solve command
+
+            // Asserts
+            if(parameters.size() < 1){return PLEOS_COMMAND_NOT_ENOUGH_PARAMETERS;}
+            else if(parameters.size() > 1){return PLEOS_COMMAND_TOO_MUCH_PARAMETERS;}
+
+            // Write the result
+            std::string to_solve = parameters.at(0);
+            std::shared_ptr<scls::_Balise_Style_Container> b = std::make_shared<scls::_Balise_Style_Container>();
+            pleos::load_balises_pleos(b);scls::Text_Style s;scls::print("PLEOS", to_solve);
+            scls::table_from_xml<Table>(scls::xml(b, to_solve), s).get()->to_image().save_png(file_output);
             return 1;
         }
 
