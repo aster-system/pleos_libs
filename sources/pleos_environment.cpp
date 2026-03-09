@@ -103,6 +103,9 @@ namespace pleos {
         defined_balises.get()->set_defined_balise("repeat", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();
         current_balise.get()->has_content = true;
+        defined_balises.get()->set_defined_balise("set", current_balise);
+        current_balise = std::make_shared<scls::Balise_Style_Datas>();
+        current_balise.get()->has_content = true;
         current_balise.get()->style.set_margin_bottom(16);
         defined_balises.get()->set_defined_balise("table", current_balise);
         current_balise = std::make_shared<scls::Balise_Style_Datas>();

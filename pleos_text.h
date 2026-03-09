@@ -89,10 +89,10 @@ namespace pleos {
     };
 
     // Final Table
-    class Table : public scls::__Table_Case {
+    class Table : public scls::Table_Base {
     public:
         // Table constructor
-        Table():scls::__Table_Case(){};
+        Table():scls::Table_Base(){};
 
         // Set the value of an std::string case
         virtual std::shared_ptr<scls::__Image_Base> case_image_from_text(std::string value, scls::Text_Style needed_style, scls::Text_Image_Generator* tig);

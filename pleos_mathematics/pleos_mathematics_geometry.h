@@ -113,6 +113,9 @@ namespace pleos {
         std::shared_ptr<Point_2D> new_point(double x, double y);
         std::shared_ptr<Point_2D> new_point(scls::Point_2D point);
 
+        // Adds a collision mesh to a physic object
+        void add_collision_mesh(scls::Physic_Object* object);
+
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter_name);
         // Sets a parameter by its name

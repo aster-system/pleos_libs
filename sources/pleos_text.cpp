@@ -505,7 +505,7 @@ namespace pleos {
     void GUI_Text::__GUI_Text_Block_Graphic::update_texture(std::shared_ptr<scls::Text_Image_Block> block_to_apply, scls::Image_Generation_Type generation_type){
         int height=0;int width=0;
         graphic()->set_style(block_to_apply.get()->global_style());
-        graphic()->graphic_from_xml(block_to_apply.get()->datas()->content, block_to_apply.get()->global_style(), width, height);
+        graphic()->graphic_from_xml(block_to_apply.get()->datas()->content, block_to_apply.get()->global_style(), &width, &height);
 
         // Update the size
         graphic_object()->set_height_in_pixel(height);

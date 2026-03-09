@@ -54,6 +54,15 @@ namespace pleos {
     //
     //******************
 
+    // Adds a collision mesh to a physic object
+    void Form_2D::add_collision_mesh(scls::Physic_Object* object) {
+    	std::vector<scls::Point_2D> points = std::vector<scls::Point_2D>(a_points.size());
+    	for(std::size_t i = 0;i<a_points.size();i++){
+    		points[i] = a_points.at(i).get()->absolute_position();
+    	}
+    	object->add_collisions(points);
+    }
+
     // Adds an exclusion point to the form
     void Form_2D::add_exclusion_point(std::shared_ptr<Point_2D> point){a_exclusion_points.push_back(point);};
 

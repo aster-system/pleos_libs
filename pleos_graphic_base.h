@@ -614,6 +614,7 @@ namespace pleos {
         inline double opacity() const {return a_opacity;};
         inline __Graphic_Object_Base* parent() const {return a_parent.lock().get();};
         inline scls::Point_2D position() const {return a_transform.get()->position();};
+        inline scls::Point_2D real_velocity() const {return a_transform.get()->real_velocity();};
         inline void rotate(scls::Fraction needed_rotation) const {a_transform.get()->rotate(needed_rotation);}
         inline scls::Fraction rotation() const {return a_transform.get()->rotation();}
         inline bool save_to_xml_text() const {return a_save_to_xml_text;};
