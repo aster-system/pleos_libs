@@ -68,7 +68,6 @@ namespace pleos {
         scls::Image needed_texture = a_last_texture;
 
         // Paste the image
-        if(rotation() != 0){needed_texture.rotate(rotation().to_double());}
         needed_x = graphic_x_to_pixel_x(absolute_x()) - needed_texture.width() / 2;
         needed_y = graphic_y_to_pixel_y_inversed(absolute_y()) - needed_texture.height() / 2;
         image.get()->paste(needed_texture, needed_x, needed_y, opacity());
@@ -78,6 +77,8 @@ namespace pleos {
     // Coordinates datas
     int Graphic::Graphic_Texture::graphic_x_to_texture_x(scls::Fraction x){scls::Fraction local_x = x - min_x();return ((local_x / width()).to_double() * static_cast<double>(texture()->width()));}
     int Graphic::Graphic_Texture::graphic_y_to_texture_y(scls::Fraction y){scls::Fraction local_y = y - min_y();return (static_cast<double>(texture()->height()) - (local_y / height()).to_double() * static_cast<double>(texture()->height()));}
+    double Graphic::Graphic_Texture::texture_x_to_graphic_x(int x){double normal = (attached_transform()->absolute_x() - attached_transform()->absolute_scale_x() / 2) + ((static_cast<double>(x) / a_texture.get()->width()) * attached_transform()->absolute_scale_x());return normal;}
+    double Graphic::Graphic_Texture::texture_y_to_graphic_y(int y){double normal = (attached_transform()->absolute_y() - attached_transform()->absolute_scale_y() / 2) + ((static_cast<double>(y) / a_texture.get()->height()) * attached_transform()->absolute_scale_y());return normal;}
 
     // Loads the last texture of the object
     void Graphic::Graphic_Texture::load_last_texture(){
@@ -101,6 +102,9 @@ namespace pleos {
             }
         }
         else {a_last_texture = texture_shared_ptr();}
+
+        // Rotation
+        if(rotation() != 0){a_last_texture.get()->rotate(rotation().to_double());}
     }
 
     // Returns the source to a XML text

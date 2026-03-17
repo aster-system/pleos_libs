@@ -108,6 +108,11 @@ namespace pleos {
             // Coordinates datas
             int graphic_x_to_texture_x(scls::Fraction x);
             int graphic_y_to_texture_y(scls::Fraction y);
+            double texture_x_to_graphic_x(int x);
+            double texture_y_to_graphic_y(int y);
+
+            // Update the texture
+            void update_texture(){a_last_texture.reset();};
 
             // Returns the source to a XML text
             virtual std::string to_displayed_text();
@@ -121,7 +126,7 @@ namespace pleos {
             inline scls::__Image_Base* last_texture() const {return a_last_texture.get();};
             inline void set_source(std::string new_source) {a_source = new_source;}
             inline void set_texture(scls::Image new_texture){set_texture(new_texture.image_shared_ptr());};
-            inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();a_last_texture.reset();};
+            inline void set_texture(std::shared_ptr<scls::__Image_Base> new_texture){a_texture=new_texture;a_source=std::string();update_texture();};
             inline void set_texture(std::string path){if(path != std::string()){set_texture(std::make_shared<scls::__Image_Base>(path));}a_source=path;};
             inline void set_texture_displaying(std::string new_texture_displaying){if(new_texture_displaying == std::string("fill")){set_texture_displaying(Texture_Displaying::TD_Fill);}else if(new_texture_displaying == std::string("from_height")){set_texture_displaying(Texture_Displaying::TD_From_Height);}else if(new_texture_displaying == std::string("from_width")){set_texture_displaying(Texture_Displaying::TD_From_Width);}else if(new_texture_displaying == std::string("pixel_size")){set_texture_displaying(Texture_Displaying::TD_Pixel_Size);}}
             inline void set_texture_displaying(Texture_Displaying new_texture_displaying){a_texture_displaying = new_texture_displaying;}
