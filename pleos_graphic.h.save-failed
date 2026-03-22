@@ -361,6 +361,9 @@ namespace pleos {
         // Action handling
         //******************
 
+        // Returns the entire action container
+        scls::Action_Container* actions_container() const {return a_actions.get();};
+
         // Returns an action function by its name
         __Graphic_Object_Base::Action_Function* action_function_by_name(std::string needed_name);
         std::shared_ptr<__Graphic_Object_Base::Action_Function> action_function_by_name_shared_ptr(std::string needed_name);

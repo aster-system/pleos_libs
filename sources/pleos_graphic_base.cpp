@@ -47,31 +47,23 @@ namespace pleos {
     scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());}
 
     // Clone actions
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Accelerate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Accelerate> new_action = std::make_shared<__Graphic_Object_Base::Action_Accelerate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->x = x;new_action.get()->y = y;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Delete::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Delete> new_action = std::make_shared<__Graphic_Object_Base::Action_Delete>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_delete = to_delete;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Execute::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Execute> new_action = std::make_shared<__Graphic_Object_Base::Action_Execute>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_execute = to_execute.get()->clone();return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Function_Call::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Function_Call> new_action = std::make_shared<__Graphic_Object_Base::Action_Function_Call>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->function_name = function_name;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Move::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Move> new_action = std::make_shared<__Graphic_Object_Base::Action_Move>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->speed = speed;new_action.get()->x_end = x_end;new_action.get()->y_end = y_end;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Rotate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Rotate> new_action = std::make_shared<__Graphic_Object_Base::Action_Rotate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->rotation_end = rotation_end;new_action.get()->speed = speed;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Set_Parameter::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Set_Parameter> new_action = std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->parameter_name = parameter_name;new_action.get()->parameter_value = parameter_value;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Stop::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Stop> new_action = std::make_shared<__Graphic_Object_Base::Action_Stop>(duration);return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Wait::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Wait_Until::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait_Until> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait_Until>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;return new_action;}
-    // Clone a structure
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Structure::clone(){return clone_as_structure();}
-    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Structure::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Structure> new_action = std::make_shared<__Graphic_Object_Base::Action_Structure>(type);clone_content(new_action);return new_action;}
-    void __Graphic_Object_Base::Action_Structure::clone_content(std::shared_ptr<Action_Structure> target){for(int i = 0;i<static_cast<int>(a_actions.size());i++){target.get()->add_action(a_actions.at(i).get()->clone());}}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Accelerate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Accelerate> new_action = std::make_shared<__Graphic_Object_Base::Action_Accelerate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->x = x;new_action.get()->y = y;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Delete::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Delete> new_action = std::make_shared<__Graphic_Object_Base::Action_Delete>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_delete = to_delete;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Emit::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Emit> new_action = std::make_shared<__Graphic_Object_Base::Action_Emit>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_emit = to_emit;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Execute::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Execute> new_action = std::make_shared<__Graphic_Object_Base::Action_Execute>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->to_execute = to_execute.get()->clone();return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Function_Call::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Function_Call> new_action = std::make_shared<__Graphic_Object_Base::Action_Function_Call>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->function_name = function_name;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Move::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Move> new_action = std::make_shared<__Graphic_Object_Base::Action_Move>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->speed = speed;new_action.get()->x_end = x_end;new_action.get()->y_end = y_end;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Rotate::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Rotate> new_action = std::make_shared<__Graphic_Object_Base::Action_Rotate>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->rotation_end = rotation_end;new_action.get()->speed = speed;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Set_Parameter::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Set_Parameter> new_action = std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;new_action.get()->parameter_name = parameter_name;new_action.get()->parameter_value = parameter_value;new_action.get()->target = target;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Stop::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Stop> new_action = std::make_shared<__Graphic_Object_Base::Action_Stop>(duration);return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Wait::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;return new_action;}
+    std::shared_ptr<scls::Action> __Graphic_Object_Base::Action_Wait_Until::clone(){std::shared_ptr<__Graphic_Object_Base::Action_Wait_Until> new_action = std::make_shared<__Graphic_Object_Base::Action_Wait_Until>();new_action.get()->duration = duration;new_action.get()->direct_pass_at_end = direct_pass_at_end;return new_action;}
     // Complex structures
     std::shared_ptr<__Graphic_Object_Base::Action_Function> __Graphic_Object_Base::Action_Function::clone_as_function() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Function::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
-    std::shared_ptr<__Graphic_Object_Base::Action_Structure> __Graphic_Object_Base::Action_Loop::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Loop> new_action = std::make_shared<__Graphic_Object_Base::Action_Loop>();new_action.get()->a_repetition = a_repetition;clone_content(new_action);return new_action;}
+    std::shared_ptr<scls::Action_Structure> __Graphic_Object_Base::Action_Function::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
+    std::shared_ptr<scls::Action_Structure> __Graphic_Object_Base::Action_Loop::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Loop> new_action = std::make_shared<__Graphic_Object_Base::Action_Loop>();new_action.get()->a_repetition = a_repetition;clone_content(new_action);return new_action;}
 
     // Returns the action to a XML text
-    // Action
-    std::string __Graphic_Object_Base::Action::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_time() + std::string(">");}
-    std::string __Graphic_Object_Base::Action::to_xml_text_name(){return std::string("action");}
-    std::string __Graphic_Object_Base::Action::to_xml_text_object(std::string object_name){if(object_name == std::string()){return std::string();}return std::string(" object=\"") + object_name + std::string("\"");}
-    std::string __Graphic_Object_Base::Action::to_xml_text_time() const{if(duration == 0){return std::string();}return std::string(" time=") + scls::Fraction::from_double(duration).to_std_string(0);}
     // Action accelerate
     std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_x() + to_xml_text_y() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_name(){return std::string("action_accelerate");}
@@ -79,6 +71,8 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Accelerate::to_xml_text_y(){return std::string(" y=") + scls::Fraction::from_double(y).to_std_string(0);}
     // Action delete
     std::string __Graphic_Object_Base::Action_Delete::to_xml_text_name(){return std::string("action_delete");}
+    // Action emit
+    std::string __Graphic_Object_Base::Action_Emit::to_xml_text_name(){return std::string("action_emit");}
     // Action execute
     std::string __Graphic_Object_Base::Action_Execute::to_xml_text_name(){return std::string("action_execute");}
     // Action function
@@ -105,9 +99,6 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Set_Parameter::to_xml_text_value()const{return std::string(" value=") + parameter_value;}
     // Action stop
     std::string __Graphic_Object_Base::Action_Stop::to_xml_text_name(){return std::string("action_stop");}
-    // Action structure
-    std::string __Graphic_Object_Base::Action_Structure::to_xml_text_content(){std::string content = std::string();for(int i = 0;i<static_cast<int>(a_actions.size());i++){content += a_actions.at(i).get()->to_xml_text(std::string());if(i<static_cast<int>(a_actions.size())-1){content+=std::string("\n");}}return content;}
-    std::string __Graphic_Object_Base::Action_Structure::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + std::string(">\n") + to_xml_text_content() + std::string("\n</") + to_xml_text_name() + std::string(">");}
     // Action wait
     std::string __Graphic_Object_Base::Action_Wait::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_duration() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Wait::to_xml_text_duration(){return std::string(" duration=") + scls::Fraction::from_double(duration).to_std_string(0);}
@@ -129,41 +120,28 @@ namespace pleos {
     // Returns if the object contains a specific tag
     bool __Graphic_Object_Base::contains_tag(std::string tag){for(int i=0;i<static_cast<int>(a_tags.size());i++){if(a_tags.at(i)==tag){return true;}}return false;}
 
-    // Adds an action
-    std::shared_ptr<__Graphic_Object_Base::Action> __Graphic_Object_Base::Action_Structure::add_action(std::shared_ptr<__Graphic_Object_Base::Action> needed_action){a_actions.push_back(needed_action);return needed_action;}
     // Clears the actions
-    void __Graphic_Object_Base::Action_Structure::clear_actions(){a_actions.clear();a_current_action = 0;};
-    void __Graphic_Object_Base::clear_actions(){a_actions.get()->clear_actions();};
+    void __Graphic_Object_Base::clear_actions(){actions()->clear_actions();};
     // Deletes the last action
-    void __Graphic_Object_Base::Action_Structure::delete_last_action(){if(a_actions.size() > 0){a_actions.erase(a_actions.begin());}};
-    void __Graphic_Object_Base::delete_last_action(){a_actions.get()->delete_last_action();};
-    // Go to the next action
-    void __Graphic_Object_Base::Action_Structure::go_to_first_action(){a_current_action=0;__Graphic_Object_Base::Action* action = next_action();if(action != 0){action->soft_reset();}}
-    void __Graphic_Object_Base::Action_Structure::go_to_next_action(){a_current_action++;__Graphic_Object_Base::Action* action = next_action();if(action != 0){action->soft_reset();}}
-    // If the current action is the end action
-    bool __Graphic_Object_Base::Action_Structure::is_end_action() const{return a_current_action >= static_cast<int>(a_actions.size());}
+    void __Graphic_Object_Base::delete_last_action(){actions()->delete_last_action();};
     // Returns a last action
-    __Graphic_Object_Base::Action* __Graphic_Object_Base::last_action() const {return a_actions.get()->last_action();};
-    __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::last_action() const {if(static_cast<int>(a_actions.size()) <= 0){return 0;}return a_actions.at(0).get();};
+    scls::Action* __Graphic_Object_Base::last_action() const {return actions()->last_action();};
     __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::Action_Thread::last_action_delete() const{if(last_action() == 0 || last_action()->type != ACTION_DELETE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(last_action());};
-    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::last_action_delete() const{return a_actions.get()->last_action_delete();};
+    __Graphic_Object_Base::Action_Delete* __Graphic_Object_Base::last_action_delete() const{return actions()->last_action_delete();};
     __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::Action_Thread::last_action_loop() const{if(last_action() == 0 || last_action()->type != ACTION_LOOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(last_action());}
-    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::last_action_loop() const{return a_actions.get()->last_action_loop();}
+    __Graphic_Object_Base::Action_Loop* __Graphic_Object_Base::last_action_loop() const{return actions()->last_action_loop();}
     __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::Action_Thread::last_action_move() const {if(last_action() == 0 || last_action()->type != ACTION_MOVE){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Move*>(last_action());};
-    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::last_action_move() const {return a_actions.get()->last_action_move();};
+    __Graphic_Object_Base::Action_Move* __Graphic_Object_Base::last_action_move() const {return actions()->last_action_move();};
     __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::Action_Thread::last_action_set_parameter() const {if(last_action() == 0 || last_action()->type != ACTION_SET_PARAMETER){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(last_action());};
-    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::last_action_set_parameter() const {return a_actions.get()->last_action_set_parameter();};
+    __Graphic_Object_Base::Action_Set_Parameter* __Graphic_Object_Base::last_action_set_parameter() const {return actions()->last_action_set_parameter();};
     __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::Action_Thread::last_action_stop() const {if(last_action() == 0 || last_action()->type != ACTION_STOP){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Stop*>(last_action());};
-    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::last_action_stop() const {return a_actions.get()->last_action_stop();};
-    short __Graphic_Object_Base::Action_Structure::last_action_type() const {return last_action()->type;};
-    short __Graphic_Object_Base::last_action_type() const {return a_actions.get()->last_action_type();};
+    __Graphic_Object_Base::Action_Stop* __Graphic_Object_Base::last_action_stop() const {return actions()->last_action_stop();};
+    short __Graphic_Object_Base::last_action_type() const {return actions()->last_action_type();};
     __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::Action_Thread::last_action_wait() const {if(last_action() == 0 || last_action()->type != ACTION_WAIT){return 0;}return reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(last_action());};
-    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::last_action_wait() const {return a_actions.get()->last_action_wait();};
+    __Graphic_Object_Base::Action_Wait* __Graphic_Object_Base::last_action_wait() const {return actions()->last_action_wait();};
     // Returns the next action
-    __Graphic_Object_Base::Action* __Graphic_Object_Base::Action_Structure::next_action() const{if(static_cast<int>(a_actions.size()) <= a_current_action){return 0;}return a_actions.at(a_current_action).get();}
-    __Graphic_Object_Base::Action* __Graphic_Object_Base::next_action() const{return a_actions.get()->next_action();}
-    short __Graphic_Object_Base::Action_Structure::next_action_type() const{__Graphic_Object_Base::Action* action = next_action();if(action==0){return 0;}return action->type;}
-    short __Graphic_Object_Base::next_action_type() const{return a_actions.get()->next_action_type();}
+    scls::Action* __Graphic_Object_Base::next_action() const{return actions()->next_action();}
+    short __Graphic_Object_Base::next_action_type() const{return actions()->next_action_type();}
 
     // Returns a color adapted with the needed opacity
     scls::Color __Graphic_Object_Base::color_with_absolute_opacity(scls::Color needed_color)const{needed_color.set_alpha(static_cast<double>(needed_color.alpha()) * absolute_opacity());return needed_color;};
@@ -240,6 +218,7 @@ namespace pleos {
     // Returns a parameter by its name
     std::string __Graphic_Object_Base::parameter(std::string parameter_name) {
         if(parameter_name == std::string("opacity")){return scls::Fraction::from_double(opacity()).to_std_string(0);}
+        else if(parameter_name == std::string("y")){return scls::Fraction::from_double(y()).to_std_string(0);}
         return std::string();
     }
     // Sets a parameter by its name
@@ -252,8 +231,8 @@ namespace pleos {
         }
         else if(parameter_name == std::string("height")){double current = scls::string_to_double(parameter_value);set_height(current);}
         else if(parameter_name == std::string("width")){double current = scls::string_to_double(parameter_value);set_width(current);}
-        else if(parameter_name == std::string("x")){double current = scls::string_to_double(parameter_value);set_x(current);}
-        else if(parameter_name == std::string("y")){double current = scls::string_to_double(parameter_value);set_y(current);}
+        else if(parameter_name == std::string("x")){double start = scls::string_to_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
+        else if(parameter_name == std::string("y")){double start = scls::string_to_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
     }
 
     // Sets the parent of the object
@@ -296,7 +275,7 @@ namespace pleos {
     std::string __Graphic_Object_Base::to_xml_text_width(){return to_xml_text_width(std::string("width"));}
 
     // Updates the actions of the object
-    bool __Graphic_Object_Base::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
+    bool __Graphic_Object_Base::update_action(double used_delta_time, scls::Action* action, int& deleted_objects) {
         if(action->type == ACTION_STOP){
             double proportion = 1;if(action->duration != 0){proportion = action->passed_time / action->duration;}
             if(proportion >= 1){set_velocity(velocity() * 0);return true;}

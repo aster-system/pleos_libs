@@ -84,54 +84,25 @@ namespace pleos {
         // Action handling
         //******************
 
-        // Action than the robot can do
-        struct Action {
-            #define ACTION_ACCELERATE -2
-            #define ACTION_THREAD -1
-            #define ACTION_DELETE 0
-            #define ACTION_EXECUTE 1
-            #define ACTION_FUNCTION 2
-            #define ACTION_FUNCTION_CALL 3
-            #define ACTION_LOOP 4
-            #define ACTION_MOVE 5
-            #define ACTION_ROTATE 6
-            #define ACTION_SET_PARAMETER 7
-            #define ACTION_STOP 8
-            #define ACTION_STRUCTURE 9
-            #define ACTION_WAIT 10
-            #define ACTION_WAIT_UNTIL 11
-
-            // Action constructor
-            Action(short action_type):type(action_type){};
-
-            // Clone the action
-            virtual std::shared_ptr<Action> clone() = 0;
-            // Soft-resets the action
-            virtual void soft_reset(){};
-
-            // Returns the action to a XML text
-            virtual std::string to_xml_text(std::string object_name);
-            virtual std::string to_xml_text_name();
-            std::string to_xml_text_object(std::string object_name);
-            std::string to_xml_text_time() const;
-
-            // Duration of the action
-            double duration = 0;
-            // Passed time at executing this action
-            double passed_time = 0;
-            // If the object should be save in XML
-            bool save_to_xml_text = false;
-            // Step of the action
-            unsigned short step = 0;
-            // Type of the action
-            const short type = -1;
-            // If the action should directly pass to the other at the end
-            bool direct_pass_at_end = false;
-        };
+        #define ACTION_ACCELERATE -2
+        #define ACTION_THREAD -1
+        #define ACTION_DELETE 0
+        #define ACTION_EMIT 1
+        #define ACTION_EXECUTE 2
+        #define ACTION_FUNCTION 3
+        #define ACTION_FUNCTION_CALL 4
+        #define ACTION_LOOP 5
+        #define ACTION_MOVE 6
+        #define ACTION_ROTATE 7
+        #define ACTION_SET_PARAMETER 8
+        #define ACTION_STOP 9
+        #define ACTION_STRUCTURE 10
+        #define ACTION_WAIT 11
+        #define ACTION_WAIT_UNTIL 12
 
         // Possible actions
         // Accelerate action
-        struct Action_Accelerate : public Action {
+        struct Action_Accelerate : public scls::Action {
             // Action_Accelerate constructor
             Action_Accelerate():Action(ACTION_ACCELERATE){};
             Action_Accelerate(double needed_x, double needed_y):Action_Accelerate(){x=needed_x;y=needed_y;};
@@ -150,7 +121,7 @@ namespace pleos {
             inline scls::Point_2D acceleration(){return scls::Point_2D(x, y);};
         };
         // Delete action
-        struct Action_Delete : public Action {
+        struct Action_Delete : public scls::Action {
             #define ACTION_DELETE_OBJECT 0
             #define ACTION_DELETE_PHYSIC 1
 
@@ -167,8 +138,24 @@ namespace pleos {
             // To delete
             char to_delete = ACTION_DELETE_OBJECT;
         };
+        // Emit action
+        struct Action_Emit : public scls::Action {
+
+            // Action_Emit constructor
+            Action_Emit():Action(ACTION_EMIT){};
+            Action_Emit(std::string emit):Action_Emit(){to_emit = emit;};
+
+            // Clone the action
+            virtual std::shared_ptr<Action> clone();
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+            // Content to execute
+            std::string to_emit;
+        };
         // Execute action
-        struct Action_Execute : public Action {
+        struct Action_Execute : public scls::Action {
 
             // Action_Execute constructor
             Action_Execute():Action(ACTION_EXECUTE){};
@@ -184,7 +171,7 @@ namespace pleos {
             std::shared_ptr<scls::XML_Text_Base> to_execute;
         };
         // Move action
-        struct Action_Move : public Action {
+        struct Action_Move : public scls::Action {
             // Action_Move constructor
             Action_Move():Action(ACTION_MOVE){};
             Action_Move(double needed_x, double needed_y, double needed_speed):Action_Move(){speed=needed_speed;x_end=needed_x;y_end=needed_y;};
@@ -204,7 +191,7 @@ namespace pleos {
             inline scls::Point_2D position_end(){return scls::Point_2D(x_end, y_end);};
         };
         // Rotate action
-        struct Action_Rotate : public Action {
+        struct Action_Rotate : public scls::Action {
             // Action_Rotate constructor
             Action_Rotate():Action(ACTION_ROTATE){};
             Action_Rotate(double needed_rotation, double needed_speed):Action_Rotate(){rotation_end=needed_rotation;speed=needed_speed;};
@@ -225,7 +212,7 @@ namespace pleos {
             double __rotated = 0;double rotation_end = 0;double rotation_start = 0;
         };
         // Set parameter action
-        struct Action_Set_Parameter : public Action {
+        struct Action_Set_Parameter : public scls::Action {
             // Action_Set_Parameter constructor
             Action_Set_Parameter():Action(ACTION_SET_PARAMETER){};
             Action_Set_Parameter(std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;duration = needed_duration;};
@@ -249,7 +236,7 @@ namespace pleos {
             std::string target = std::string();
         };
         // Stop action
-        struct Action_Stop : public Action {
+        struct Action_Stop : public scls::Action {
             // Action_Stop constructor
             Action_Stop(double needed_duration):Action(ACTION_STOP){duration = needed_duration;};
 
@@ -260,7 +247,7 @@ namespace pleos {
             virtual std::string to_xml_text_name();
         };
         // Wait action
-        struct Action_Wait : public Action {
+        struct Action_Wait : public scls::Action {
             // Action_Wait constructor
             Action_Wait():Action(ACTION_WAIT){};
             Action_Wait(double time):Action_Wait(){duration = time;};
@@ -273,7 +260,7 @@ namespace pleos {
             virtual std::string to_xml_text_name();
             std::string to_xml_text_duration();
         };
-        struct Action_Wait_Until : public Action {
+        struct Action_Wait_Until : public scls::Action {
             // Action_Wait_Until constructor
             Action_Wait_Until():Action(ACTION_WAIT_UNTIL){};
             Action_Wait_Until(double time):Action_Wait_Until(){duration = time;};
@@ -287,61 +274,16 @@ namespace pleos {
             std::string to_xml_text_duration();
         };
 
-        // Structure action
-        struct Action_Structure : public Action {
-            // Action structure
-
-            // Action_Structure constructor
-            Action_Structure(short action_type):Action(action_type){};
-
-            // Adds an action
-            std::shared_ptr<Action> add_action(std::shared_ptr<Action> needed_action);
-            // Clears the actions
-            void clear_actions();
-            // Deletes the last action
-            void delete_last_action();
-
-            // Go to the first / next action
-            void go_to_first_action();
-            void go_to_next_action();
-            // If the current action is the end action
-            bool is_end_action() const;
-            // Returns a last action
-            Action* last_action() const;
-            short last_action_type() const;
-            // Returns the next action
-            Action* next_action() const;
-            short next_action_type() const;
-
-            // Clone the action
-            virtual std::shared_ptr<Action> clone();
-            virtual std::shared_ptr<Action_Structure> clone_as_structure();
-            void clone_content(std::shared_ptr<Action_Structure> target);
-
-            // Returns the action to a XML text
-            std::string to_xml_text_content();
-            virtual std::string to_xml_text(std::string object_name);
-
-            // Getters and setters
-            inline std::vector<std::shared_ptr<Action>>& actions(){return a_actions;};
-            inline int current_action() const {return a_current_action;};
-        private:
-            // Needed actions
-            std::vector<std::shared_ptr<Action>> a_actions;
-            // Current action
-            int a_current_action = 0;
-        };
-
         // Function action
-        struct Action_Function : public Action_Structure {
+        struct Action_Function : public scls::Action_Structure {
             // Action function
 
             // Action_Function constructor
-            Action_Function():Action_Structure(ACTION_LOOP){};
+            Action_Function():scls::Action_Structure(ACTION_LOOP){};
             Action_Function(std::string needed_function_name):Action_Function(){function_name = needed_function_name;};
 
             // Clones the action
-            virtual std::shared_ptr<Action_Structure> clone_as_structure();
+            virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
             std::shared_ptr<Action_Function> clone_as_function();
 
             // Returns the action to a XML text
@@ -350,7 +292,7 @@ namespace pleos {
             // Name of the function
             std::string function_name = std::string();
         };
-        struct Action_Function_Call : public Action {
+        struct Action_Function_Call : public scls::Action {
             // Action function call
 
             // Action_Wait constructor
@@ -371,14 +313,14 @@ namespace pleos {
             std::shared_ptr<Action_Function> needed_function;
         };
         // Loop action
-        struct Action_Loop : public Action_Structure {
+        struct Action_Loop : public scls::Action_Structure {
             // Action loop
 
             // Action_Loop constructor
-            Action_Loop():Action_Structure(ACTION_LOOP){};
+            Action_Loop():scls::Action_Structure(ACTION_LOOP){};
 
             // Clones the action
-            virtual std::shared_ptr<Action_Structure> clone_as_structure();
+            virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
 
             // Returns the action to a XML text
             virtual std::string to_xml_text_name();
@@ -392,7 +334,7 @@ namespace pleos {
         };
 
         // Thread of actions
-        struct Action_Thread : public Action_Structure {
+        struct Action_Thread : public scls::Action_Structure {
             // Action thread
 
             // Action_Thread constructor
@@ -403,6 +345,8 @@ namespace pleos {
             // Adds a delete action
             void add_action_delete(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();actions().push_back(action);};
             void add_action_delete_physic(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();action.get()->to_delete=ACTION_DELETE_PHYSIC;actions().push_back(action);};
+            // Adds a function call action
+            void add_action_function_call(std::string function_to_call){std::shared_ptr<Action_Function_Call> action = std::make_shared<Action_Function_Call>(function_to_call);actions().push_back(action);};
             // Adds a move action
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);return action;};
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);return action;};
@@ -418,7 +362,7 @@ namespace pleos {
             // Adds a stop action
             void add_action_stop(){std::shared_ptr<Action_Stop> action = std::make_shared<Action_Stop>(0);actions().push_back(action);};
             // Adds a structure action
-            void add_action_structure(std::shared_ptr<Action_Structure> loop){actions().push_back(loop);};
+            void add_action_structure(std::shared_ptr<scls::Action_Structure> loop){actions().push_back(loop);};
             // Adds a wait action
             std::shared_ptr<Action_Wait> add_action_wait(double time_in_second){std::shared_ptr<Action_Wait> action = std::make_shared<Action_Wait>();action.get()->duration=time_in_second;actions().push_back(action);return action;};
             std::shared_ptr<Action_Wait_Until> add_action_wait_until(double time){std::shared_ptr<Action_Wait_Until> action = std::make_shared<Action_Wait_Until>(time);actions().push_back(action);return action;};
@@ -438,7 +382,7 @@ namespace pleos {
         void delete_last_action();
 
         // Returns a last action
-        Action* last_action() const;
+        scls::Action* last_action() const;
         Action_Delete* last_action_delete() const;
         Action_Loop* last_action_loop() const;
         Action_Move* last_action_move() const;
@@ -448,12 +392,15 @@ namespace pleos {
         Action_Wait* last_action_wait() const;
 
         // Returns the next action
-        Action* next_action() const;
+        scls::Action* next_action() const;
         short next_action_type() const;
 
         // Getters and setters
-        inline Action_Thread* actions() {return a_actions.get();};
-        inline std::vector<std::shared_ptr<Action>>& actions_list(){return a_actions.get()->actions();};
+        inline Action_Thread* actions() const {return reinterpret_cast<Action_Thread*>(a_actions.get()->main_thread());};
+        inline scls::Action_Container* actions_container() const {return a_actions.get();};
+        inline std::vector<std::shared_ptr<scls::Action>>& actions_list(){return actions()->actions();};
+        inline Action_Thread* thread(int position) const {return reinterpret_cast<Action_Thread*>(a_actions.get()->thread(position));};
+        inline int threads_number() const {return a_actions.get()->threads_number();};
 
         //******************
         // Collision handling
@@ -583,6 +530,7 @@ namespace pleos {
         inline double absolute_width() const {return a_transform.get()->absolute_scale_x();};
         inline double absolute_x() const {return a_transform.get()->absolute_x();};
         inline double absolute_y() const {return a_transform.get()->absolute_y();};
+        inline std::string actions_function_at_collision() const {return a_actions_function_at_collision;};
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline scls::Transform_Object_2D* attached_transform_parent() const {return a_transform.get()->parent();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
@@ -618,6 +566,7 @@ namespace pleos {
         inline void rotate(scls::Fraction needed_rotation) const {a_transform.get()->rotate(needed_rotation);}
         inline scls::Fraction rotation() const {return a_transform.get()->rotation();}
         inline bool save_to_xml_text() const {return a_save_to_xml_text;};
+        inline void set_actions_function_at_collision(std::string new_function){a_actions_function_at_collision = new_function;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_deadline(double new_dead_line){a_deadline = new_dead_line;if(should_delete()){when_should_delete();}};
         inline void set_drawing_proportion(double new_drawing_proportion) {a_drawing_proportion = new_drawing_proportion;};
@@ -668,7 +617,7 @@ namespace pleos {
         // Updates the object
         virtual int update(double used_delta_time){return 1;};
         // Updates the actions of the object
-        virtual bool update_action(double used_delta_time, Action* action, int& deleted_objects);
+        virtual bool update_action(double used_delta_time, scls::Action* action, int& deleted_objects);
 
         // Function called during an interaction
         virtual void interaction(__Graphic_Object_Base* sender, std::string current_interaction){};
@@ -696,7 +645,10 @@ namespace pleos {
         //******************
 
         // Actions to do
-        std::shared_ptr<Action_Thread> a_actions = std::make_shared<Action_Thread>();
+        std::shared_ptr<scls::Action_Container> a_actions = std::make_shared<scls::Action_Container>(std::make_shared<Action_Thread>());
+
+        // Possible function
+        std::string a_actions_function_at_collision = std::string();
 
         //******************
         // Main attributes

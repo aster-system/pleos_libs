@@ -40,7 +40,7 @@ namespace pleos {
     void Graphic::Graphic_Base_Object::delete_physic_object(){graphic()->physic_object_by_attached_object(this)->delete_object();}
 
     // Updates the actions of the object
-    bool Graphic::Graphic_Base_Object::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
+    bool Graphic::Graphic_Base_Object::update_action(double used_delta_time, scls::Action* action, int& deleted_objects) {
         if(action->type == ACTION_DELETE) {
             // Delete the object
             __Graphic_Object_Base::Action_Delete* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(action);
@@ -155,7 +155,7 @@ namespace pleos {
     }
 
     // Updates the actions of the object
-    bool Graphic::Graphic_Texture_Table::update_action(double used_delta_time, __Graphic_Object_Base::Action* action, int& deleted_objects) {
+    bool Graphic::Graphic_Texture_Table::update_action(double used_delta_time, scls::Action* action, int& deleted_objects) {
         return Graphic::Graphic_Texture::update_action(used_delta_time, action, deleted_objects);
     }
 
@@ -996,7 +996,7 @@ namespace pleos {
     // Updates the object
     int __current_deleted_object = 0;
     bool Graphic::__update_action(__Graphic_Object_Base* object, double used_delta_time){return __update_action(object, object->actions(), used_delta_time);}
-    bool Graphic::__update_action(__Graphic_Object_Base* object, __Graphic_Object_Base::Action_Structure* structure, double used_delta_time){
+    bool Graphic::__update_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time){
         if(structure->next_action() != 0){
             bool action_terminated = false;
             double start_passed_time = structure->next_action()->passed_time;
@@ -1013,6 +1013,12 @@ namespace pleos {
                 if(l_a->to_delete == ACTION_DELETE_OBJECT){object->set_should_delete(true);}
                 else if(l_a->to_delete == ACTION_DELETE_PHYSIC){physic_object_by_attached_object(object)->delete_object();}
                 action_terminated = true;
+            }
+            else if(structure->next_action_type() == ACTION_EMIT){
+                // Wait action
+                __Graphic_Object_Base::Action_Emit* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Emit*>(structure->next_action());
+                add_signal(l_a->to_emit);
+                return true;
             }
             else if(structure->next_action_type() == ACTION_FUNCTION_CALL) {
                 __Graphic_Object_Base::Action_Function_Call* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Function_Call*>(structure->next_action());
@@ -1090,7 +1096,7 @@ namespace pleos {
             else {action_terminated = object->update_action(used_delta_time, structure->next_action(), __current_deleted_object);}
 
             // If the action is terminated
-            __Graphic_Object_Base::Action* last = 0;
+            scls::Action* last = 0;
             if(action_terminated){last = structure->next_action();structure->go_to_next_action();}
             if(last != 0 && last->direct_pass_at_end){return true;}
         }
@@ -1151,7 +1157,11 @@ namespace pleos {
 
         // Check actions
         __current_deleted_object = 0;
-        for(int i = 0;i<static_cast<int>(objects().size());i++){while(__update_action(objects().at(i).get(), used_delta_time)){}}
+        for(int i = 0;i<static_cast<int>(objects().size());i++){
+            for(int j = 0;j<objects().at(i).get()->threads_number();j++){
+                while(__update_action(objects().at(i).get(), objects().at(i).get()->thread(j), used_delta_time)){}
+            }
+        }
         if(__current_deleted_object > 0){update_delete();}
     }
 
@@ -1260,6 +1270,9 @@ namespace pleos {
     }
     // Balises physic in the graphic
     bool Graphic::graphic_from_xml_balise_attribute_physic(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, std::shared_ptr<Graphic_Physic>& physic, Text_Environment* environment, scls::Text_Style text_style) {
+        // Non-necessary physic object
+        if(attribute.name == std::string_view("when_collision")) {object.get()->set_actions_function_at_collision(attribute.value);}
+
         // Asserts
         if(physic.get() == 0 && attribute.name != "physic"){return false;}
 
@@ -1802,7 +1815,7 @@ namespace pleos {
         // Check the actions
         return object;
     }
-    std::shared_ptr<pleos::__Graphic_Object_Base> Graphic::graphic_from_xml_balise_action(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, __Graphic_Object_Base::Action_Structure* structure) {
+    std::shared_ptr<pleos::__Graphic_Object_Base> Graphic::graphic_from_xml_balise_action(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment, scls::Text_Style text_style, scls::Action_Structure* structure) {
         std::string balise_content = xml.get()->xml_balise();
         std::string current_balise_name = xml.get()->xml_balise_name();
         std::vector<scls::XML_Attribute>& attributes = xml.get()->xml_balise_attributes();
@@ -1976,19 +1989,21 @@ namespace pleos {
             // Get the datas about a vector of the graphic
             LOAD_PRENEEDED_DATAS
             std::string needed_parameter_name = std::string();
+            std::string needed_parameter_target = std::string();
             std::string needed_parameter_value = std::string("0");
             double needed_time = 0;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == std::string("parameter")) {needed_parameter_name = attributes[j].value;}
+                else if(attributes[j].name == "target") {needed_parameter_target = attributes[j].value;}
                 else if(attributes[j].name == "time") {needed_time = environment->value_double(attributes[j].value);}
                 else if(attributes[j].name == "value"){needed_parameter_value = attributes[j].value;}
             }
 
             // Add the action
-            if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_name, needed_parameter_value, needed_time)).get()->save_to_xml_text = true;}
+            if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_target, needed_parameter_name, needed_parameter_value, needed_time)).get()->save_to_xml_text = true;}
             else if(needed_objects.size() > 0){
                 for(int i = 0;i<static_cast<int>(needed_objects.size());i++) {
-                    needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_name, needed_parameter_value, needed_time)).get()->save_to_xml_text = true;
+                    needed_objects.at(i).get()->actions()->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_target, needed_parameter_name, needed_parameter_value, needed_time)).get()->save_to_xml_text = true;
                 }
             }
         }
@@ -2180,17 +2195,6 @@ namespace pleos {
     // Physic handling
     //
     //******************
-
-    /*// Returns the direct position of the object in a certain amount of second
-    scls::Point_2D Graphic::Graphic_Physic::direct_position_in_time(double seconds) {
-        scls::Point_2D current_position = attached_transform()->absolute_position();
-        scls::Point_2D current_velocity = velocity();
-        for(int i = 0;i<seconds*500;i++){
-            current_position += current_velocity * 0.002;
-            current_velocity += gravity * 0.002;
-        }
-        return current_position;
-    }//*/
 
     // Creates and return a new physic object
     std::shared_ptr<Graphic::Graphic_Physic> Graphic::new_physic_object(std::shared_ptr<__Graphic_Object_Base> object) {
@@ -2423,6 +2427,11 @@ namespace pleos {
                     needed_collision_event.get()->set_object(object->this_object_shared_ptr());
                     needed_collision_event.get()->set_other_object(reinterpret_cast<Graphic::Graphic_Physic*>(needed_collision_event.get()->collision_event()->other_physic())->attached_object_shared_ptr());
                     object->when_collision(needed_collision_event.get());
+
+                    // Function when collision happens
+                    if(object->actions_function_at_collision() != std::string_view()){
+                        object->actions_container()->new_thread<pleos::__Graphic_Object_Base::Action_Thread>().get()->add_action_function_call(object->actions_function_at_collision());
+                    }
                 }
             }
         }//*/
