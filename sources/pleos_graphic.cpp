@@ -1020,6 +1020,12 @@ namespace pleos {
                 add_signal(l_a->to_emit);
                 return true;
             }
+            else if(structure->next_action_type() == ACTION_EXECUTE) {
+                // Move action
+                __Graphic_Object_Base::Action_Execute* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Execute*>(structure->next_action());
+                __graphic_from_xml_balises(l_a->to_execute, environment_shared_ptr().get(), scls::Text_Style(), 0, 0);
+                action_terminated=true;
+            }
             else if(structure->next_action_type() == ACTION_FUNCTION_CALL) {
                 __Graphic_Object_Base::Action_Function_Call* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Function_Call*>(structure->next_action());
 
@@ -1116,9 +1122,10 @@ namespace pleos {
 
         // Check delete
         update_delete();
+        std::vector<std::shared_ptr<__Graphic_Object_Base>> current_objects = objects();
 
         // Update
-        for(int i = 0;i<static_cast<int>(objects().size());){int current_update = objects().at(i).get()->update(used_delta_time);if(current_update == 0){current_update=1;}i+=current_update;}
+        for(int i = 0;i<static_cast<int>(current_objects.size());){int current_update = current_objects.at(i).get()->update(used_delta_time);if(current_update == 0){current_update=1;}i+=current_update;}
 
         // Check actions of the graphic
         if(a_actions.get()->next_action() != 0){
@@ -1157,9 +1164,9 @@ namespace pleos {
 
         // Check actions
         __current_deleted_object = 0;
-        for(int i = 0;i<static_cast<int>(objects().size());i++){
-            for(int j = 0;j<objects().at(i).get()->threads_number();j++){
-                while(__update_action(objects().at(i).get(), objects().at(i).get()->thread(j), used_delta_time)){}
+        for(int i = 0;i<static_cast<int>(current_objects.size());i++){
+            for(int j = 0;j<current_objects.at(i).get()->threads_number();j++){
+                while(__update_action(current_objects.at(i).get(), current_objects.at(i).get()->thread(j), used_delta_time)){}
             }
         }
         if(__current_deleted_object > 0){update_delete();}
