@@ -45,28 +45,30 @@ namespace pleos {
     public:
         // Constructor of a studied function
  		Function_Studied(){};
- 		Function_Studied(std::shared_ptr<scls::__Formula> formula){set_formula(*formula.get());};
+ 		Function_Studied(std::shared_ptr<scls::Formula_Base> formula){set_formula(*formula.get());};
 
         // Returns the introduction for this function
         std::string introduction(scls::Textual_Math_Settings* settings) const{return std::string();};
 
         // Creates and returns a new function studied
-        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::__Formula needed_formula, Function_Studied* parent){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->a_parent_object=parent->a_this_object;to_return.get()->set_formula(needed_formula);return to_return;};
-        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::__Formula needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula(needed_formula);return to_return;};
+        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula_Base needed_formula, Function_Studied* parent){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->a_parent_object=parent->a_this_object;to_return.get()->set_formula(needed_formula);return to_return;};
+        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(scls::Formula_Base needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula(needed_formula);return to_return;};
+        static std::shared_ptr<Function_Studied> new_function_studied_shared_ptr(std::shared_ptr<scls::Formula_Base> needed_formula){std::shared_ptr<Function_Studied> to_return = std::make_shared<Function_Studied>();to_return.get()->a_this_object=to_return;to_return.get()->set_formula_shared_ptr(needed_formula);return to_return;};
 
         // Getters and setters
         inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline scls::Set_Number* definition_set(){return a_definition_set.get();};
-        inline scls::__Formula* formula()const{return a_function_segments.at(0).formula.get();};
-        inline std::shared_ptr<scls::__Formula> formula_copy()const{return formula()->clone();};
+        inline scls::Formula_Base* formula()const{return a_function_segments.at(0).formula.get();};
+        inline std::shared_ptr<scls::Formula_Base> formula_copy()const{return formula()->clone();};
         inline int level() const {if(a_parent_object.lock().get() == 0){return 0;}return a_parent_object.lock().get()->level() + 1;}
         inline std::string name() const {return a_function_name;};
         inline scls::Set_Number* roots(){return a_roots.get();};
         inline void set_color(scls::Color new_color){a_color = new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_definition_set(scls::Set_Number new_definition_set){a_definition_set=std::make_shared<scls::Set_Number>(new_definition_set);};
-        inline void set_formula(scls::__Formula formula){a_function_segments.at(0).formula = std::make_shared<scls::__Formula>(formula);};
+        inline void set_formula_shared_ptr(std::shared_ptr<scls::Formula_Base> formula){a_function_segments.at(0).formula = formula;};
+        inline void set_formula(scls::Formula_Base formula){a_function_segments.at(0).formula = std::make_shared<scls::Formula_Base>(formula);};
         inline void set_function_unknown(std::string unknown){a_function_unknown = unknown;};
         inline void set_name(std::string new_name){a_function_name = new_name;if(connected_object()!=0){connected_object()->set_text(std::string("Fonction ") + new_name);}};
         inline void set_roots(scls::Set_Number new_roots){a_roots = std::make_shared<scls::Set_Number>(new_roots);};
@@ -78,7 +80,7 @@ namespace pleos {
     private:
 
         // Segmented parts
-        struct Segmented_Part {std::shared_ptr<scls::__Formula> formula = std::make_shared<scls::__Formula>();};
+        struct Segmented_Part {std::shared_ptr<scls::Formula_Base> formula = std::make_shared<scls::Formula_Base>();};
         // Formulas of the function
         std::vector<Segmented_Part> a_function_segments = std::vector<Segmented_Part>(1, Segmented_Part());
 
@@ -132,7 +134,7 @@ namespace pleos {
     //
     //******************
 
-    // Gets the antiderivated polynomial of a polynomial
+    /*// Gets the antiderivated polynomial of a polynomial
     scls::Polynomial polynomial_antiderivation(Function_Studied* function, std::string* redaction);
 
     // Gets the derivated polynomial of a polynomial
@@ -167,6 +169,7 @@ namespace pleos {
 
     // Studies precisely a function
     void study_function(scls::__Formula* formula, std::string* redaction);
+    //*/
 }
 
 #endif // PLEOS_MATHEMATICS_FUNCTIONS

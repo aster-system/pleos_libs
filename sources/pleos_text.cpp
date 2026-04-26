@@ -354,8 +354,8 @@ namespace pleos {
             // Expression
             std::string result = std::string();
             if(to_express != std::string()) {
-                scls::__Formula formula = *scls::string_to_formula(to_express).get();
-                result = formula.to_mathml(0);
+                std::shared_ptr<scls::Formula_Base> formula = scls::string_to_algebra_element<scls::Formula_Base>(to_express);
+                result = formula.get()->to_mathml(0);
 
                 // Set the good balise
                 if(current_text.get()->balise_in_hierarchy("math")){current_text.get()->set_xml_balise_name(std::string("mrow"));}
@@ -364,9 +364,9 @@ namespace pleos {
 
             // Solving
             if(to_solve != std::string()) {
-                std::shared_ptr<scls::__Formula> formula = scls::string_to_formula(to_solve);
-                std::shared_ptr<Function_Studied> function = Function_Studied::new_function_studied_shared_ptr(*formula.get());
-                solve_equation(function.get(), &result);
+                std::shared_ptr<scls::Formula_Base> formula = scls::string_to_algebra_element<scls::Formula_Base>(to_solve);
+                std::shared_ptr<Function_Studied> function = Function_Studied::new_function_studied_shared_ptr(formula);
+                //solve_equation(function.get(), &result); TEMPORARY DISABLED
 
                 // Set the good balise
                 if(current_text.get()->balise_in_hierarchy("p")){current_text.get()->set_xml_balise_name(std::string(""));}

@@ -37,13 +37,15 @@ namespace pleos {
     //******************
 
     // Base of the graphic
-    int Plane_Base::graphic_x_to_pixel_x(double x, int needed_width){return std::round((x - a_middle_x) * a_pixel_by_case_x + (static_cast<double>(needed_width) / 2.0)) ;};
+    int Plane_Base::graphic_x_to_pixel_x(double x){return base_x_to_canonical_x(x); return graphic_x_to_pixel_x(x, a_width_in_pixel);};
+    int Plane_Base::graphic_x_to_pixel_x(double x, int needed_width){return std::round((x - x_middle_in_canonical_base()) * a_pixel_by_case_x + (static_cast<double>(needed_width) / 2.0)) ;};
     int Plane_Base::graphic_x_to_pixel_x(double x, std::shared_ptr<scls::__Image_Base> needed_image){return graphic_x_to_pixel_x(x, needed_image.get()->width());};
-    int Plane_Base::graphic_y_to_pixel_y(double y, int needed_height){return (std::round((y - a_middle_y) * a_pixel_by_case_y) + (needed_height / 2.0)) - a_y_offset;};
+    int Plane_Base::graphic_y_to_pixel_y(double y){return base_y_to_canonical_y(y);return graphic_y_to_pixel_y(y, a_height_in_pixel);};
+    int Plane_Base::graphic_y_to_pixel_y(double y, int needed_height){return (std::round((y - y_middle_in_canonical_base()) * a_pixel_by_case_y) + (needed_height / 2.0)) - a_y_offset;};
     int Plane_Base::graphic_y_to_pixel_y(double y, std::shared_ptr<scls::__Image_Base> needed_image){return graphic_y_to_pixel_y(y, needed_image.get()->height());}
-    scls::Fraction Plane_Base::pixel_x_to_graphic_x(int x, int image_width){return scls::Fraction::from_double(a_middle_x) + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction::from_double(a_pixel_by_case_x));}
+    scls::Fraction Plane_Base::pixel_x_to_graphic_x(int x, int image_width){return canonical_x_to_base_x(x);return scls::Fraction::from_double(x_middle_in_canonical_base()) + ((scls::Fraction(x) - scls::Fraction(image_width, 2)) / scls::Fraction::from_double(a_pixel_by_case_x));}
     scls::Fraction Plane_Base::pixel_x_to_graphic_x(int x, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_x_to_graphic_x(x, needed_image.get()->width());}
-    scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, int needed_height){return scls::Fraction::from_double(a_middle_y) + ((scls::Fraction(y) - scls::Fraction(needed_height, 2)) / scls::Fraction::from_double(a_pixel_by_case_y));}
+    scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, int needed_height){return canonical_y_to_base_y(y);return scls::Fraction::from_double(y_middle_in_canonical_base()) + ((scls::Fraction(y) - scls::Fraction(needed_height, 2)) / scls::Fraction::from_double(a_pixel_by_case_y));}
     scls::Fraction Plane_Base::pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image){return pixel_y_to_graphic_y(y, needed_image.get()->height());}
 
     // Clone actions
@@ -61,6 +63,7 @@ namespace pleos {
     // Complex structures
     std::shared_ptr<__Graphic_Object_Base::Action_Function> __Graphic_Object_Base::Action_Function::clone_as_function() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
     std::shared_ptr<scls::Action_Structure> __Graphic_Object_Base::Action_Function::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Function> new_action = std::make_shared<__Graphic_Object_Base::Action_Function>();new_action.get()->function_name = function_name;clone_content(new_action);return new_action;}
+    std::shared_ptr<scls::Action_Structure> __Graphic_Object_Base::Action_If::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_If> new_action = std::make_shared<__Graphic_Object_Base::Action_If>();clone_content(new_action);return new_action;}
     std::shared_ptr<scls::Action_Structure> __Graphic_Object_Base::Action_Loop::clone_as_structure() {std::shared_ptr<__Graphic_Object_Base::Action_Loop> new_action = std::make_shared<__Graphic_Object_Base::Action_Loop>();new_action.get()->a_repetition = a_repetition;clone_content(new_action);return new_action;}
 
     // Returns the action to a XML text
@@ -80,6 +83,8 @@ namespace pleos {
     std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text(std::string object_name){return std::string("<") + to_xml_text_name() + to_xml_text_object(object_name) + to_xml_text_function_name() +  std::string(">");}
     std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text_name(){return std::string("action_function_call");}
     std::string __Graphic_Object_Base::Action_Function_Call::to_xml_text_function_name(){return std::string(" function=") + function_name;}
+    // Action if
+    std::string __Graphic_Object_Base::Action_If::to_xml_text_name(){return std::string("action_if");}
     // Action loop
     std::string __Graphic_Object_Base::Action_Loop::to_xml_text_name(){return std::string("action_loop");}
     // Action move
@@ -204,20 +209,21 @@ namespace pleos {
     void __Graphic_Object_Base::remove_tag(std::string needed_tag){for(int i = 0;i<static_cast<int>(a_tags.size());i++){if(a_tags.at(i) == needed_tag){a_tags.erase(a_tags.begin() + i);break;}}}
 
     // Annoying functions to draw the image
-    int __Graphic_Object_Base::graphic_x_to_pixel_x(double x){return std::ceil((x - graphic_base()->a_middle_x) * pixel_by_case_x() + (static_cast<double>(graphic_base()->a_width_in_pixel) / 2.0));};
-    int __Graphic_Object_Base::graphic_x_to_pixel_x(scls::Fraction x){return std::ceil(((x - scls::Fraction::from_double(graphic_base()->a_middle_x)) * pixel_by_case_x() + scls::Fraction(graphic_base()->a_width_in_pixel, 2)).to_double());};
-    int __Graphic_Object_Base::graphic_y_to_pixel_y(double y){return (std::ceil((y - graphic_base()->a_middle_y) * pixel_by_case_y()) + (graphic_base()->a_height_in_pixel / 2.0)) - graphic_base()->a_y_offset;};
-    int __Graphic_Object_Base::graphic_y_to_pixel_y(scls::Fraction y){return std::ceil(((y - scls::Fraction::from_double(graphic_base()->a_middle_y)) * pixel_by_case_y() + scls::Fraction(graphic_base()->a_height_in_pixel, 2)).to_double()) - graphic_base()->a_y_offset;};
+    int __Graphic_Object_Base::graphic_x_to_pixel_x(double x){return graphic_base()->graphic_x_to_pixel_x(x);};
+    int __Graphic_Object_Base::graphic_x_to_pixel_x(scls::Fraction x){return graphic_base()->graphic_x_to_pixel_x(x.to_double());};
+    int __Graphic_Object_Base::graphic_y_to_pixel_y(double y){return graphic_base()->graphic_y_to_pixel_y(y) - graphic_base()->a_y_offset;};
+    int __Graphic_Object_Base::graphic_y_to_pixel_y(scls::Fraction y){return graphic_base()->graphic_y_to_pixel_y(y.to_double()) - graphic_base()->a_y_offset;};
     int __Graphic_Object_Base::graphic_y_to_pixel_y_inversed(double y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
     int __Graphic_Object_Base::graphic_y_to_pixel_y_inversed(scls::Fraction y){return graphic_base()->a_height_in_pixel - graphic_y_to_pixel_y(y);};
     double __Graphic_Object_Base::pixel_by_case_x() const {return graphic_base()->a_pixel_by_case_x;};
     double __Graphic_Object_Base::pixel_by_case_y() const {return graphic_base()->a_pixel_by_case_y;};
-    scls::Fraction __Graphic_Object_Base::pixel_x_to_graphic_x(int x){return scls::Fraction::from_double(graphic_base()->a_middle_x) + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
-    scls::Fraction __Graphic_Object_Base::pixel_y_to_graphic_y(int y){return scls::Fraction::from_double(graphic_base()->a_middle_y) + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
+    scls::Fraction __Graphic_Object_Base::pixel_x_to_graphic_x(int x){return scls::Fraction::from_double(graphic_base()->x_middle_in_canonical_base()) + ((scls::Fraction(x) - scls::Fraction(graphic_base()->a_width_in_pixel, 2)) / scls::Fraction::from_double(pixel_by_case_x()));}
+    scls::Fraction __Graphic_Object_Base::pixel_y_to_graphic_y(int y){return scls::Fraction::from_double(graphic_base()->y_middle_in_canonical_base()) + ((scls::Fraction(graphic_base()->a_height_in_pixel, 2) - scls::Fraction(y)) / scls::Fraction::from_double(pixel_by_case_y()));}
 
     // Returns a parameter by its name
     std::string __Graphic_Object_Base::parameter(std::string parameter_name) {
         if(parameter_name == std::string("opacity")){return scls::Fraction::from_double(opacity()).to_std_string(0);}
+        else if(parameter_name == std::string("x")){return scls::Fraction::from_double(x()).to_std_string(0);}
         else if(parameter_name == std::string("y")){return scls::Fraction::from_double(y()).to_std_string(0);}
         return std::string();
     }
@@ -261,7 +267,7 @@ namespace pleos {
     std::string __Graphic_Object_Base::to_xml_text(){return std::string("<") + to_xml_text_base() + std::string(">");}
     std::string __Graphic_Object_Base::to_xml_text_base(){return to_xml_text_object_name() + to_xml_text_name() + to_xml_text_parent() + to_xml_text_x() + to_xml_text_y() + to_xml_text_width() + to_xml_text_height() + to_xml_text_opacity() + to_xml_text_tags();}
     std::string __Graphic_Object_Base::to_xml_text_color(std::string attribute_name, scls::Color color){return std::string(" ") + attribute_name + std::string("=(") + std::to_string(color.red()) + std::string(",") + std::to_string(color.green()) + std::string(",") + std::to_string(color.blue()) + std::string(",") + std::to_string(color.alpha()) + std::string(")");};
-    std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + std::to_string(height());}
+    std::string __Graphic_Object_Base::to_xml_text_height(std::string attribute_name){if(height() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + scls::Fraction::from_double(height()).to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_height(){return to_xml_text_height(std::string("height"));}
     std::string __Graphic_Object_Base::to_xml_text_name(){if(a_name == std::string()){return std::string();}return std::string(" name=\"") + a_name + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_object_name(){return std::string("object");}
@@ -269,9 +275,9 @@ namespace pleos {
     std::string __Graphic_Object_Base::to_xml_text_parent() {if(parent() == 0){return std::string();}return std::string(" parent=\"") + parent()->name() + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_rotation(){if(rotation() == 0){return std::string();}return std::string(" rotation=\"") + rotation().to_std_string(0) + std::string("\"");}
     std::string __Graphic_Object_Base::to_xml_text_tags(){if(static_cast<int>(a_tags.size())==0){return std::string();}std::string to_return=std::string();for(int i=0;i<static_cast<int>(a_tags.size());i++){to_return+=a_tags.at(i);if(i<static_cast<int>(a_tags.size())-1){to_return+=std::string(";");}}return std::string(" tags=\"") + to_return + std::string("\"");}
-    std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + scls::remove_space(x_formula().to_std_string(0));}
-    std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + scls::remove_space(y_formula().to_std_string(0));}
-    std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + width_formula().to_std_string(0);}
+    std::string __Graphic_Object_Base::to_xml_text_x(){if(x() == 0){return std::string();}return std::string(" x=") + scls::remove_space(scls::Fraction::from_double(x()).to_std_string(0));}
+    std::string __Graphic_Object_Base::to_xml_text_y(){if(y() == 0){return std::string();}return std::string(" y=") + scls::remove_space(scls::Fraction::from_double(y()).to_std_string(0));}
+    std::string __Graphic_Object_Base::to_xml_text_width(std::string attribute_name){if(width() == 1){return std::string();}return std::string(" ") + attribute_name + std::string("=") + scls::Fraction::from_double(width()).to_std_string(0);}
     std::string __Graphic_Object_Base::to_xml_text_width(){return to_xml_text_width(std::string("width"));}
 
     // Updates the actions of the object

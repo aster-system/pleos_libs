@@ -157,8 +157,8 @@ namespace pleos {
     // Calculate the GCD of two numbers
     long long arithmetic_gcd(Arithmetic_Object* object, std::string* redaction) {
         // Add the start of the redaction
-        long long first = object->value_1.value_to_double(0);
-        long long second = object->value_2.value_to_double(0);
+        long long first = 1;//bject->value_1.value_to_double(0);
+        long long second = 1;//object->value_2.value_to_double(0);
         if(second > first){long long temp = first;first = second;second = temp;}
         const long long start_first = first;
         const long long start_second = second;
@@ -200,8 +200,8 @@ namespace pleos {
     // Calculate the Bezout identity of two numbers
     void arithmetic_bezout_identity(Arithmetic_Object* object, std::string* redaction) {
         // Add the start of the redaction
-        long long first = object->value_1.value_to_double(0);
-        long long second = object->value_2.value_to_double(0);
+        long long first = 1;//object->value_1.value_to_double(0);
+        long long second = 1;//object->value_2.value_to_double(0);
         if(second > first){long long temp = first;first = second;second = temp;}
         const long long start_first = first;
         const long long start_second = second;
@@ -254,7 +254,7 @@ namespace pleos {
 
     // Calculate the decomposition of a number
     void arithmetic_decomposition(Arithmetic_Object* object, std::string* redaction) {
-        long long number_value = object->value_1.value_to_double(0);
+        long long number_value = 1;//object->value_1.value_to_double(0);
         const long long number_value_start = number_value;
         if(redaction != 0 && false){(*redaction) += std::string("Nous cherchons la décomposition en produit de facteurs premiers de ") + std::to_string(number_value) + std::string(". ");}
 
@@ -312,7 +312,7 @@ namespace pleos {
         return sieve.get()->to_image();
     }
 
-    // Converts an algebric compelx number to this polar form
+    /*// Converts an algebric compelx number to this polar form
     scls::Complex_Polar complex_algebric_to_polar(scls::Complex c, std::string* redaction) {
     	std::shared_ptr<scls::__Formula> module = std::make_shared<scls::__Formula>(c.real() *  c.real() + c.imaginary() * c.imaginary());
     	module.get()->set_applied_function<scls::__Sqrt_Function>();
@@ -329,11 +329,11 @@ namespace pleos {
     	}
 
     	return scls::Complex_Polar(argument, module);
-    }
+    }//*/
 
     // Get the root of a complex number
     void complex_root(scls::Complex c, int n, std::string* redaction) {
-    	scls::Complex_Polar polar = complex_algebric_to_polar(c, redaction);
+    	/*scls::Complex_Polar polar = complex_algebric_to_polar(c, redaction);
     	if(redaction != 0){(*redaction) += std::string("Analysons les racines base ") + std::to_string(n) + (" du nombre complexe ") + c.to_std_string_simple(0) + std::string(".</br>");}
 
     	// Calculate the modulus
@@ -359,7 +359,7 @@ namespace pleos {
     		for(int i = 0;i<static_cast<int>(arguments.size());i++) {
     			(*redaction) += std::string("<math><mi>r</mi><msub>") + std::to_string(i) + ("</msub><mapprox>") + arguments.at(i).to_complex().to_mathml(&s) + std::string("</math></br>");
 			}
-    	}
+    	}//*/
     }
 }
 

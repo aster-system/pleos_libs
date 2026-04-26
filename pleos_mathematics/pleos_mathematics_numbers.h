@@ -51,8 +51,8 @@ namespace pleos {
         // Needed choice
         bool choice_1 = false;
         // Needed value
-        scls::__Formula value_1;
-        scls::__Formula value_2;
+        //scls::__Formula value_1;
+        //scls::__Formula value_2;
 
         // Possible input
         std::shared_ptr<scls::GUI_Text_Input> input_1;
@@ -76,7 +76,7 @@ namespace pleos {
     scls::Image erathostene_sieve(int image_width, int start_number, int end_number);
 
     // Converts an algebric compelx number to this polar form
-    scls::Complex_Polar complex_algebric_to_polar(scls::Complex c, std::string* redaction);
+    //scls::Complex_Polar complex_algebric_to_polar(scls::Complex c, std::string* redaction);
 
     // Get the root of a complex number
     void complex_root(scls::Complex c, int n, std::string* redaction);

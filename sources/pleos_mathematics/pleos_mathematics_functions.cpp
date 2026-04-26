@@ -35,11 +35,12 @@ namespace pleos {
     //
     //******************
 
+    /*
 	// Gets the antiderivated polynomial of a polynomial
 	std::string __redaction_polynomial_antiderivation_0 = std::string("Cette forme est un simple polynôme, on peut obtenir facilement sa primitive grâce aux propriétés des polynômes.");
 	std::string __redaction_polynomial_antiderivation_final = std::string("Donc, une primitive de \"<full_formula>\" est \"<derivated>\".");
 	scls::Polynomial polynomial_antiderivation(Function_Studied* function, std::string* redaction) {
-    	scls::__Formula* formula = function->formula();
+    	scls::Formula_Base* formula = function->formula();
 		scls::Polynomial polynomial = *formula->polynomial();
 		scls::Textual_Math_Settings settings;settings.set_hide_if_0(false);
 		std::string unknown_name = std::string("x");
@@ -554,4 +555,5 @@ namespace pleos {
 		(*redaction) += std::string("Ensuite, étudions la représentation graphique de cette fonction.</p>");
 		(*redaction) += std::string("<graphic><function expression=\"") + formula->to_std_string(0) + std::string("\"></graphic>");
 	}
+	//*/
 }

@@ -229,10 +229,10 @@ namespace pleos {
             // The form is a line
 
             // Needed coordinates
-            scls::__Formula x_1 = a_points.at(0).get()->absolute_x();
-            scls::__Formula x_2 = a_points.at(1).get()->absolute_x();
-            scls::__Formula y_1 = a_points.at(0).get()->absolute_y();
-            scls::__Formula y_2 = a_points.at(1).get()->absolute_y();
+            scls::Fraction x_1 = a_points.at(0).get()->absolute_x();
+            scls::Fraction x_2 = a_points.at(1).get()->absolute_x();
+            scls::Fraction y_1 = a_points.at(0).get()->absolute_y();
+            scls::Fraction y_2 = a_points.at(1).get()->absolute_y();
 
             // Add the form
             double proportion = a_points_link.at(0).drawing_proportion;
@@ -255,10 +255,10 @@ namespace pleos {
             //*/
 
             // Get the good datas
-            scls::__Formula needed_height = height_formula();
-            scls::__Formula needed_width = width_formula();
-            scls::__Formula needed_x = x_formula() - needed_width / 2;
-            scls::__Formula needed_y = y_formula() - needed_height / 2;
+            scls::Fraction needed_height = height();
+            scls::Fraction needed_width = width();
+            scls::Fraction needed_x = x() - needed_width / 2;
+            scls::Fraction needed_y = y() - needed_height / 2;
 
             // Add the form
             content += std::string("<rect") + to_xml_text_name() + to_xml_text_tags() + to_xml_text_parent() + to_xml_text_opacity() + to_xml_text_color(std::string("border_color"), border_color()) + to_xml_text_color(std::string("color"), color()) + std::string(" x=") + needed_x.to_std_string(0) + std::string(" y=") + needed_y.to_std_string(0) + std::string(" width=") + needed_width.to_std_string(0) + std::string(" height=") + needed_height.to_std_string(0) + to_xml_text_border_radius() + std::string(">");
@@ -323,6 +323,19 @@ namespace pleos {
     std::string Form_2D::type_name(bool capitalise_first_letter) const {std::string to_return=std::string();if(a_points.size()==3){if(capitalise_first_letter){return std::string("Triangle");}return std::string("triangle");}if(capitalise_first_letter){to_return+=std::string("Forme");}else{to_return+=std::string("forme");}to_return+=std::string(" à ")+std::to_string(a_points.size())+std::string(" points");return to_return;};
     std::string Form_2D::type_name() const {return type_name(true);};
 
+    // Updates the button
+    int Arrow_2D::update(double used_delta_time){update_hat();return 0;}
+
+    // Update the hat
+    void Arrow_2D::update_hat() {
+        scls::Point_2D pos_end = points().at(points().size() - 1).get()->absolute_position();
+        scls::Point_2D pos_start = points().at(0).get()->absolute_position();
+        scls::Point_2D branch = (pos_start - pos_end).normalized();
+
+        a_hat_1.get()->set_position(pos_end + branch.rotated(30));
+        a_hat_2.get()->set_position(pos_end + branch.rotated(-30));
+    }
+
     //******************
     //
     // The "Circle" class
@@ -346,8 +359,8 @@ namespace pleos {
 
     // Returns a parameter by its name
     std::string Circle::parameter(std::string parameter_name){
-        if(parameter_name == std::string("angle_end")){return angle_end_formula().to_std_string(0);}
-        else if(parameter_name == std::string("angle_start")){return angle_start_formula().to_std_string(0);}
+        if(parameter_name == std::string("angle_end")){return scls::Fraction(angle_end()).to_std_string(0);}
+        else if(parameter_name == std::string("angle_start")){return scls::Fraction(angle_start()).to_std_string(0);}
         else if(parameter_name == std::string("color")){return color().to_std_string(0);}
         return __Graphic_Object_Base::parameter(parameter_name);
     }
@@ -355,14 +368,14 @@ namespace pleos {
     // Sets a parameter by its name
     void Circle::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){
         if(parameter_name == std::string("angle_end")){
-            double needed_angle = scls::string_to_formula(parameter_value).get()->value_to_double();
-            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).get()->value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+            double needed_angle = environment()->value_double(parameter_value);
+            if(proportion < 1){double base_angle = environment()->value_double(parameter_value_start);needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
 
             set_angle_end(needed_angle);
         }
         else if(parameter_name == std::string("angle_start")){
-            double needed_angle = scls::string_to_formula(parameter_value).get()->value_to_double();
-            if(proportion < 1){double base_angle = scls::string_to_formula(parameter_value_start).get()->value_to_double();needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
+            double needed_angle = environment()->value_double(parameter_value);
+            if(proportion < 1){double base_angle = environment()->value_double(parameter_value_start);needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
 
             set_angle_start(needed_angle);
         }
@@ -377,8 +390,8 @@ namespace pleos {
 
     // Returns the needed XML text to generate this object
     std::string Circle::to_displayed_text(){return std::string("cercle");}
-    std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(angle_end_formula().to_std_string(0));}
-    std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(angle_start_formula().to_std_string(0));}
+    std::string Circle::to_xml_text_angle_end(){if(angle_end() == 360){return std::string();}return std::string(" angle_end=") + scls::remove_space(scls::Fraction(angle_end()).to_std_string(0));}
+    std::string Circle::to_xml_text_angle_start(){if(angle_start() == 0){return std::string();}return std::string(" angle_start=") + scls::remove_space(scls::Fraction(angle_start()).to_std_string(0));}
     std::string Circle::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius());};
     std::string Circle::to_xml_text_radius(){if(radius_x() != radius_y()){return std::string();}return std::string(" radius=") + radius_x().to_std_string(0);}
     std::string Circle::to_xml_text_radius_x(){if(radius_x() == 1 || radius_x() == radius_y()){return std::string();}return std::string(" radius_x=") + radius_x().to_std_string(0);}

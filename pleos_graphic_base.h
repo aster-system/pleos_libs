@@ -40,10 +40,15 @@ namespace pleos {
     //******************
 
     // Base of the graphic
-    struct Plane_Base {
+    struct Plane_Base : public scls::Plane_Base {
+        // Plane_Base constructor
+        Plane_Base():scls::Plane_Base(100, 100, 0, 0){};
+
         // Datas about the plane
+        int graphic_x_to_pixel_x(double x);
         int graphic_x_to_pixel_x(double x, int needed_width);
         int graphic_x_to_pixel_x(double x, std::shared_ptr<scls::__Image_Base> needed_image);
+        int graphic_y_to_pixel_y(double y);
         int graphic_y_to_pixel_y(double y, int needed_height);
         int graphic_y_to_pixel_y(double y, std::shared_ptr<scls::__Image_Base> needed_image);
         scls::Fraction pixel_x_to_graphic_x(int x, int needed_width);
@@ -56,13 +61,13 @@ namespace pleos {
         double a_pixel_by_case_y = 100;
 
         // Coordinates of the base
-        double a_middle_x = 0;
-        double a_middle_y = 0;
+        double a_x_middle = 0;
+        double a_y_middle = 0;
         int a_y_offset = 0;
 
         // Size of the base
         double a_height = -1;double a_width = -1;
-        int a_height_in_pixel = -1;int a_width_in_pixel = -1;
+        double a_height_in_pixel = -1;double a_width_in_pixel = -1;
         bool a_height_used = false;bool a_width_used = false;
     };
     struct __Graphic_Base : public Plane_Base {
@@ -91,14 +96,15 @@ namespace pleos {
         #define ACTION_EXECUTE 2
         #define ACTION_FUNCTION 3
         #define ACTION_FUNCTION_CALL 4
-        #define ACTION_LOOP 5
-        #define ACTION_MOVE 6
-        #define ACTION_ROTATE 7
-        #define ACTION_SET_PARAMETER 8
-        #define ACTION_STOP 9
-        #define ACTION_STRUCTURE 10
-        #define ACTION_WAIT 11
-        #define ACTION_WAIT_UNTIL 12
+        #define ACTION_IF 5
+        #define ACTION_LOOP 6
+        #define ACTION_MOVE 7
+        #define ACTION_ROTATE 8
+        #define ACTION_SET_PARAMETER 9
+        #define ACTION_STOP 10
+        #define ACTION_STRUCTURE 11
+        #define ACTION_WAIT 12
+        #define ACTION_WAIT_UNTIL 13
 
         // Possible actions
         // Accelerate action
@@ -309,8 +315,26 @@ namespace pleos {
 
             // Name of the function
             std::string function_name = std::string();
+            // Namespace for the function
+            std::shared_ptr<scls::Math_Environment::Namespace> function_namespace;
             // Pointer to the action
             std::shared_ptr<Action_Function> needed_function;
+        };
+        // If action
+        struct Action_If : public scls::Action_Structure {
+            // Action_If loop
+
+            // Action_If constructor
+            Action_If():scls::Action_Structure(ACTION_IF){};
+
+            // Clones the action
+            virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
+
+            // Returns the action to a XML text
+            virtual std::string to_xml_text_name();
+
+        private:
+
         };
         // Loop action
         struct Action_Loop : public scls::Action_Structure {
@@ -347,6 +371,7 @@ namespace pleos {
             void add_action_delete_physic(){std::shared_ptr<Action_Delete> action = std::make_shared<Action_Delete>();action.get()->to_delete=ACTION_DELETE_PHYSIC;actions().push_back(action);};
             // Adds a function call action
             void add_action_function_call(std::string function_to_call){std::shared_ptr<Action_Function_Call> action = std::make_shared<Action_Function_Call>(function_to_call);actions().push_back(action);};
+            void add_action_function_call(std::string function_to_call, std::shared_ptr<scls::Math_Environment::Namespace> current_namespace){std::shared_ptr<Action_Function_Call> action = std::make_shared<Action_Function_Call>(function_to_call);action.get()->function_namespace = current_namespace;actions().push_back(action);};
             // Adds a move action
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end, double needed_speed){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;action.get()->speed = needed_speed;actions().push_back(action);return action;};
             std::shared_ptr<Action_Move> add_action_move(double x_end, double y_end){std::shared_ptr<Action_Move> action = std::make_shared<Action_Move>();action.get()->x_end=x_end;action.get()->y_end=y_end;actions().push_back(action);return action;};
@@ -510,14 +535,8 @@ namespace pleos {
         virtual void load_object_settings(scls::GUI_Object* gui_object);
 
         // Moves the object
-        inline void move_x(scls::Fraction movement){attached_transform()->move_x(movement);};
-        inline void move_y(scls::Fraction movement){attached_transform()->move_y(movement);};
-
-        // Formula datas
-        inline scls::__Formula height_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->scale_y()));};
-        inline scls::__Formula width_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->scale_x()));};
-        inline scls::__Formula y_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->y()));};
-        inline scls::__Formula x_formula() const {return scls::__Formula(scls::Complex(a_transform.get()->x()));};
+        inline void move_x(double movement){attached_transform()->move_x(movement);};
+        inline void move_y(double movement){attached_transform()->move_y(movement);};
 
         // Returns the point in a point 3D
         inline scls::Point_3D to_point_3d_absolute() {return scls::Point_3D(absolute_x(), 0, absolute_y());};
@@ -539,6 +558,7 @@ namespace pleos {
         inline std::shared_ptr<scls::GUI_Text> connected_object_shared_ptr()const{return a_connected_object.lock();};
         inline double deadline() const {return a_deadline;};
         inline double drawing_proportion() const {return a_drawing_proportion;};
+        inline pleos::Text_Environment* environment() const {return graphic_base()->a_environment.get();};
         inline __Graphic_Base* graphic_base() const {return a_graphic_base.lock().get();};
         inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base.lock();};
         inline double height() const {return a_transform.get()->scale_y();};
@@ -583,7 +603,7 @@ namespace pleos {
         inline void set_save_to_xml_text(bool new_save_to_xml_text) {a_save_to_xml_text = new_save_to_xml_text;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;if(should_delete()){when_should_delete();}};
         inline void set_this_object(std::weak_ptr<__Graphic_Object_Base> new_this_object){a_this_object=new_this_object;};
-        inline void set_unknowns(std::shared_ptr<scls::__Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
+        inline void set_unknowns(std::shared_ptr<scls::Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
         inline void set_velocity(scls::Point_2D new_velocity){a_transform.get()->set_velocity(new_velocity);};
         inline bool should_delete() const {return a_should_delete || (a_deadline != -1 && a_live_time >= a_deadline);};
         inline void set_width(double new_width){a_transform.get()->set_scale_x(new_width);};
@@ -637,7 +657,7 @@ namespace pleos {
     protected:
 
         // Returns the used unknowns
-        inline scls::__Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
+        inline scls::Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
         //******************
@@ -690,7 +710,7 @@ namespace pleos {
         // This object
         std::weak_ptr<__Graphic_Object_Base> a_this_object;
         // Unknowns in the object
-        std::shared_ptr<scls::__Formula_Base::Unknowns_Container> a_unknowns;
+        std::shared_ptr<scls::Formula_Base::Unknowns_Container> a_unknowns;
 
         // Collisions this frame
         std::vector<scls::Collision::Collision_Event*> a_collisions_this_frame = std::vector<scls::Collision::Collision_Event*>();

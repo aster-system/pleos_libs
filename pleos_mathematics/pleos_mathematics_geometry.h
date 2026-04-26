@@ -194,6 +194,27 @@ namespace pleos {
         // From where the object was clone
         std::weak_ptr<__Graphic_Object_Base> a_cloned_from;
     };
+    class Arrow_2D : public Form_2D {
+        // Class representating a mathematical arrow 2D
+    public:
+
+        // Arrow_2D constructor
+        Arrow_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):Form_2D(graphic_base, name){};
+
+        // Updates the button
+        virtual int update(double used_delta_time);
+        // Update the hat
+        void update_hat();
+
+        // Getters and setters
+        inline void set_hat_1(std::shared_ptr<__Graphic_Object_Base> hat_1){a_hat_1 = hat_1;}
+        inline void set_hat_2(std::shared_ptr<__Graphic_Object_Base> hat_2){a_hat_2 = hat_2;}
+
+    private:
+        // Parts of the arrow
+        std::shared_ptr<__Graphic_Object_Base> a_hat_1;
+        std::shared_ptr<__Graphic_Object_Base> a_hat_2;
+    };
 
     //******************
     //
@@ -232,9 +253,7 @@ namespace pleos {
 
         // Getters and setters
         inline double angle_end() const {return a_angle_end;};
-        inline scls::__Formula angle_end_formula() const {return scls::__Formula(scls::Complex::from_double(a_angle_end));};
         inline double angle_start() const {return a_angle_start;};
-        inline scls::__Formula angle_start_formula() const {return scls::__Formula(scls::Complex::from_double(a_angle_start));};
         inline scls::Color border_color() const {return a_border_color;};
         inline int border_radius() const {return a_border_radius;};
         inline scls::Point_2D center() const {return attached_transform()->absolute_position();};
