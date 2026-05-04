@@ -550,6 +550,8 @@ namespace pleos {
         inline double absolute_x() const {return a_transform.get()->absolute_x();};
         inline double absolute_y() const {return a_transform.get()->absolute_y();};
         inline std::string actions_function_at_collision() const {return a_actions_function_at_collision;};
+        inline scls::Math_Environment::Namespace* attached_namespace() const {return a_namespace.get();};
+        inline std::shared_ptr<scls::Math_Environment::Namespace> attached_namespace_shared_ptr() const {return a_namespace;};
         inline scls::Transform_Object_2D* attached_transform() const {return a_transform.get();};
         inline scls::Transform_Object_2D* attached_transform_parent() const {return a_transform.get()->parent();};
         inline std::shared_ptr<scls::Transform_Object_2D> attached_transform_shared_ptr() const {return a_transform;};
@@ -597,6 +599,7 @@ namespace pleos {
         inline void set_opacity(double new_opacity){a_opacity = new_opacity;};
         inline void set_position(scls::Point_2D new_position){attached_transform()->set_position(new_position);};
         inline void set_name(std::string new_name) {a_name = new_name;};
+        inline void set_namespace(std::shared_ptr<scls::Math_Environment::Namespace> new_namespace){a_namespace = new_namespace;};
         inline void set_rotation(double new_rotation){a_transform.get()->set_rotation(scls::Fraction::from_double(new_rotation));};
         inline void set_rotation(scls::__Fraction_Base new_rotation){a_transform.get()->set_rotation(new_rotation);};
         inline void set_rotation(scls::Fraction new_rotation){a_transform.get()->set_rotation(new_rotation);};
@@ -695,6 +698,8 @@ namespace pleos {
         double a_live_time = 0;
         // Name of the object
         std::string a_name = std::string();
+        // Namespace of this object
+        std::shared_ptr<scls::Math_Environment::Namespace> a_namespace;
         // Used object name for this object
         std::string a_object_name;
         // Opacity of the object

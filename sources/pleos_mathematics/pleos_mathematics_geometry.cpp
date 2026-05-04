@@ -179,6 +179,15 @@ namespace pleos {
     }
     std::shared_ptr<Point_2D> Form_2D::new_point(scls::Point_2D point){return new_point(point.x(), point.y());}
 
+    // Positions of the points
+    std::vector<scls::Point_2D> Form_2D::points_positions() {
+        std::vector<scls::Point_2D> to_return = std::vector<scls::Point_2D>(a_points.size());
+        for(std::size_t i = 0;i<a_points.size();++i) {
+            to_return[i] = a_points.at(i).get()->absolute_position();
+        }
+        return to_return;
+    }
+
     // Returns a parameter by its name
     std::string Form_2D::parameter(std::string parameter_name) {
         if(parameter_name == std::string("border_color")){return border_color().to_std_string(0);}
@@ -323,6 +332,23 @@ namespace pleos {
     std::string Form_2D::type_name(bool capitalise_first_letter) const {std::string to_return=std::string();if(a_points.size()==3){if(capitalise_first_letter){return std::string("Triangle");}return std::string("triangle");}if(capitalise_first_letter){to_return+=std::string("Forme");}else{to_return+=std::string("forme");}to_return+=std::string(" à ")+std::to_string(a_points.size())+std::string(" points");return to_return;};
     std::string Form_2D::type_name() const {return type_name(true);};
 
+    // Returns a parameter by its name
+   std::string Arrow_2D::parameter(std::string parameter_name) {
+	   if(parameter_name == std::string_view("hat_proportion")){return scls::Fraction(a_hat_proportion).to_std_string(0);}
+	   return __Graphic_Object_Base::parameter(parameter_name);
+   }
+
+   // Sets a parameter by its name
+    void Arrow_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+	    if(parameter_name == std::string("hat_proportion")){
+		 	double start_hat_proportion = environment()->value_double(parameter_value_start);
+		 	double needed_hat_proportion = environment()->value_double(parameter_value);
+			needed_hat_proportion = start_hat_proportion + (needed_hat_proportion - start_hat_proportion) * proportion;
+			a_hat_proportion = needed_hat_proportion;
+	    }
+	    else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
+    }
+
     // Updates the button
     int Arrow_2D::update(double used_delta_time){update_hat();return 0;}
 
@@ -330,7 +356,7 @@ namespace pleos {
     void Arrow_2D::update_hat() {
         scls::Point_2D pos_end = points().at(points().size() - 1).get()->absolute_position();
         scls::Point_2D pos_start = points().at(0).get()->absolute_position();
-        scls::Point_2D branch = (pos_start - pos_end).normalized();
+        scls::Point_2D branch = (pos_start - pos_end).normalized() * a_hat_proportion;
 
         a_hat_1.get()->set_position(pos_end + branch.rotated(30));
         a_hat_2.get()->set_position(pos_end + branch.rotated(-30));
@@ -359,9 +385,11 @@ namespace pleos {
 
     // Returns a parameter by its name
     std::string Circle::parameter(std::string parameter_name){
-        if(parameter_name == std::string("angle_end")){return scls::Fraction(angle_end()).to_std_string(0);}
-        else if(parameter_name == std::string("angle_start")){return scls::Fraction(angle_start()).to_std_string(0);}
-        else if(parameter_name == std::string("color")){return color().to_std_string(0);}
+        if(parameter_name == std::string_view("angle_end")){return scls::Fraction(angle_end()).to_std_string(0);}
+        else if(parameter_name == std::string_view("angle_start")){return scls::Fraction(angle_start()).to_std_string(0);}
+        else if(parameter_name == std::string_view("color")){return color().to_std_string(0);}
+        else if(parameter_name == std::string_view("radius_x")){return scls::Fraction(radius_x()).to_std_string(0);}
+        else if(parameter_name == std::string_view("radius_y")){return scls::Fraction(radius_y()).to_std_string(0);}
         return __Graphic_Object_Base::parameter(parameter_name);
     }
 
@@ -385,6 +413,18 @@ namespace pleos {
 
             set_color(needed_color);
         }
+        else if(parameter_name == std::string("radius_x")){
+        	double start_radius_x = environment()->value_double(parameter_value_start);
+        	double needed_radius_x = environment()->value_double(parameter_value);
+        	needed_radius_x = start_radius_x + (needed_radius_x - start_radius_x) * proportion;
+        	set_radius_x(needed_radius_x);
+		}
+        else if(parameter_name == std::string("radius_y")){
+			double start_radius_y = environment()->value_double(parameter_value_start);
+			double needed_radius_y = environment()->value_double(parameter_value);
+			needed_radius_y = start_radius_y + (needed_radius_y - start_radius_y) * proportion;
+			set_radius_y(needed_radius_y);
+		}
         else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
     }
 

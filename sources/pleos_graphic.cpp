@@ -277,30 +277,46 @@ namespace pleos {
 
         if(one_balise.get()->xml_balise_name() == std::string("env")) {
             // Using the PLEOS environment
+            std::string formula_name = std::string();
             std::string object_name = std::string();
             std::string parameter_name = std::string();
             std::string variable_name = std::string();
 
-            int precision = 2;
+            bool fixed = false;int precision = 2;
             for(int j = 0;j<static_cast<int>(attributes.size());j++){
-                if(attributes.at(j).name == std::string_view("object")){object_name = attributes.at(j).value;}
+                if(attributes.at(j).name == std::string_view("fixed")){fixed = true;}
+                else if(attributes.at(j).name == std::string_view("formula")){formula_name = attributes.at(j).value;}
+                else if(attributes.at(j).name == std::string_view("object")){object_name = attributes.at(j).value;}
                 else if(attributes.at(j).name == std::string_view("parameter")){parameter_name = attributes.at(j).value;}
                 else if(attributes.at(j).name == std::string_view("precision")){precision = environment()->value_double(attributes.at(j).value);}
-                else if(attributes.at(j).name == std::string_view("var")){variable_name = attributes.at(j).value;}
+                else if(attributes.at(j).name == std::string_view("variable")){variable_name = attributes.at(j).value;}
             }
 
             // Prepare the datas
             std::string final_text;
 
+            // Get the value
             if(!parameter_name.empty()) {
                 // Format the value
-                std::string needed_parameter = graphic()->object_by_name(object_name)->parameter(parameter_name);
-                if(needed_parameter.empty()){needed_parameter = std::string("0");} double value = environment()->value_double(needed_parameter);
+                __Graphic_Object_Base* o = 0;
+                if(object_name.empty()){o = this;}
+                else{o = graphic()->object_by_name(object_name);}
+                std::string needed_parameter = o->parameter(parameter_name);
+                if(needed_parameter.empty()){needed_parameter = std::string("0");}
+                double value = environment()->value_double(needed_parameter);
+                final_text = scls::format_number_to_text(value, precision);
+            }
+            else if(!variable_name.empty()) {
+                // Format the value
+                __Graphic_Object_Base* o = 0;
+                if(object_name.empty()){o = this;}
+                else{o = graphic()->object_by_name(object_name);}
+                double value = o->attached_namespace()->value_by_name(variable_name).to_double();
                 final_text = scls::format_number_to_text(value, precision);
             }
             else {
                 // Format the value
-                double value = environment()->value_by_name(variable_name).to_double();
+                double value = environment()->value_by_name(formula_name).to_double();
                 final_text = scls::format_number_to_text(value, precision);
             }
 
@@ -629,7 +645,7 @@ namespace pleos {
     // Adds an text to the graphic
     void Graphic::add_text(std::shared_ptr<Graphic::Graphic_Text> text){bool good = true;for(int i = 0;i<static_cast<int>(a_texts.size());i++){if(a_texts.at(i).get()==text.get()){good=false;break;}}if(good){a_objects.push_back(text);a_texts.push_back(text);}}
     // Creates and returns a new text in the graphic
-    std::shared_ptr<Graphic::Graphic_Text> Graphic::new_text(std::string name, std::string content, scls::Fraction x, scls::Fraction y, scls::Text_Style style){std::shared_ptr<Graphic::Graphic_Text> created_text = std::make_shared<Graphic::Graphic_Text>(a_this_object);created_text.get()->set_name(name);created_text.get()->set_this_object(created_text);add_text(created_text);Graphic::Graphic_Text* current_text=created_text.get();current_text->set_content(content);current_text->set_style(style);current_text->set_x(x.to_double());current_text->set_y(y.to_double());return created_text;}
+    std::shared_ptr<Graphic::Graphic_Text> Graphic::new_text(std::string name, std::string content, scls::Fraction x, scls::Fraction y, scls::Text_Style style){std::shared_ptr<Graphic::Graphic_Text> created_text = std::make_shared<Graphic::Graphic_Text>(a_this_object);created_text.get()->set_name(name);created_text.get()->set_this_object(created_text);created_text.get()->set_namespace(environment()->create_namespace("object"));add_text(created_text);Graphic::Graphic_Text* current_text=created_text.get();current_text->set_content(content);current_text->set_style(style);current_text->set_x(x.to_double());current_text->set_y(y.to_double());return created_text;}
     std::shared_ptr<Graphic::Graphic_Text> Graphic::new_text(std::string name, std::string content, Point_2D position, scls::Text_Style style){return new_text(name, content, position.x(), position.y(), style);}
 
     // Returns a text by his name
@@ -649,6 +665,13 @@ namespace pleos {
     __Graphic_Object_Base* Graphic::last_object() const{if(a_objects.size() <= 0){return 0;}return a_objects.at(a_objects.size() - 1).get();}
 
     // Returns an object shared ptr
+    __Graphic_Object_Base* Graphic::object_by_id(int id) {return object_by_id_shared_ptr(id).get();}
+    std::shared_ptr<__Graphic_Object_Base> Graphic::object_by_id_shared_ptr(int id) {
+        // Check all the objects
+        for(std::size_t i = 0;i<a_objects.size();i++){if(!a_objects.at(i).get()->should_delete() && a_objects.at(i).get()->id() == id){return a_objects.at(i);}}
+
+        return std::shared_ptr<__Graphic_Object_Base>();
+    }
     __Graphic_Object_Base* Graphic::object_by_name(std::string name){return object_by_name_shared_ptr(name).get();}
     std::shared_ptr<__Graphic_Object_Base> Graphic::object_by_name_shared_ptr(std::string name) {
         std::shared_ptr<__Graphic_Object_Base> to_return = circle_by_name_shared_ptr(name);
@@ -1072,7 +1095,11 @@ namespace pleos {
                 // Delete the object
                 __Graphic_Object_Base::Action_Delete* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Delete*>(structure->next_action());
                 if(l_a->to_delete == ACTION_DELETE_OBJECT){object->set_should_delete(true);}
-                else if(l_a->to_delete == ACTION_DELETE_PHYSIC){physic_object_by_attached_object(object)->delete_object();}
+                else if(l_a->to_delete == ACTION_DELETE_PHYSIC){
+                    Graphic_Physic* t = physic_object_by_attached_object(object);
+                    if(t != 0){t->delete_object();}
+                    else{scls::print("Warning", "PLEOS Graphic", std::string("The object \"") + object->name() + std::string("\" has no attached physic object."));}
+                }
                 action_terminated = true;
             }
             else if(structure->next_action_type() == ACTION_EMIT){
@@ -1115,16 +1142,26 @@ namespace pleos {
             }
             else if(structure->next_action_type() == ACTION_IF) {
                 __Graphic_Object_Base::Action_If* l_a = reinterpret_cast<__Graphic_Object_Base::Action_If*>(structure->next_action());
+                //action_terminated = __update_action(object, l_a, used_delta_time);
+                action_terminated = true;
+
+                //std::cout << "E " << environment()->back_namespace()->parent()->value_by_name("id").to_double() << " " << object_by_id(environment()->back_namespace()->parent()->value_by_name("id").to_double()) << std::endl;
+                __Graphic_Object_Base* g = object_by_id(environment()->back_namespace()->value_by_name("id").to_double());
+                if(g != 0 && g->contains_tag("ceil")) {
+                    double v = environment()->back_namespace()->parent()->value_by_name("i").to_double();
+                    objects_by_tag("o").at(v).get()->set_x(object->x());
+                    objects_by_tag("o").at(v).get()->set_y(object->y());
+                }
 
                 // Check repetition
-                double current_x = environment()->back_namespace()->unknown_by_name("x")->value.get()->value<scls::Fraction>()->to_double();
+                /*double current_x = environment()->back_namespace()->unknown_by_name("x")->value.get()->value<scls::Fraction>()->to_double();
                 //if(std::abs(object->y()) > 4){action_terminated = __update_action(object, l_a, used_delta_time);} else
                 if(std::abs(current_x) > 1.5) {
                     if(current_x > 0){environment()->set_unknown_value_by_name("l", environment()->value_by_name("l") + 1);}
                     else{environment()->set_unknown_value_by_name("r", environment()->value_by_name("r") + 1);}
                     environment()->set_unknown_value_by_name("diff", environment()->value_by_name("l") - environment()->value_by_name("r"));
-                }
-                action_terminated = true;
+                }//*/
+                //action_terminated = true;
 
                 /*if(std::abs(current_x) > 1.0){action_terminated = __update_action(object, l_a, used_delta_time);}
                 else{action_terminated=true;}
@@ -1171,7 +1208,13 @@ namespace pleos {
                 if(l_a->passed_time >= l_a->duration){action_terminated=true;}
 
                 // Target
-                if(target != std::string()){object = object_by_name(target);}
+                if(target != std::string()){
+                    scls::Function_Called_Text f = scls::parse_function_call(target);
+                    if(f.error == SCLS_FUNCTION_CALLED_TEXT_NOT_FUNCTION){object = object_by_name(target);}
+                    else {
+
+                    }
+                }
 
                 // Start parameter
                 if(start_passed_time == 0){parameter_start = object->parameter(parameter_name);}
@@ -1343,7 +1386,8 @@ namespace pleos {
     }
     // Balises object in the graphic
     bool Graphic::graphic_from_xml_balise_attribute_object(scls::XML_Attribute& attribute, std::shared_ptr<__Graphic_Object_Base> object, Text_Environment* environment, scls::Text_Style text_style) {
-        if(attribute.name == "height") {object.get()->set_height(environment->value_double(attribute.value));}
+    	if(attribute.name == std::string_view("behind")) {set_object_render_before(object, object_by_name(attribute.value));}
+    	else if(attribute.name == "height") {object.get()->set_height(environment->value_double(attribute.value));}
         else if(attribute.name == "name") {std::string needed_name = graphic_from_xml_name(attribute, object.get()->to_xml_text_object_name(), environment);object.get()->set_name(needed_name);}
         else if(attribute.name == "opacity") {object.get()->set_opacity(environment->value_double(attribute.value));}
         else if(attribute.name == "parent") {
@@ -1353,6 +1397,13 @@ namespace pleos {
         }
         else if(attribute.name == "rotation") {object.get()->set_rotation(environment->value_double(attribute.value));}
         else if(attribute.name == "tag" || attribute.name == "tags") {object.get()->load_tags(attribute.value);}
+        else if(attribute.name == "variables") {
+            std::vector<std::string> cut = scls::cut_string(attribute.value, std::string(";"));
+            for(std::size_t i = 0;i<cut.size();i++) {
+                std::vector<std::string> part = scls::cut_string(cut.at(i), std::string(":"));
+                object.get()->attached_namespace()->create_unknown(part.at(0))->set_value(std::make_shared<scls::Fraction>(environment->value_number(part.at(1))));
+            }
+        }
         else if(attribute.name == "width") {object.get()->set_width(environment->value_double(attribute.value));}
         else if(attribute.name == "x") {object.get()->set_x(environment->value_double(attribute.value));}
         else if(attribute.name == "y") {object.get()->set_y(environment->value_double(attribute.value));}
@@ -1464,11 +1515,12 @@ namespace pleos {
         else if(current_balise_name == "arrow" || current_balise_name == "arrow_hat") {
             // Get the datas about a vector of the graphic
             scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
-            std::string needed_name = std::string();double needed_proportion = 1;
+            std::string needed_name = std::string();double needed_hat_proportion = 1;double needed_proportion = 1;
             scls::Fraction x_1 = 0;scls::Fraction x_2 = 0;scls::Fraction y_1 = 0;scls::Fraction y_2 = 0;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = scls::Color::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "border_radius" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "border_radius" || attributes[j].name == "border_width" || attributes[j].name == "width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "hat_proportion") {needed_hat_proportion = environment->value_double(attributes[j].value);}
                 else if(attributes[j].name == "name") {needed_name = attributes[j].value;}
                 else if(attributes[j].name == "proportion") {needed_proportion = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
@@ -1491,6 +1543,7 @@ namespace pleos {
             hat_2.get()->set_border_radius(border_radius.to_double());
             created_form.get()->set_hat_1(p_1);
             created_form.get()->set_hat_2(p_2);
+            created_form.get()->set_hat_proportion(needed_hat_proportion);
             created_form.get()->update_hat();
         }
         else if(current_balise_name == "background_color") {set_background_color(scls::Color::from_xml(xml));}
@@ -1526,7 +1579,14 @@ namespace pleos {
             // Configurate the form
             std::shared_ptr<pleos::Graphic::Graphic_Physic> physic;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
-            	if(graphic_from_xml_balise_attribute_form_2d(attributes[j], created_form, environment, text_style)) {}
+                if(attributes.at(j).name == std::string_view("mesh_collision")){
+                    if(physic.get() != 0){
+                        std::vector<scls::Point_2D> p = created_form.get()->points_positions();
+                        physic.get()->add_collisions_direct(p);
+                    }
+                    else{scls::print(std::string("PLEOS Graphic"), std::string("The form 2D \"") + created_form.get()->name() + std::string("\" you want to add a mesh collision does not have an attached physic."));}
+                }
+            	else if(graphic_from_xml_balise_attribute_form_2d(attributes[j], created_form, environment, text_style)) {}
             	else if(graphic_from_xml_balise_attribute_physic(attributes[j], created_form, physic, environment, text_style)) {}
             }
         }
@@ -2552,8 +2612,9 @@ namespace pleos {
 
                     // Function when collision happens
                     if(object->actions_function_at_collision() != std::string_view()){
-                        std::shared_ptr<scls::Math_Environment::Namespace> needed_namespace = environment()->create_namespace("collision");
+                        std::shared_ptr<scls::Math_Environment::Namespace> needed_namespace = environment()->create_namespace("collision", object->attached_namespace_shared_ptr());
                         needed_namespace.get()->set_unknown_value_by_name("x", scls::Fraction::from_double(object->x()));
+                        needed_namespace.get()->set_unknown_value_by_name("id", scls::Fraction::from_double(needed_collision_event.get()->other_object()->id()));
                         object->actions_container()->new_thread<pleos::__Graphic_Object_Base::Action_Thread>().get()->add_action_function_call(object->actions_function_at_collision(), needed_namespace);
                     }
                 }

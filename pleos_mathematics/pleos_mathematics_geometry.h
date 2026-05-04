@@ -121,6 +121,8 @@ namespace pleos {
         // Sets a parameter by its name
         virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_name, double proportion);
 
+        // Positions of the points
+        std::vector<scls::Point_2D> points_positions();
         // Sets a lof of external points
         void set_external_points(std::vector<std::shared_ptr<__Graphic_Object_Base>> new_points);
         // Returns a list of the points triangulated
@@ -200,6 +202,12 @@ namespace pleos {
 
         // Arrow_2D constructor
         Arrow_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):Form_2D(graphic_base, name){};
+        virtual ~Arrow_2D(){};
+
+        // Returns a parameter by its name
+		virtual std::string parameter(std::string parameter_name);
+		// Sets a parameter by its name
+		virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
 
         // Updates the button
         virtual int update(double used_delta_time);
@@ -209,8 +217,13 @@ namespace pleos {
         // Getters and setters
         inline void set_hat_1(std::shared_ptr<__Graphic_Object_Base> hat_1){a_hat_1 = hat_1;}
         inline void set_hat_2(std::shared_ptr<__Graphic_Object_Base> hat_2){a_hat_2 = hat_2;}
+        inline void set_hat_proportion(double new_hat_proportion){a_hat_proportion = new_hat_proportion;};
 
     private:
+
+        // Size of the hat
+        double a_hat_proportion = 1;
+
         // Parts of the arrow
         std::shared_ptr<__Graphic_Object_Base> a_hat_1;
         std::shared_ptr<__Graphic_Object_Base> a_hat_2;

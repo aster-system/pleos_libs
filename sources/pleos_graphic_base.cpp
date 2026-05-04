@@ -114,7 +114,7 @@ namespace pleos {
 
     // __Graphic_Object_Base constructor
     int __current_id = 0;
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_id(__current_id),a_name(name){a_id = __current_id;__current_id++;a_transform.get()->set_this_object(a_transform);};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;++__current_id;a_transform.get()->set_this_object(a_transform);};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base,name,scls::Point_2D(0, 0)){};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position):__Graphic_Object_Base(graphic_base, std::string(), position){};
     __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base):__Graphic_Object_Base(graphic_base, std::string(), scls::Point_2D(0, 0)){};
