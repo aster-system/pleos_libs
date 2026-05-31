@@ -78,7 +78,7 @@ namespace pleos {
     int Graphic::Graphic_Texture::graphic_x_to_texture_x(scls::Fraction x){scls::Fraction local_x = x - min_x();return ((local_x / width()).to_double() * static_cast<double>(texture()->width()));}
     int Graphic::Graphic_Texture::graphic_y_to_texture_y(scls::Fraction y){scls::Fraction local_y = y - min_y();return (static_cast<double>(texture()->height()) - (local_y / height()).to_double() * static_cast<double>(texture()->height()));}
     double Graphic::Graphic_Texture::texture_x_to_graphic_x(int x){double normal = (attached_transform()->absolute_x() - attached_transform()->absolute_scale_x() / 2) + ((static_cast<double>(x) / a_texture.get()->width()) * attached_transform()->absolute_scale_x());return normal;}
-    double Graphic::Graphic_Texture::texture_y_to_graphic_y(int y){double normal = (attached_transform()->absolute_y() - attached_transform()->absolute_scale_y() / 2) + ((static_cast<double>(y) / a_texture.get()->height()) * attached_transform()->absolute_scale_y());return normal;}
+    double Graphic::Graphic_Texture::texture_y_to_graphic_y(int y){double normal = (-attached_transform()->absolute_y() - attached_transform()->absolute_scale_y() / 2) + ((static_cast<double>(y) / a_texture.get()->height()) * attached_transform()->absolute_scale_y());return normal;}
 
     // Loads the last texture of the object
     void Graphic::Graphic_Texture::load_last_texture(){
@@ -1147,11 +1147,15 @@ namespace pleos {
 
                 //std::cout << "E " << environment()->back_namespace()->parent()->value_by_name("id").to_double() << " " << object_by_id(environment()->back_namespace()->parent()->value_by_name("id").to_double()) << std::endl;
                 __Graphic_Object_Base* g = object_by_id(environment()->back_namespace()->value_by_name("id").to_double());
-                if(g != 0 && g->contains_tag("ceil")) {
-                    double v = environment()->back_namespace()->parent()->value_by_name("i").to_double();
-                    objects_by_tag("o").at(v).get()->set_x(object->x());
-                    objects_by_tag("o").at(v).get()->set_y(object->y());
+                environment()->set_unknown_value_by_name("t", environment()->create_unknown("t")->value.get()->value<scls::Fraction>()->to_double() + 1);
+                if(g != 0 && g->contains_tag("kill")) {
+                    object->set_should_delete(true);
+                    if(g->contains_tag("p")) {
+                        environment()->set_unknown_value_by_name("p", environment()->create_unknown("p")->value.get()->value<scls::Fraction>()->to_double() + 1);
+                    }
                 }
+
+                environment()->set_unknown_value_by_name("r", environment()->create_unknown("p")->value.get()->value<scls::Fraction>()->to_double() / environment()->create_unknown("t")->value.get()->value<scls::Fraction>()->to_double());
 
                 // Check repetition
                 /*double current_x = environment()->back_namespace()->unknown_by_name("x")->value.get()->value<scls::Fraction>()->to_double();
@@ -1220,10 +1224,10 @@ namespace pleos {
                 if(start_passed_time == 0){parameter_start = object->parameter(parameter_name);}
 
                 // Get the good parameter
-                if(parameter_name == std::string("child")){__Graphic_Object_Base*needed_object=object_by_name(parameter_value);if(needed_object != 0){needed_object->set_parent(object);}}
-                else if(parameter_name == std::string("gravity")){physic_object_by_attached_object(object)->set_use_gravity((parameter_value != std::string("0")));}
-                else if(parameter_name == std::string("parent")){object->set_parent(object_by_name_shared_ptr(parameter_value));}
-                else{object->set_parameter(parameter_name, parameter_value, parameter_start, proportion);}
+                if(parameter_name == std::string_view("child")){__Graphic_Object_Base*needed_object=object_by_name(parameter_value);if(needed_object != 0){needed_object->set_parent(object);}}
+                else if(parameter_name == std::string_view("gravity")){physic_object_by_attached_object(object)->set_use_gravity((parameter_value != std::string("0")));}
+                else if(parameter_name == std::string_view("parent")){object->set_parent(object_by_name_shared_ptr(parameter_value));}
+                else{object->set_parameter(parameter_name, parameter_value, parameter_start, proportion, &l_a->buffer);}
             }
             else {action_terminated = object->update_action(used_delta_time, structure->next_action(), __current_deleted_object);}
 
@@ -1392,12 +1396,17 @@ namespace pleos {
         else if(attribute.name == "opacity") {object.get()->set_opacity(environment->value_double(attribute.value));}
         else if(attribute.name == "parent") {
             scls::Function_Called_Text called_function = scls::parse_function_call(attribute.value);
-            if(called_function.error == 0){if(called_function.name == std::string("last_object")){object.get()->set_parent(objects().at(objects().size() - (std::stoi(called_function.parameters.at(0)) + 1)));}}
+            if(called_function.error == 0){
+                if(called_function.name == std::string("last_object")){
+                    if(called_function.parameters.size() == 0){object.get()->set_parent(objects().at(objects().size() - 2));}
+                    else{object.get()->set_parent(objects().at(objects().size() - (std::stoi(called_function.parameters.at(0)) + 1)));}
+                }
+            }
             else{object.get()->set_parent(object_by_name_shared_ptr(attribute.value));}
         }
         else if(attribute.name == "rotation") {object.get()->set_rotation(environment->value_double(attribute.value));}
         else if(attribute.name == "tag" || attribute.name == "tags") {object.get()->load_tags(attribute.value);}
-        else if(attribute.name == "variables") {
+        else if(attribute.name == "variable" || attribute.name == "variables") {
             std::vector<std::string> cut = scls::cut_string(attribute.value, std::string(";"));
             for(std::size_t i = 0;i<cut.size();i++) {
                 std::vector<std::string> part = scls::cut_string(cut.at(i), std::string(":"));
@@ -1541,8 +1550,8 @@ namespace pleos {
             hat_2.get()->set_border_color(border_color);hat_2.get()->set_save_to_xml_text(false);
             hat_1.get()->set_border_radius(border_radius.to_double());
             hat_2.get()->set_border_radius(border_radius.to_double());
-            created_form.get()->set_hat_1(p_1);
-            created_form.get()->set_hat_2(p_2);
+            created_form.get()->set_hat_1(p_1);created_form.get()->set_hat_line_1(hat_1);
+            created_form.get()->set_hat_2(p_2);created_form.get()->set_hat_line_2(hat_2);
             created_form.get()->set_hat_proportion(needed_hat_proportion);
             created_form.get()->update_hat();
         }
@@ -1820,8 +1829,8 @@ namespace pleos {
                 if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = environment->value_color(attributes[j].value);}
                 else if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "border_radius" || attributes[j].name == "border_width") {border_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "height") {height = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "width") {width = scls::Fraction::from_std_string(attributes[j].value);}
+                else if(attributes[j].name == "height") {height = environment->value_number(attributes[j].value);}
+                else if(attributes[j].name == "width") {width = environment->value_number(attributes[j].value);}
                 else if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_form, environment, text_style)){}
                 else if(graphic_from_xml_balise_attribute_physic(attributes.at(j), created_form, physic, environment, text_style)) {}
             }
@@ -2622,6 +2631,8 @@ namespace pleos {
         }//*/
 
         // Late update
+        graphic()->update_delete();
+        a_datas.get()->physic_engine()->check_delete_physic_object();
         needed_update += a_datas.get()->physic_engine()->update_physic_late(used_delta_time);
 
         return needed_update;

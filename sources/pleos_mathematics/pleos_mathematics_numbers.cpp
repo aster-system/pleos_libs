@@ -134,12 +134,12 @@ namespace pleos {
         scls::Color point_color(0, 0, 0);
         std::shared_ptr<scls::model_maker::Polygon> points = scls::model_maker::regular_polygon_points(point_number);
         for(int i = 0;i<static_cast<int>(points.get()->points.size());i++) {
-            int current_x = static_cast<double>(image_width) / 2.0 + points.get()->points[i].x() * static_cast<double>(circle_radius * 2);
-            int current_y = static_cast<double>(image_width) / 2.0 + points.get()->points[i].z() * static_cast<double>(circle_radius * 2);
+            int current_x = static_cast<double>(image_width) / 2.0 + points.get()->points[i].get()->x() * static_cast<double>(circle_radius * 2);
+            int current_y = static_cast<double>(image_width) / 2.0 + points.get()->points[i].get()->z() * static_cast<double>(circle_radius * 2);
 
             int final_modulo = static_cast<int>(i * modulo) % point_number;
-            int final_x = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].x() * static_cast<double>(circle_radius * 2);
-            int final_y = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].z() * static_cast<double>(circle_radius * 2);
+            int final_x = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].get()->x() * static_cast<double>(circle_radius * 2);
+            int final_y = static_cast<double>(image_width) / 2.0 + points.get()->points[final_modulo].get()->z() * static_cast<double>(circle_radius * 2);
 
             to_return.get()->fill_rect(current_x, current_y, 6, 6, point_color);
             //scls::Color final_color = line_colors[static_cast<int>(round(ratio_distance * lines_colors_size))];

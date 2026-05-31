@@ -119,7 +119,7 @@ namespace pleos {
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter_name);
         // Sets a parameter by its name
-        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_name, double proportion);
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer);
 
         // Positions of the points
         std::vector<scls::Point_2D> points_positions();
@@ -216,7 +216,9 @@ namespace pleos {
 
         // Getters and setters
         inline void set_hat_1(std::shared_ptr<__Graphic_Object_Base> hat_1){a_hat_1 = hat_1;}
+        inline void set_hat_line_1(std::shared_ptr<Form_2D> new_hat_line_1){a_hat_line_1 = new_hat_line_1;}
         inline void set_hat_2(std::shared_ptr<__Graphic_Object_Base> hat_2){a_hat_2 = hat_2;}
+        inline void set_hat_line_2(std::shared_ptr<Form_2D> new_hat_line_2){a_hat_line_2 = new_hat_line_2;}
         inline void set_hat_proportion(double new_hat_proportion){a_hat_proportion = new_hat_proportion;};
 
     private:
@@ -227,6 +229,8 @@ namespace pleos {
         // Parts of the arrow
         std::shared_ptr<__Graphic_Object_Base> a_hat_1;
         std::shared_ptr<__Graphic_Object_Base> a_hat_2;
+        std::shared_ptr<Form_2D> a_hat_line_1;
+        std::shared_ptr<Form_2D> a_hat_line_2;
     };
 
     //******************
@@ -240,6 +244,7 @@ namespace pleos {
     public:
         // Circle constructor
         Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y);
+        virtual ~Circle();
 
         // Draws the circle on an image
         virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
@@ -251,7 +256,7 @@ namespace pleos {
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter);
         // Sets a parameter by its name
-        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer);
 
         // Returns the needed XML text to generate this object
         virtual std::string to_displayed_text();

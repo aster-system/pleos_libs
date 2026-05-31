@@ -222,23 +222,26 @@ namespace pleos {
 
     // Returns a parameter by its name
     std::string __Graphic_Object_Base::parameter(std::string parameter_name) {
-        if(parameter_name == std::string("opacity")){return scls::Fraction::from_double(opacity()).to_std_string(0);}
-        else if(parameter_name == std::string("x")){return scls::Fraction::from_double(x()).to_std_string(0);}
-        else if(parameter_name == std::string("y")){return scls::Fraction::from_double(y()).to_std_string(0);}
+        if(parameter_name == std::string_view("height")){return scls::Fraction::from_double(height()).to_std_string(0);}
+        else if(parameter_name == std::string_view("opacity")){return scls::Fraction::from_double(opacity()).to_std_string(0);}
+        else if(parameter_name == std::string_view("width")){return scls::Fraction::from_double(width()).to_std_string(0);}
+        else if(parameter_name == std::string_view("x")){return scls::Fraction::from_double(x()).to_std_string(0);}
+        else if(parameter_name == std::string_view("y")){return scls::Fraction::from_double(y()).to_std_string(0);}
         return std::string();
     }
     // Sets a parameter by its name
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value){return set_parameter(parameter_name, parameter_value, std::string(""), 1);}
-    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){set_parameter(parameter_name, parameter_value, parameter_value_start, proportion, 0);}
+    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer) {
         if(parameter_name == std::string("opacity")){
             double current = scls::string_to_double(parameter_value);
             if(proportion != 1){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();set_opacity(start + (current - start) * proportion);}
             else{set_opacity(current);}
         }
-        else if(parameter_name == std::string("height")){double current = scls::string_to_double(parameter_value);set_height(current);}
-        else if(parameter_name == std::string("width")){double current = scls::string_to_double(parameter_value);set_width(current);}
-        else if(parameter_name == std::string("x")){double start = scls::string_to_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
-        else if(parameter_name == std::string("y")){double start = scls::string_to_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
+        else if(parameter_name == std::string("height")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
+        else if(parameter_name == std::string("width")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_width(current);}
+        else if(parameter_name == std::string("x")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
+        else if(parameter_name == std::string("y")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
     }
 
     // Sets the parent of the object

@@ -240,6 +240,9 @@ namespace pleos {
             std::string parameter_start = std::string();
             // Target
             std::string target = std::string();
+
+            // Buffer object
+            std::vector<std::shared_ptr<scls::Object>> buffer = std::vector<std::shared_ptr<scls::Object>>();
         };
         // Stop action
         struct Action_Stop : public scls::Action {
@@ -497,6 +500,7 @@ namespace pleos {
         // Sets a parameter by its name
         void set_parameter(std::string parameter_name, std::string parameter_value);
         virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
+        virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer);
 
         // Sets the parent of the object
         void __delete_children(__Graphic_Object_Base* object_to_delete);

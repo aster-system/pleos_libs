@@ -195,7 +195,7 @@ namespace pleos {
         return __Graphic_Object_Base::parameter(parameter_name);
     }
     // Sets a parameter by its name
-    void Form_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+    void Form_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer) {
         if(parameter_name == std::string("border_color")){
             scls::Color needed_color = scls::Color::from_std_string(parameter_value);
             if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
@@ -203,8 +203,21 @@ namespace pleos {
             set_border_color(needed_color);
         }
         else if(parameter_name == std::string("color")){
-            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
-            if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+            scls::Color needed_color;
+            if(buffer != 0){
+                if(buffer->size() != 2){
+                    buffer->clear();
+                    buffer->push_back(std::make_shared<scls::Color>(scls::Color::from_std_string(parameter_value)));
+                    buffer->push_back(std::make_shared<scls::Color>(scls::Color::from_std_string(parameter_value_start)));
+                }
+
+                needed_color = *reinterpret_cast<scls::Color*>(buffer->at(0).get());
+                if(proportion < 1){scls::Color base_color = *reinterpret_cast<scls::Color*>(buffer->at(1).get());needed_color = base_color + (needed_color - base_color) * proportion;}
+            }
+            else{
+                needed_color = scls::Color::from_std_string(parameter_value);
+                if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+            }
 
             set_color(needed_color);
         }
@@ -301,16 +314,16 @@ namespace pleos {
         if(static_cast<int>(points().size()) < 3){return;}
 
         // Triangulate the face with the model maker part of SCLS
-        scls::model_maker::Face form_to_face;
+        std::shared_ptr<scls::model_maker::Face> form_to_face = scls::model_maker::Face::new_face_object();
         for(int i = 0;i<static_cast<int>(points().size());i++) {
             scls::model_maker::Point current_point = points().at(i).get()->to_point_3d_absolute();
-            form_to_face.points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
+            form_to_face.get()->points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
         }
         for(int i = 0;i<static_cast<int>(exclusion_points().size());i++) {
             scls::model_maker::Point current_point = exclusion_points()[i].get()->to_point_3d_absolute();
-            form_to_face.exclusion_points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
+            form_to_face.get()->exclusion_points().push_back(std::make_shared<scls::model_maker::Point>(current_point));
         }
-        a_last_triangulation = form_to_face.triangulate();
+        a_last_triangulation = form_to_face.get()->triangulate();
     }
     std::vector<std::shared_ptr<Point_2D>> Form_2D::triangulated_points_external() {
         // Triangulate the point
@@ -356,10 +369,21 @@ namespace pleos {
     void Arrow_2D::update_hat() {
         scls::Point_2D pos_end = points().at(points().size() - 1).get()->absolute_position();
         scls::Point_2D pos_start = points().at(0).get()->absolute_position();
-        scls::Point_2D branch = (pos_start - pos_end).normalized() * a_hat_proportion;
+        double arrow_size = pos_end.distance(pos_start) + 1;
 
-        a_hat_1.get()->set_position(pos_end + branch.rotated(30));
-        a_hat_2.get()->set_position(pos_end + branch.rotated(-30));
+        if(pos_end == pos_start) {
+            a_hat_line_1.get()->set_opacity(0);
+            a_hat_line_2.get()->set_opacity(0);
+        }
+        else {
+            scls::Point_2D branch = (pos_start - pos_end).normalized() * a_hat_proportion * (std::log(arrow_size) / std::log(3));
+
+            a_hat_1.get()->set_position(pos_end + branch.rotated(30));
+            a_hat_2.get()->set_position(pos_end + branch.rotated(-30));
+
+            a_hat_line_1.get()->set_border_color(border_color());a_hat_line_1.get()->set_opacity(opacity());
+            a_hat_line_2.get()->set_border_color(border_color());a_hat_line_2.get()->set_opacity(opacity());
+        }
     }
 
     //******************
@@ -370,6 +394,7 @@ namespace pleos {
 
     // Circle constructor
     Circle::Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y):__Graphic_Object_Base(graphic_base, name, scls::Point_2D(x, y)){set_radius_x(radius_x);set_radius_y(radius_y);}
+    Circle::~Circle(){}
 
     // Draws the circle on an image
     void Circle::draw_on_image(std::shared_ptr<scls::__Image_Base> image){
@@ -394,7 +419,7 @@ namespace pleos {
     }
 
     // Sets a parameter by its name
-    void Circle::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){
+    void Circle::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer){
         if(parameter_name == std::string("angle_end")){
             double needed_angle = environment()->value_double(parameter_value);
             if(proportion < 1){double base_angle = environment()->value_double(parameter_value_start);needed_angle = base_angle + (needed_angle - base_angle) * proportion;}
@@ -408,8 +433,21 @@ namespace pleos {
             set_angle_start(needed_angle);
         }
         else if(parameter_name == std::string("color")){
-            scls::Color needed_color = scls::Color::from_std_string(parameter_value);
-            if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+            scls::Color needed_color;
+            if(buffer != 0){
+                if(buffer->size() != 2){
+                    buffer->clear();
+                    buffer->push_back(std::make_shared<scls::Color>(scls::Color::from_std_string(parameter_value)));
+                    buffer->push_back(std::make_shared<scls::Color>(scls::Color::from_std_string(parameter_value_start)));
+                }
+
+                needed_color = *reinterpret_cast<scls::Color*>(buffer->at(0).get());
+                if(proportion < 1){scls::Color base_color = *reinterpret_cast<scls::Color*>(buffer->at(1).get());needed_color = base_color + (needed_color - base_color) * proportion;}
+            }
+            else{
+                needed_color = scls::Color::from_std_string(parameter_value);
+                if(proportion < 1){scls::Color base_color = scls::Color::from_std_string(parameter_value_start);needed_color = base_color + (needed_color - base_color) * proportion;}
+            }
 
             set_color(needed_color);
         }
