@@ -758,7 +758,8 @@ namespace pleos {
                     else{scls::print(std::string("PLEOS Graphic"), std::string("Unknown point \"") + cutted.at(i) + std::string("\" for the form \"") + needed_form->name() + "\".");}
                 }
                 else if(f.name == std::string_view("last_object")) {
-                    int p = scls::string_to_double(f.parameters.at(0));
+                    int p = 0;
+                    if(f.parameters.size() > 0){p = scls::string_to_double(f.parameters.at(0));}
                     needed_form->add_point_external(a_objects.at(a_objects.size() - (1 + p)));
                 }
                 else if(f.name == std::string_view("new")) {
@@ -1316,7 +1317,7 @@ namespace pleos {
         if(attribute.name == "angle_end") {circle.get()->set_angle_end(environment->value_double(attribute.value));}
         else if(attribute.name == "angle_start") {circle.get()->set_angle_start(environment->value_double(attribute.value));}
         else if(attribute.name == "border_color") {circle.get()->set_border_color(environment->value_color(attribute.value));}
-        else if(attribute.name == "border_radius" || attribute.name == "border_width" || attribute.name == "width") {circle.get()->set_border_radius(scls::Fraction::from_std_string(attribute.value).to_double());}
+        else if(attribute.name == "border_radius" || attribute.name == "border_width" || attribute.name == "width") {std::cout << "O " << attribute.value << std::endl; circle.get()->set_border_radius(environment->value_double(attribute.value));}
         else if(attribute.name == "color" || attribute.name == "background_color") {circle.get()->set_color(environment->value_color(attribute.value));}
         else if(attribute.name == "radius") {double f = environment->value_double(attribute.value);circle.get()->set_radius_x(f);circle.get()->set_radius_y(f);}
         else if(attribute.name == "radius_x") {circle.get()->set_radius_x(environment->value_double(attribute.value));}

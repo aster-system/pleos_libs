@@ -231,7 +231,7 @@ namespace pleos {
     }
     // Sets a parameter by its name
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value){return set_parameter(parameter_name, parameter_value, std::string(""), 1);}
-    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){set_parameter(parameter_name, parameter_value, parameter_value_start, proportion, 0);}
+    void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion, 0);}
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer) {
         if(parameter_name == std::string("opacity")){
             double current = scls::string_to_double(parameter_value);
