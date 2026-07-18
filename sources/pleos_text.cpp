@@ -244,7 +244,7 @@ namespace pleos {
         }
 	}
 	// Creates and returns a graph / tree from an std::string
-	std::shared_ptr<Graph<std::string>> graph_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Graph<std::string>> graph = std::make_shared<Graph<std::string>>();__graph_add_datas(xml, needed_style, graph.get());return graph;}
+	std::shared_ptr<scls::Graph_Base> graph_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<scls::Graph_Base> graph = scls::Graph_Base::new_graph_from_xml(xml);return graph;}
 	std::shared_ptr<Tree<std::string>> tree_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style){std::shared_ptr<Tree<std::string>> tree = std::make_shared<Tree<std::string>>();__tree_add_datas(xml, needed_style, tree.get());return tree;}
 
 	// Generate a word

@@ -196,7 +196,7 @@ namespace pleos {
         for(int i = 0;i<value_number;i++){values[i] = i + 1;}
 
         // Shuffle the list
-        std::random_shuffle(values.begin(), values.end());
+        std::shuffle(values.begin(), values.end(), scls::generator());
         to_return.get()->values_start = values.begin();
         to_return.get()->values_end = values.end();
 

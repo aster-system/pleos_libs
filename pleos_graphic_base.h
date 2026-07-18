@@ -102,7 +102,6 @@ namespace pleos {
         #define ACTION_ROTATE 8
         #define ACTION_SET_PARAMETER 9
         #define ACTION_STOP 10
-        #define ACTION_STRUCTURE 11
         #define ACTION_WAIT 12
         #define ACTION_WAIT_UNTIL 13
 

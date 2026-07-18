@@ -352,7 +352,7 @@ namespace pleos {
    }
 
    // Sets a parameter by its name
-    void Arrow_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion) {
+    void Arrow_2D::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer) {
 	    if(parameter_name == std::string("hat_proportion")){
 		 	double start_hat_proportion = environment()->value_double(parameter_value_start);
 		 	double needed_hat_proportion = environment()->value_double(parameter_value);

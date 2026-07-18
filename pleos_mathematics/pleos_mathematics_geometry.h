@@ -207,7 +207,7 @@ namespace pleos {
         // Returns a parameter by its name
 		virtual std::string parameter(std::string parameter_name);
 		// Sets a parameter by its name
-		virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion);
+		virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer);
 
         // Updates the button
         virtual int update(double used_delta_time);

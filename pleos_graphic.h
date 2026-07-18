@@ -96,8 +96,7 @@ namespace pleos {
 
             // Graphic_Base_Object constructor
             Graphic_Texture_Object(std::weak_ptr<Graphic> graphic_base):Graphic_Base_Object(graphic_base){};
-            // Graphic_Texture_Object destructor
-            ~Graphic_Texture_Object(){};
+            virtual ~Graphic_Texture_Object() = default;
 
             // Draws the object on an image
             virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
@@ -266,15 +265,22 @@ namespace pleos {
         };
 
         // Function in a graphic
-        class Graphic_Function {
+        class Graphic_Function : public Graphic_Base_Object {
             // Class representating a function for a graphic
         public:
 
             // Graphic_Function constructor
-            Graphic_Function(std::shared_ptr<Function_Studied> function_studied);
+            Graphic_Function(std::weak_ptr<Graphic> graphic_base, std::shared_ptr<Function_Studied> function_studied);
+            virtual ~Graphic_Function() = default;
 
             // Add a curve area
             inline void add_curve_area(scls::Fraction start, scls::Fraction end, int rectangle_number){Curve_Area to_add;to_add.area_start = start;to_add.area_end=end;to_add.rectangle_number=rectangle_number;a_curve_areas.push_back(to_add);};
+
+            // Add a fill area
+            inline void add_fill_area(scls::Fraction start, scls::Fraction end){Fill_Area to_add;to_add.area_start = start;to_add.area_end=end;a_fill_areas.push_back(to_add);};
+
+            // Draws the object on an image
+            virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
 
             // Getters and setters
             inline scls::Color color() const {return a_function_studied.get()->color();};
@@ -283,6 +289,9 @@ namespace pleos {
             inline scls::Fraction curve_area_start(int n){return a_curve_areas.at(n).area_start;};
             inline int curve_area_rectangle_number(int n){return a_curve_areas.at(n).rectangle_number;};
             inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set();};
+            inline scls::Fraction fill_area_end(int n){return a_fill_areas.at(n).area_end;};
+            inline int fill_areas_number(){return a_fill_areas.size();};
+            inline scls::Fraction fill_area_start(int n){return a_fill_areas.at(n).area_start;};
             inline scls::Formula_Base& formula(){return *a_function_studied.get()->formula();};
             inline Function_Studied* function()const{return a_function_studied.get();};
             inline double middle_x() const {return a_graphic_base.get()->x_middle_in_canonical_base();};
@@ -296,6 +305,11 @@ namespace pleos {
             // Needed curves area
             struct Curve_Area{scls::Fraction area_end = 1;scls::Fraction area_start = 0;int rectangle_number = 10;};
             std::vector<Curve_Area> a_curve_areas;
+
+            // Needed fill area
+            struct Fill_Area{scls::Fraction area_end = 1;scls::Fraction area_start = 0;};
+            std::vector<Fill_Area> a_fill_areas;
+
             // Formula of the function
             std::shared_ptr<Function_Studied> a_function_studied;
             // Datas about the plane
@@ -634,6 +648,8 @@ namespace pleos {
         std::shared_ptr<__Graphic_Object_Base> object_by_id_shared_ptr(int id);
         __Graphic_Object_Base* object_by_name(std::string name);
         std::shared_ptr<__Graphic_Object_Base> object_by_name_shared_ptr(std::string name);
+        __Graphic_Object_Base* object_by_string(std::string name);
+        std::shared_ptr<__Graphic_Object_Base> object_by_string_shared_ptr(std::string name);
         // Returns a list of objects shared ptr
         std::vector<std::shared_ptr<__Graphic_Object_Base>> objects_by_tag(std::string tag_name);
         // Returns a list of objects shared ptr by their type (to_xml_text_object_name())
@@ -800,7 +816,7 @@ namespace pleos {
         void graphic_from_xml(std::string to_parse, int graphic_width_in_pixel, int graphic_height_in_pixel);
 
         // Generates a new line from XML
-        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment){std::shared_ptr<pleos::__Graphic_Object_Base> o_1;std::shared_ptr<pleos::__Graphic_Object_Base> o_2;double x_1;double x_2;double y_1;double y_2;__new_line_xml(o_1, o_2, x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line;if(o_1.get() == 0 || o_2.get() == 0){created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);}else{created_line = new_line<T>(std::string(), o_1, o_2);}return created_line;}
+        template <typename T = Form_2D> std::shared_ptr<T> new_line_xml(std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment){std::shared_ptr<pleos::__Graphic_Object_Base> o_1;std::shared_ptr<pleos::__Graphic_Object_Base> o_2;double x_1;double x_2;double y_1;double y_2;__new_line_xml(o_1, o_2, x_1, x_2, y_1, y_2, xml, environment);std::shared_ptr<T> created_line;if(o_1.get() == 0 || o_2.get() == 0){created_line = new_line<T>(std::string(), x_1, y_1, x_2, y_2);}else{created_line = new_line<T>(std::string(), o_1, o_2);}created_line.get()->set_namespace(environment->create_namespace("line"));return created_line;}
         void __new_line_xml(std::shared_ptr<pleos::__Graphic_Object_Base>& o_1, std::shared_ptr<pleos::__Graphic_Object_Base>& o_2, double& x_1, double& x_2, double& y_1, double& y_2, std::shared_ptr<scls::XML_Text_Base> xml, Text_Environment* environment);
 
         //******************

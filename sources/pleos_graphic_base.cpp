@@ -233,15 +233,16 @@ namespace pleos {
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value){return set_parameter(parameter_name, parameter_value, std::string(""), 1);}
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion){__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion, 0);}
     void __Graphic_Object_Base::set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer) {
-        if(parameter_name == std::string("opacity")){
+        if(parameter_name == std::string_view("opacity")){
             double current = scls::string_to_double(parameter_value);
             if(proportion != 1){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();set_opacity(start + (current - start) * proportion);}
             else{set_opacity(current);}
         }
-        else if(parameter_name == std::string("height")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
-        else if(parameter_name == std::string("width")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_width(current);}
-        else if(parameter_name == std::string("x")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
-        else if(parameter_name == std::string("y")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
+        else if(parameter_name == std::string_view("height")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
+        else if(parameter_name == std::string_view("velocity")){scls::Point_2D new_velocity = environment()->value_point_2d(parameter_value).to_point_2d(environment()->unknowns());attached_transform()->set_velocity(new_velocity);}
+        else if(parameter_name == std::string_view("width")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_width(current);}
+        else if(parameter_name == std::string_view("x")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
+        else if(parameter_name == std::string_view("y")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
     }
 
     // Sets the parent of the object
@@ -288,7 +289,7 @@ namespace pleos {
         if(action->type == ACTION_STOP){
             double proportion = 1;if(action->duration != 0){proportion = action->passed_time / action->duration;}
             if(proportion >= 1){set_velocity(velocity() * 0);return true;}
-            else{set_velocity(velocity() * 0.995);}
+            else{set_velocity(velocity() * 0.95);}
         }
         else if(action->type == ACTION_WAIT){
             // Wait action
