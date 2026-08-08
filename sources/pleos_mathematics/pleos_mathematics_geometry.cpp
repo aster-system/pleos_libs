@@ -103,6 +103,11 @@ namespace pleos {
             if(needed_proportion >= 0) {
                 needed_move_x *= needed_proportion;
                 needed_move_y *= needed_proportion;
+
+                // Start proportion
+                double to_add_x = (needed_x - last_x) * link(0).drawing_proportion_start;
+                double to_add_y = (needed_y - last_y) * link(0).drawing_proportion_start;
+                needed_move_x_minus += to_add_x;needed_move_y_minus += to_add_y;
             }
             else {
                 needed_move_x_minus = needed_move_x * (1.0 + needed_proportion);
@@ -111,7 +116,9 @@ namespace pleos {
 
             // Apply the proportion
             int line_width = border_radius();
-            image.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, color_with_absolute_opacity(border_color()), line_width);
+            double final_x_end = last_x + needed_move_x;double final_y_end = last_y + needed_move_y;
+            double final_x_start = last_x + needed_move_x_minus;double final_y_start = last_y + needed_move_y_minus;
+            image.get()->draw_line(final_x_start, final_y_start, final_x_end, final_y_end, color_with_absolute_opacity(border_color()), line_width);
             return;
         }
 
@@ -369,8 +376,14 @@ namespace pleos {
     void Arrow_2D::update_hat() {
         scls::Point_2D pos_end = points().at(points().size() - 1).get()->absolute_position();
         scls::Point_2D pos_start = points().at(0).get()->absolute_position();
+        scls::Point_2D pos_end_real = pos_start + (pos_end - pos_start) * link(0).drawing_proportion;
+        scls::Point_2D pos_start_real = pos_start + (pos_end - pos_start) * link(0).drawing_proportion_start;
+        pos_end = pos_end_real;pos_start = pos_start_real;
+
+        // Needed datas
         double arrow_size = pos_end.distance(pos_start) + 1;
 
+        a_extremity.get()->set_position(pos_end);
         if(pos_end == pos_start) {
             a_hat_line_1.get()->set_opacity(0);
             a_hat_line_2.get()->set_opacity(0);

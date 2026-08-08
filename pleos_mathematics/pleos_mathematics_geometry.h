@@ -94,7 +94,7 @@ namespace pleos {
         // Class representating a geometrical form in 2D
     public:
         // Link between the point
-        struct Link {double drawing_proportion = 1;};
+        struct Link {double drawing_proportion = 1;double drawing_proportion_start = 0;};
 
         // Form_2D constructor
         Form_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base, name){};
@@ -215,6 +215,7 @@ namespace pleos {
         void update_hat();
 
         // Getters and setters
+        inline void set_extremity(std::shared_ptr<__Graphic_Object_Base> new_extremity){a_extremity = new_extremity;}
         inline void set_hat_1(std::shared_ptr<__Graphic_Object_Base> hat_1){a_hat_1 = hat_1;}
         inline void set_hat_line_1(std::shared_ptr<Form_2D> new_hat_line_1){a_hat_line_1 = new_hat_line_1;}
         inline void set_hat_2(std::shared_ptr<__Graphic_Object_Base> hat_2){a_hat_2 = hat_2;}
@@ -225,6 +226,9 @@ namespace pleos {
 
         // Size of the hat
         double a_hat_proportion = 1;
+
+        // Extremity of the arrow
+        std::shared_ptr<__Graphic_Object_Base> a_extremity;
 
         // Parts of the arrow
         std::shared_ptr<__Graphic_Object_Base> a_hat_1;

@@ -418,9 +418,9 @@ namespace pleos {
         // Soft reset the graphic
         virtual void soft_reset();
         // Updates the object
-        bool __update_action(__Graphic_Object_Base* object, double used_delta_time);
-        bool __update_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time);
+        bool update_action(__Graphic_Object_Base* object, double used_delta_time);
         void update_delete();
+        virtual bool update_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time);
         virtual void update(double used_delta_time);
 
         // Annoying functions to draw the image
