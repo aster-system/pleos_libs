@@ -39,6 +39,24 @@ namespace pleos {
     //
     //******************
 
+	// Size in a graphic
+	struct Graphic_Size {
+		// Graphic_Size constructor
+		Graphic_Size(int size, unsigned char type):a_size(size),a_type(type){};
+		Graphic_Size(int size):a_size(size){};
+		Graphic_Size(){};
+
+		// Size
+		double a_size = 0;
+
+		// Type of the size (0 = plane, 1 = pixel)
+		unsigned char a_type = 0;
+
+		// Values
+		constexpr static unsigned char type_plane = 0;
+		constexpr static unsigned char type_pixel = 1;
+	};
+
     // Base of the graphic
     struct Plane_Base : public scls::Plane_Base {
         // Plane_Base constructor
@@ -111,6 +129,7 @@ namespace pleos {
             // Action_Accelerate constructor
             Action_Accelerate():Action(ACTION_ACCELERATE){};
             Action_Accelerate(double needed_x, double needed_y):Action_Accelerate(){x=needed_x;y=needed_y;};
+            virtual ~Action_Accelerate() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -133,6 +152,7 @@ namespace pleos {
             // Action_Delete constructor
             Action_Delete():Action(ACTION_DELETE){};
             Action_Delete(char object):Action_Delete(){to_delete = object;};
+            virtual ~Action_Delete() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -149,6 +169,7 @@ namespace pleos {
             // Action_Emit constructor
             Action_Emit():Action(ACTION_EMIT){};
             Action_Emit(std::string emit):Action_Emit(){to_emit = emit;};
+            virtual ~Action_Emit() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -165,6 +186,7 @@ namespace pleos {
             // Action_Execute constructor
             Action_Execute():Action(ACTION_EXECUTE){};
             Action_Execute(std::shared_ptr<scls::XML_Text_Base> execute):Action_Execute(){to_execute = execute;};
+            virtual ~Action_Execute() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -180,6 +202,7 @@ namespace pleos {
             // Action_Move constructor
             Action_Move():Action(ACTION_MOVE){};
             Action_Move(double needed_x, double needed_y, double needed_speed):Action_Move(){speed=needed_speed;x_end=needed_x;y_end=needed_y;};
+            virtual ~Action_Move() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -200,6 +223,7 @@ namespace pleos {
             // Action_Rotate constructor
             Action_Rotate():Action(ACTION_ROTATE){};
             Action_Rotate(double needed_rotation, double needed_speed):Action_Rotate(){rotation_end=needed_rotation;speed=needed_speed;};
+            virtual ~Action_Rotate() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -222,6 +246,7 @@ namespace pleos {
             Action_Set_Parameter():Action(ACTION_SET_PARAMETER){};
             Action_Set_Parameter(std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;duration = needed_duration;};
             Action_Set_Parameter(std::string needed_target, std::string needed_parameter_name, std::string needed_parameter_value, double needed_duration):Action_Set_Parameter(){parameter_name = needed_parameter_name;parameter_value = needed_parameter_value;target=needed_target;duration = needed_duration;};
+            virtual ~Action_Set_Parameter() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -247,6 +272,7 @@ namespace pleos {
         struct Action_Stop : public scls::Action {
             // Action_Stop constructor
             Action_Stop(double needed_duration):Action(ACTION_STOP){duration = needed_duration;};
+            virtual ~Action_Stop() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -259,6 +285,7 @@ namespace pleos {
             // Action_Wait constructor
             Action_Wait():Action(ACTION_WAIT){};
             Action_Wait(double time):Action_Wait(){duration = time;};
+            virtual ~Action_Wait() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -272,6 +299,7 @@ namespace pleos {
             // Action_Wait_Until constructor
             Action_Wait_Until():Action(ACTION_WAIT_UNTIL){};
             Action_Wait_Until(double time):Action_Wait_Until(){duration = time;};
+            virtual ~Action_Wait_Until() = default;
 
             // Clone the action
             virtual std::shared_ptr<Action> clone();
@@ -289,6 +317,7 @@ namespace pleos {
             // Action_Function constructor
             Action_Function():scls::Action_Structure(ACTION_LOOP){};
             Action_Function(std::string needed_function_name):Action_Function(){function_name = needed_function_name;};
+            virtual ~Action_Function() = default;
 
             // Clones the action
             virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
@@ -306,6 +335,7 @@ namespace pleos {
             // Action_Wait constructor
             Action_Function_Call():Action(ACTION_FUNCTION_CALL){};
             Action_Function_Call(std::string needed_function_name):Action_Function_Call(){function_name = needed_function_name;};
+            virtual ~Action_Function_Call() = default;
 
             // Clones the action
             virtual std::shared_ptr<Action> clone();
@@ -328,6 +358,7 @@ namespace pleos {
 
             // Action_If constructor
             Action_If():scls::Action_Structure(ACTION_IF){};
+            virtual ~Action_If() = default;
 
             // Clones the action
             virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
@@ -344,6 +375,7 @@ namespace pleos {
 
             // Action_Loop constructor
             Action_Loop():scls::Action_Structure(ACTION_LOOP){};
+            virtual ~Action_Loop() = default;
 
             // Clones the action
             virtual std::shared_ptr<scls::Action_Structure> clone_as_structure();
@@ -365,6 +397,7 @@ namespace pleos {
 
             // Action_Thread constructor
             Action_Thread():Action_Structure(ACTION_THREAD){};
+            virtual ~Action_Thread() = default;
 
             // Adds an accelerate action
             void add_action_accelerate(double x, double y){std::shared_ptr<Action_Accelerate> action = std::make_shared<Action_Accelerate>(x, y);actions().push_back(action);};
@@ -469,6 +502,7 @@ namespace pleos {
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position);
         __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base);
+        virtual ~__Graphic_Object_Base() = default;
 
         // Adds a tag to the object
         void add_tag(std::string new_tag);

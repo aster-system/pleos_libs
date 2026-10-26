@@ -238,11 +238,11 @@ namespace pleos {
             if(proportion != 1){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();set_opacity(start + (current - start) * proportion);}
             else{set_opacity(current);}
         }
-        else if(parameter_name == std::string_view("height")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
+        else if(parameter_name == std::string_view("height")){double start = environment()->value_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
         else if(parameter_name == std::string_view("velocity")){scls::Point_2D new_velocity = environment()->value_point_2d(parameter_value).to_point_2d(environment()->unknowns());attached_transform()->set_velocity(new_velocity);}
-        else if(parameter_name == std::string_view("width")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_width(current);}
-        else if(parameter_name == std::string_view("x")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_x(current);}
-        else if(parameter_name == std::string_view("y")){double start = scls::Fraction::from_std_string(parameter_value_start).to_double();double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_y(current);}
+        else if(parameter_name == std::string_view("width")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_width(current);}
+        else if(parameter_name == std::string_view("x")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_x(current);}
+        else if(parameter_name == std::string_view("y")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_y(current);}
     }
 
     // Sets the parent of the object

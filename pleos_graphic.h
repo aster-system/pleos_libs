@@ -56,8 +56,7 @@ namespace pleos {
         public:
             // Graphic_Base_Object constructor
             Graphic_Base_Object(std::weak_ptr<Graphic> graphic_base):__Graphic_Object_Base(graphic_base.lock().get()->graphic_base_shared_ptr()),a_graphic(graphic_base){};
-            // Graphic_Base_Object destructor
-            ~Graphic_Base_Object(){};
+            virtual ~Graphic_Base_Object() = default;
 
             // Deletes the physic object
             void delete_physic_object();
@@ -95,7 +94,7 @@ namespace pleos {
             enum Texture_Displaying {TD_Fill,TD_From_Height,TD_From_Width,TD_Pixel_Size};
 
             // Graphic_Base_Object constructor
-            Graphic_Texture_Object(std::weak_ptr<Graphic> graphic_base):Graphic_Base_Object(graphic_base){};
+            Graphic_Texture_Object(std::weak_ptr<Graphic> graphic_base);
             virtual ~Graphic_Texture_Object() = default;
 
             // Draws the object on an image
@@ -231,8 +230,7 @@ namespace pleos {
 
             // Datas_Set constructor
             Datas_Set(std::weak_ptr<Graphic> graphic_base, std::string name):Graphic_Base_Object(graphic_base){};
-            // Datas_Set destructor
-            ~Datas_Set(){};
+            virtual ~Datas_Set() = default;
 
             // Adds a data to the datas set
             inline void add_data(scls::Fraction new_data){a_datas.push_back(new_data);};
@@ -282,6 +280,11 @@ namespace pleos {
             // Draws the object on an image
             virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
 
+            // Returns a parameter by its name
+            virtual std::string parameter(std::string parameter_name);
+            // Sets a parameter by its name
+            virtual void set_parameter(std::string parameter_name, std::string parameter_value, std::string parameter_value_start, double proportion, std::vector<std::shared_ptr<scls::Object>>* buffer);
+
             // Getters and setters
             inline scls::Color color() const {return a_function_studied.get()->color();};
             inline scls::Fraction curve_area_end(int n){return a_curve_areas.at(n).area_end;};
@@ -289,17 +292,21 @@ namespace pleos {
             inline scls::Fraction curve_area_start(int n){return a_curve_areas.at(n).area_start;};
             inline int curve_area_rectangle_number(int n){return a_curve_areas.at(n).rectangle_number;};
             inline scls::Set_Number* definition_set(){return a_function_studied.get()->definition_set();};
+            inline scls::Fraction end(){return a_function_studied.get()->end();};
             inline scls::Fraction fill_area_end(int n){return a_fill_areas.at(n).area_end;};
             inline int fill_areas_number(){return a_fill_areas.size();};
             inline scls::Fraction fill_area_start(int n){return a_fill_areas.at(n).area_start;};
             inline scls::Formula_Base& formula(){return *a_function_studied.get()->formula();};
             inline Function_Studied* function()const{return a_function_studied.get();};
+            inline int line_width() const {return a_function_studied.get()->line_width();};
             inline double middle_x() const {return a_graphic_base.get()->x_middle_in_canonical_base();};
             inline double middle_y() const {return a_graphic_base.get()->y_middle_in_canonical_base();};
             inline std::string name() const {return a_function_studied.get()->name();};
             inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
             inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
+            inline void set_end(scls::Fraction f){a_function_studied.get()->set_end(f);};
             inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
+            inline void set_line_width(int new_line_width){a_function_studied.get()->set_line_width(new_line_width);};
 
         private:
             // Needed curves area
@@ -316,13 +323,49 @@ namespace pleos {
             std::shared_ptr<__Graphic_Base> a_graphic_base;
         };
 
+        // Field in a graphic
+		class Graphic_Field : public Graphic_Base_Object {
+			// Class representing a function for a graphic
+		public:
+
+			// Graphic_Field constructor
+        	Graphic_Field(std::weak_ptr<Graphic> graphic_base);
+			virtual ~Graphic_Field() = default;
+
+			// Draws the object on an image
+			virtual void draw_on_image(std::shared_ptr<scls::__Image_Base>);
+
+			// Function called to update the circle
+            virtual int update(double used_delta_time);
+
+			// Getters and setters
+			inline double middle_x() const {return a_graphic_base.get()->x_middle_in_canonical_base();};
+			inline double middle_y() const {return a_graphic_base.get()->y_middle_in_canonical_base();};
+			inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
+			inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
+			inline void set_formula_x(std::shared_ptr<scls::Formula_Base> new_formula_x){a_formula_x = new_formula_x;}
+			inline void set_formula_y(std::shared_ptr<scls::Formula_Base> new_formula_y){a_formula_y = new_formula_y;}
+			inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
+
+		private:
+
+			// Formula for the X and Y
+			std::shared_ptr<scls::Formula_Base> a_formula_x;
+			std::shared_ptr<scls::Formula_Base> a_formula_y;
+
+			// Points for the arrows
+			std::vector<scls::Point_2D> a_arrows_starts;
+
+			// Datas about the plane
+			std::shared_ptr<__Graphic_Base> a_graphic_base;
+		};
+
         // Text in a graphic
         class Graphic_Text : public Graphic_Base_Object{
         public:
             // Graphic_Text constructor
-            Graphic_Text(std::weak_ptr<Graphic> graphic_base):Graphic_Base_Object(graphic_base){};
-            // Graphic_Text destructor
-            ~Graphic_Text(){};
+            Graphic_Text(std::weak_ptr<Graphic> graphic_base);
+            virtual ~Graphic_Text() = default;
 
             // Moves an object to a position, from an another position
             inline void move_from_to(scls::Point_2D pos_1, scls::Point_2D pos_2, double proportion){scls::Point_2D new_pos = pos_1 + (pos_2 - pos_1) * proportion;set_x(new_pos.x());set_y(new_pos.y());};
@@ -398,6 +441,9 @@ namespace pleos {
         // Graphic handling
         //******************
 
+        // Destructor
+        virtual ~Graphic() = default;
+
         // Returns a new graphic
         static std::shared_ptr<Graphic> new_graphic(scls::_Window_Advanced_Struct* window_struct);
         static std::shared_ptr<Graphic> new_graphic();
@@ -412,6 +458,7 @@ namespace pleos {
         // Sets the middle of the base
         void set_middle(double middle_x, double middle_y);
         // Sets the scale of the base
+        void set_height_with_same_ratio(double height);
         void set_scale(double width, double height, bool width_used, bool height_used);
         void set_scale(double width, double height);
 
@@ -438,8 +485,6 @@ namespace pleos {
         scls::Fraction pixel_y_to_graphic_y(int y, std::shared_ptr<scls::__Image_Base> needed_image);
         // Draw the bases of the image
         void image_draw_base(std::shared_ptr<scls::__Image_Base> to_return);
-        // Draw a function on the image
-        void image_draw_function(std::shared_ptr<scls::__Image_Base> to_return, std::shared_ptr<Graphic_Function> needed_function, std::vector<scls::Fraction>& screen_pos);
 
         // Sets an object at the background object
         void set_background_object(__Graphic_Object_Base* object);
@@ -450,7 +495,8 @@ namespace pleos {
         // Sets an object render before an other
         void set_object_render_before(std::shared_ptr<__Graphic_Object_Base> object, __Graphic_Object_Base* object_to_render_before);
 
-        // Adds a function to the graphic
+        // Adds a field / function to the graphic
+        std::shared_ptr<Graphic_Field> add_field();
         std::shared_ptr<Graphic_Function> add_function(std::shared_ptr<Function_Studied> function_studied);
         // Resets the object
         virtual void reset();

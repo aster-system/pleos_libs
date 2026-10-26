@@ -115,7 +115,7 @@ namespace pleos {
             }
 
             // Apply the proportion
-            int line_width = border_radius();
+            int line_width = border_radius_pixel();
             double final_x_end = last_x + needed_move_x;double final_y_end = last_y + needed_move_y;
             double final_x_start = last_x + needed_move_x_minus;double final_y_start = last_y + needed_move_y_minus;
             image.get()->draw_line(final_x_start, final_y_start, final_x_end, final_y_end, color_with_absolute_opacity(border_color()), line_width);
@@ -170,7 +170,7 @@ namespace pleos {
                 needed_move_y_minus = needed_move_y * (1.0 + needed_proportion);
             }
 
-            image.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, current_border_color, border_radius());
+            image.get()->draw_line(last_x + needed_move_x_minus, last_y + needed_move_y_minus, last_x + needed_move_x, last_y + needed_move_y, current_border_color, border_radius_pixel());
             last_point = current_point; last_x = needed_x; last_y = needed_y;
         }
     }
@@ -238,6 +238,32 @@ namespace pleos {
         for(std::size_t i = 0;i<new_points.size();i++) {
             add_point_external(new_points.at(i));
         }
+    }
+
+    // Set the rect of the form from the  points
+    void Form_2D::set_rect_from_points() {
+        // Assert
+        if(a_points.size() == 0){set_position(scls::Point_2D(0, 0));set_width(0);set_height(0);return;}
+
+        double max_x = a_points.at(0).get()->absolute_x();
+        double min_x = a_points.at(0).get()->absolute_x();
+        double max_y = a_points.at(0).get()->absolute_y();
+        double min_y = a_points.at(0).get()->absolute_y();
+
+        scls::Point_2D total_sum = a_points.at(0).get()->absolute_position();
+        for(std::size_t i = 1;i<a_points.size();i++){
+            scls::Point_2D current_pos = a_points.at(i).get()->absolute_position();
+            total_sum += current_pos;
+            if(current_pos.x() > max_x){max_x = current_pos.x();}
+            if(current_pos.y() > max_y){max_y = current_pos.y();}
+            if(current_pos.x() < min_x){min_x = current_pos.x();}
+            if(current_pos.y() < min_y){min_y = current_pos.y();}
+        }
+        total_sum /= a_points.size();
+
+        // Set the datas
+        set_position(total_sum);
+        attached_transform()->set_scale(scls::Point_2D(max_x - min_x, max_y - min_y));
     }
 
     // Returns this object to an XML text
@@ -311,7 +337,7 @@ namespace pleos {
         return content;
 
     }
-    std::string Form_2D::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius());}
+    std::string Form_2D::to_xml_text_border_radius(){return std::string(" border_radius=") + std::to_string(border_radius_pixel());}
     std::string Form_2D::to_xml_text_object_name(){return std::string("form");}
 
     // Returns a list of the points triangulated

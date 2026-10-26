@@ -59,21 +59,27 @@ namespace pleos {
         inline scls::Color color() const {return a_color;};
         inline scls::GUI_Text* connected_object()const{return a_connected_object.lock().get();};
         inline scls::Set_Number* definition_set(){return a_definition_set.get();};
+        inline scls::Fraction end() const {return a_end;};
         inline scls::Formula_Base* formula()const{return a_function_segments.at(0).formula.get();};
         inline std::shared_ptr<scls::Formula_Base> formula_copy()const{return formula()->clone();};
         inline int level() const {if(a_parent_object.lock().get() == 0){return 0;}return a_parent_object.lock().get()->level() + 1;}
+        inline int line_width() const {return a_line_width;};
         inline std::string name() const {return a_function_name;};
         inline scls::Set_Number* roots(){return a_roots.get();};
         inline void set_color(scls::Color new_color){a_color = new_color;};
         inline void set_connected_object(std::weak_ptr<scls::GUI_Text> new_connected_object){a_connected_object = new_connected_object;};
         inline void set_definition_set(scls::Set_Number new_definition_set){a_definition_set=std::make_shared<scls::Set_Number>(new_definition_set);};
+        inline void set_end(scls::Fraction new_end){a_end = new_end;}
         inline void set_formula_shared_ptr(std::shared_ptr<scls::Formula_Base> formula){a_function_segments.at(0).formula = formula;};
         inline void set_formula(scls::Formula_Base formula){a_function_segments.at(0).formula = std::make_shared<scls::Formula_Base>(formula);};
         inline void set_function_unknown(std::string unknown){a_function_unknown = unknown;};
+        inline void set_line_width(int new_line_width){a_line_width = new_line_width;};
         inline void set_name(std::string new_name){a_function_name = new_name;if(connected_object()!=0){connected_object()->set_text(std::string("Fonction ") + new_name);}};
         inline void set_roots(scls::Set_Number new_roots){a_roots = std::make_shared<scls::Set_Number>(new_roots);};
         inline void set_sign_set(scls::Set_Number new_sign_set){a_sign_set = std::make_shared<scls::Set_Number>(new_sign_set);};
         inline scls::Set_Number* sign_set(){return a_sign_set.get();};
+        inline void set_start(scls::Fraction new_start){a_start = new_start;}
+        inline scls::Fraction start() const {return a_start;};
         inline std::shared_ptr<Function_Studied> this_object()const{return a_this_object.lock();};
         inline std::string unknown() const {return a_function_unknown;};
 
@@ -92,6 +98,13 @@ namespace pleos {
         int a_function_number = 0;
         // Name of the unknown in the function
         std::string a_function_unknown = "x";
+
+        // Width of the line
+        int a_line_width = 10;
+
+        // Start / end of the function
+        scls::Fraction a_end = 100;
+        scls::Fraction a_start = -100;
 
         // Color of the curve
         scls::Color a_color = scls::Color(255, 0, 0);

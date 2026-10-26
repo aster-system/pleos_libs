@@ -116,6 +116,9 @@ namespace pleos {
         // Adds a collision mesh to a physic object
         void add_collision_mesh(scls::Physic_Object* object);
 
+        // Set the rect of the form from the points
+        void set_rect_from_points();
+
         // Returns a parameter by its name
         virtual std::string parameter(std::string parameter_name);
         // Sets a parameter by its name
@@ -137,7 +140,7 @@ namespace pleos {
 
         // Getters and setters
         inline scls::Color border_color()const{return a_border_color;};
-        inline int border_radius()const{return a_border_radius;};
+        inline int border_radius_pixel()const{if(a_border_radius.a_type == Graphic_Size::type_pixel){return a_border_radius.a_size;}std::cout << "U " << a_border_radius.a_size << std::endl; return a_border_radius.a_size * graphic_base()->a_pixel_by_case_x;};
         inline __Graphic_Object_Base* cloned_from() const {return a_cloned_from.lock().get();};
         inline scls::Color color()const{return a_color;};
         inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& exclusion_points(){return a_exclusion_points;};
@@ -146,7 +149,9 @@ namespace pleos {
         inline Link& link(int position){return a_points_link[position];};
         inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& points(){return a_points;};
         inline void set_border_color(scls::Color new_border_color){a_border_color=new_border_color;};
-        inline void set_border_radius(int new_border_radius){a_border_radius=new_border_radius;};inline void set_border_width(int new_border_width){a_border_radius=new_border_width;};
+        inline void set_border_radius_pixel(int new_border_radius){a_border_radius=new_border_radius;a_border_radius.a_type=Graphic_Size::type_pixel;};
+        inline void set_border_width_pixel(int new_border_width){a_border_radius.a_size=new_border_width;a_border_radius.a_type=Graphic_Size::type_pixel;};
+        inline void set_border_width_plane(double new_border_width){a_border_radius.a_size=new_border_width;a_border_radius.a_type=Graphic_Size::type_plane;};
         inline void set_cloned_from(std::weak_ptr<__Graphic_Object_Base> new_cloned_from){a_cloned_from = new_cloned_from;};
         inline void set_color(scls::Color new_color){a_color=new_color;};
         inline void set_link_drawing_proportion(int link, double new_proportion){if(link >=static_cast<int>(a_points_link.size())){return;}a_points_link[link].drawing_proportion = new_proportion;};
@@ -178,7 +183,7 @@ namespace pleos {
         // Color of the border of the form
         scls::Color a_border_color = scls::Color(255, 0, 0);
         // Radius of the border
-        int a_border_radius = 6;
+        Graphic_Size a_border_radius = Graphic_Size(6, Graphic_Size::type_pixel);
         // Color of the inner form
         scls::Color a_color = scls::Color(0, 255, 0);
 
