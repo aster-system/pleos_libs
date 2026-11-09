@@ -1898,6 +1898,8 @@ namespace pleos {
 			// Create the function
 			field.get()->set_formula_x(formula_x);
 			field.get()->set_formula_y(formula_y);
+			physic_engine()->new_vector_field_acceleration(formula_x, formula_y);
+
 			//needed_function.get()->set_color(needed_color);
 
 			// Check the inner balises
@@ -2120,14 +2122,18 @@ namespace pleos {
             std::string needed_parameter_name = std::string();
             std::string needed_parameter_target = std::string();
             std::string needed_parameter_value = std::string("0");
+            bool needed_parameter_value_used = false;
             double needed_time = 0;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == std::string("parameter")) {needed_parameter_name = attributes[j].value;}
                 else if(attributes[j].name == "target") {needed_parameter_target = attributes[j].value;}
                 else if(attributes[j].name == "time") {needed_time = environment->value_double(attributes[j].value);}
-                else if(attributes[j].name == "value"){needed_parameter_value = attributes[j].value;}
+                else if(attributes[j].name == "value"){needed_parameter_value = attributes[j].value;needed_parameter_value_used = true;}
                 else if(attributes[j].name == "value_direct"){needed_parameter_value = scls::string_to_algebra_element<scls::Formula_Base>(attributes[j].value, environment).get()->to_std_string(0);}
             }
+
+            // Assert
+            if(!needed_parameter_value_used){scls::print("Warning", "PLEOS Graphic", "Unprecised value for a \"set parameter\" action");}
 
             // Add the action
             if(structure != 0){structure->add_action(std::make_shared<__Graphic_Object_Base::Action_Set_Parameter>(needed_parameter_target, needed_parameter_name, needed_parameter_value, needed_time)).get()->save_to_xml_text = true;}

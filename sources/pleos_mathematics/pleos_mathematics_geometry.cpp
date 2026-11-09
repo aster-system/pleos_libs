@@ -392,7 +392,7 @@ namespace pleos {
 			needed_hat_proportion = start_hat_proportion + (needed_hat_proportion - start_hat_proportion) * proportion;
 			a_hat_proportion = needed_hat_proportion;
 	    }
-	    else{__Graphic_Object_Base::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion);}
+	    else{Form_2D::set_parameter(parameter_name, parameter_value, parameter_value_start, proportion, buffer);}
     }
 
     // Updates the button
