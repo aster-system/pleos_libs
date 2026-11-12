@@ -418,7 +418,7 @@ namespace pleos {
             scls::Fraction y_diff = needed_y_end - needed_y_start;
             needed_x_end = needed_x_start + x_diff * needed_point->drawing_proportion();
             needed_y_end = needed_y_start + y_diff * needed_point->drawing_proportion();
-            hat_position_in_purcentage=scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0/SCLS_PI);
+            hat_position_in_purcentage=scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0/scls::pi);
             hat_size_in_purcentage = 20;
         }
 

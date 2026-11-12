@@ -145,7 +145,7 @@ namespace pleos {
                             // Get the good angle
                             scls::Fraction x_diff = needed_x[current_id] - needed_x[i];
                             scls::Fraction y_diff = needed_y[current_id] - needed_y[i];
-                            double angle = scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0 / SCLS_PI);
+                            double angle = scls::vector_2d_angle(x_diff.to_double(), y_diff.to_double()) * (180.0 / scls::pi);
                             while(angle < 0){angle += 360;}
                             if(angle > 225 && angle <= 315){link_type = Link_Type::LT_Bottom;}
                             else if(angle > 135 && angle <= 225){link_type = Link_Type::LT_Left;}

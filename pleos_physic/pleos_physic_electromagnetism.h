@@ -64,7 +64,7 @@ namespace pleos {
         double magnetical_orientation(scls::Vector_3D referential);
         inline double magnetical_orientation(){return magnetical_orientation(scls::Vector_3D(0, 0, 0));};
         // Volume of the particule
-        inline double volume() const {return ((4.0 * SCLS_PI * a_width * a_width * a_width)/3.0);};
+        inline double volume() const {return ((4.0 * scls::pi * a_width * a_width * a_width)/3.0);};
 
         // Getters and setters
         inline double charge() const {return a_charge;};

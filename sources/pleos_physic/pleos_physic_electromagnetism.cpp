@@ -40,16 +40,16 @@ namespace pleos {
         // Get the other angle
         magnetic_field_effect *= -1;
         double needed_angle_magnetic = scls::vector_2d_angle(magnetic_field_effect.x(), magnetic_field_effect.y());
-        while(needed_angle_magnetic > SCLS_PI) {needed_angle_magnetic -= SCLS_PI * 2;}
-        while(needed_angle_magnetic < -SCLS_PI) {needed_angle_magnetic += SCLS_PI * 2;}
+        while(needed_angle_magnetic > scls::pi) {needed_angle_magnetic -= scls::pi * 2;}
+        while(needed_angle_magnetic < -scls::pi) {needed_angle_magnetic += scls::pi * 2;}
         // Get the velocity angle
         double needed_angle_velocity = other_charge->magnetical_orientation();
         // Apply the needed modification
         double needed_angle = needed_angle_velocity - needed_angle_magnetic;
-        while(needed_angle > SCLS_PI * 2.0) {needed_angle -= SCLS_PI * 2.0;}
-        while(needed_angle <= 0) {needed_angle += SCLS_PI * 2.0;}
+        while(needed_angle > scls::pi * 2.0) {needed_angle -= scls::pi * 2.0;}
+        while(needed_angle <= 0) {needed_angle += scls::pi * 2.0;}
         // Get the good normal
-        if(needed_angle > SCLS_PI){needed_angle -= SCLS_PI * 2.0;}
+        if(needed_angle > scls::pi){needed_angle -= scls::pi * 2.0;}
 
         // Get the final vector
         scls::Vector_3D to_return = other_charge->velocity(); to_return.set_z(to_return.y());
@@ -62,8 +62,8 @@ namespace pleos {
     double Electrical_Charge::magnetical_orientation(scls::Vector_3D referential) {
         // Get the angle
         double needed_angle_other = scls::vector_2d_angle(velocity().x() - referential.x(), velocity().y() - referential.y());
-        while(needed_angle_other > SCLS_PI) {needed_angle_other -= SCLS_PI * 2;}
-        while(needed_angle_other < -SCLS_PI) {needed_angle_other += SCLS_PI * 2;}
+        while(needed_angle_other > scls::pi) {needed_angle_other -= scls::pi * 2;}
+        while(needed_angle_other < -scls::pi) {needed_angle_other += scls::pi * 2;}
         return needed_angle_other;
     }
 }
