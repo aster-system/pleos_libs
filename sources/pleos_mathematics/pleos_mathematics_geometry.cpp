@@ -112,7 +112,7 @@ namespace pleos {
             else {
                 needed_move_x_minus = needed_move_x * (1.0 + needed_proportion);
                 needed_move_y_minus = needed_move_y * (1.0 + needed_proportion);
-            }
+            }//*/
 
             // Apply the proportion
             int line_width = border_radius_pixel();

@@ -420,12 +420,14 @@ namespace pleos {
         	// Handle the attributes
 			std::vector<scls::XML_Attribute>& attributes = current_text.get()->xml_balise_attributes();
 			std::string scientists_lastname = std::string();
+			std::string type = std::string();
 			for(int i = 0;i<static_cast<int>(attributes.size());i++) {
-				if(attributes[i].name == std::string("lastname") || attributes[i].name == std::string("name")){scientists_lastname = attributes[i].value;}
+				if(attributes[i].name == std::string_view("lastname") || attributes[i].name == std::string_view("name")){scientists_lastname = attributes[i].value;}
+				else if(attributes[i].name == std::string_view("type")){type = attributes[i].value;}
 			}
 
 			// Get the needed scientist
-			Text_Environment::Scientist* needed_scientist = possible_environment.get()->scientist_by_name(scientists_lastname);
+			Text_Environment::Scientist* needed_scientist = possible_environment.get()->scientist_by_id(scientists_lastname);
 
 			if(needed_scientist == 0) {
 				current_text.get()->set_xml_balise_name(std::string());
@@ -433,8 +435,30 @@ namespace pleos {
 				scls::print("PLEOS Text Environment", std::string("This text environment has no scientist loaded named \"") + scientists_lastname + std::string("\"."));
 			}
 			else {
-				current_text.get()->set_xml_balise_name(std::string());
-				current_text.get()->set_text(scls::capitalise_first_letter(needed_scientist->lastname()));
+                if(type == std::string_view("presentation")) {
+                    current_text.get()->set_xml_balise_name(std::string());
+
+                    std::string to_use = std::string();
+
+                    if(!needed_scientist->firstname().empty()){to_use += scls::capitalise_first_letter(needed_scientist->firstname());}
+                    if(!needed_scientist->lastname().empty()){if(!to_use.empty()){to_use += std::string(" ");}to_use += scls::capitalise_first_letter(needed_scientist->lastname());}
+                    if(!needed_scientist->birth().empty() && !needed_scientist->death().empty()){
+                        if(!to_use.empty()){to_use += std::string(" ");}
+                        to_use += "(né en ";
+                        to_use += needed_scientist->birth();
+                        to_use += " et mort en ";
+                        to_use += needed_scientist->death();
+                        to_use += ")";
+                    }
+
+                    to_use = scls::to_utf_8(to_use);
+                    current_text.get()->set_text(to_use);
+                }
+                else {
+                    current_text.get()->set_xml_balise_name(std::string());
+                    if(!needed_scientist->lastname().empty()){current_text.get()->set_text(scls::capitalise_first_letter(needed_scientist->lastname()));}
+                    else{current_text.get()->set_text(scls::capitalise_first_letter(needed_scientist->firstname()));}
+                }
 			}
         }
 

@@ -453,6 +453,9 @@ namespace pleos {
         void create_background_texture(int image_width, int image_height);
         void create_background_texture(std::string path);
 
+        // Returns a parameter by its name
+        virtual std::string parameter(std::string parameter);
+
         // Sets the size of the image
         void set_image_size(int image_width, int image_height);
         // Sets the middle of the base
@@ -465,9 +468,10 @@ namespace pleos {
         // Soft reset the graphic
         virtual void soft_reset();
         // Updates the object
-        bool update_action(__Graphic_Object_Base* object, double used_delta_time);
+        bool update_object_action(__Graphic_Object_Base* object, double used_delta_time);
         void update_delete();
-        virtual bool update_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time);
+        virtual bool update_graphic_action(double used_delta_time);
+        virtual bool update_object_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time);
         virtual void update(double used_delta_time);
 
         // Annoying functions to draw the image

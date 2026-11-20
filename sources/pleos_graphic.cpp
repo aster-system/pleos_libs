@@ -852,6 +852,11 @@ namespace pleos {
     void Graphic::middle_y_add(double value) {a_graphic_base.get()->set_y_middle_in_canonical_base(a_graphic_base.get()->y_middle_in_canonical_base() + value);}
     void Graphic::set_middle(scls::Point_2D new_middle){set_middle(new_middle.x(), new_middle.y());}
 
+    // Returns a parameter by its name
+    std::string Graphic::parameter(std::string parameter) {
+        if(parameter == std::string_view("height")){return scls::Fraction::from_double(height()).to_std_string(0);}
+    }
+
     // Update the base
     void Graphic::update_base() {
         a_graphic_base.get()->set_height_unit_in_canonical_base(a_graphic_base.get()->a_height_in_pixel / a_graphic_base.get()->a_height);
@@ -956,8 +961,80 @@ namespace pleos {
 
     // Updates the object
     int __current_deleted_object = 0;
-    bool Graphic::update_action(__Graphic_Object_Base* object, double used_delta_time){return update_action(object, object->actions(), used_delta_time);}
-    bool Graphic::update_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time){
+    bool Graphic::update_graphic_action(double used_delta_time) {
+        // Check actions of the graphic
+        if(a_actions.get()->next_action() != 0){
+            bool action_terminated = false;
+            double start_passed_time = a_actions.get()->next_action()->passed_time;
+            a_actions.get()->next_action()->passed_time += used_delta_time;
+            if(a_actions.get()->next_action_type() == ACTION_EXECUTE) {
+                // Move action
+                __Graphic_Object_Base::Action_Execute* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Execute*>(a_actions.get()->next_action());
+                __graphic_from_xml_balises(l_a->to_execute, environment_shared_ptr().get(), scls::Text_Style(), 0, 0);
+                action_terminated=true;
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_MOVE) {
+                // Move action
+                scls::Point_2D mid = scls::Point_2D(a_graphic_base.get()->a_x_middle, a_graphic_base.get()->a_y_middle);
+                __Graphic_Object_Base::Action_Move* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Move*>(a_actions.get()->next_action());
+                scls::Point_2D direction_vector = (l_a->position_end() - mid).normalized();
+                direction_vector *= used_delta_time * l_a->speed;
+
+                // Do the movement
+                if(direction_vector.norm() < l_a->position_end().distance(mid)){set_middle(mid + direction_vector);}
+                else{set_middle(l_a->position_end());action_terminated=true;}
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_SET_PARAMETER) {
+                // Set parameter action
+                __Graphic_Object_Base::Action_Set_Parameter* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Set_Parameter*>(a_actions.get()->next_action());
+                std::string parameter_name = l_a->parameter_name;
+                std::string& parameter_start = l_a->parameter_start;
+                std::string parameter_value = l_a->parameter_value;
+                std::string target_name = l_a->target;
+                double proportion = l_a->passed_time / a_actions.get()->next_action()->duration;
+                if(proportion >= 1){proportion = 1;}
+                if(l_a->passed_time >= l_a->duration){action_terminated=true;}
+
+                // Target
+                __Graphic_Object_Base* target = 0;
+                if(target_name != std::string()){
+                    scls::Function_Called_Text f = scls::parse_function_call(target_name);
+                    if(f.error == SCLS_FUNCTION_CALLED_TEXT_NOT_FUNCTION){target = object_by_name(target_name);}
+                    else {
+
+                    }
+                }
+
+                // Start parameter
+                if(start_passed_time == 0){parameter_start = parameter(parameter_name);}
+
+                // Get the good parameter
+                if(target == 0) {
+                    if(parameter_name == std::string_view("height")){
+                        double height_start = environment()->value_double(parameter_start);
+                        double height_value = environment()->value_double(parameter_value);
+                        set_height_with_same_ratio(height_start + (height_value - height_start) * proportion);
+                    }
+                }
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_WAIT){
+                // Wait action
+                __Graphic_Object_Base::Action_Wait* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(a_actions.get()->next_action());
+                if(l_a->passed_time >= l_a->duration){action_terminated=true;}
+            }
+            else if(a_actions.get()->next_action_type() == ACTION_WAIT_UNTIL){
+                // Wait until action
+                __Graphic_Object_Base::Action_Wait_Until* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait_Until*>(a_actions.get()->next_action());
+                if(graphic_base()->a_time.to_double() >= l_a->duration){action_terminated=true;}
+            }
+
+            // If the action is terminated
+            if(action_terminated){a_actions.get()->go_to_next_action();}
+        }
+        return true;
+    }
+    bool Graphic::update_object_action(__Graphic_Object_Base* object, double used_delta_time){return update_object_action(object, object->actions(), used_delta_time);}
+    bool Graphic::update_object_action(__Graphic_Object_Base* object, scls::Action_Structure* structure, double used_delta_time){
         if(structure->next_action() != 0){
             bool action_terminated = false;
             double start_passed_time = structure->next_action()->passed_time;
@@ -1004,7 +1081,7 @@ namespace pleos {
                         // Start the normal update of the action
                         needed_function->go_to_first_action();
                         if(l_a->function_namespace.get() != 0){environment()->add_namespace_stack(l_a->function_namespace);}
-                        update_action(object, needed_function, used_delta_time);
+                        update_object_action(object, needed_function, used_delta_time);
                         if(l_a->function_namespace.get() != 0){environment()->pop_namespace_stack();}
                         if(needed_function->is_end_action()){action_terminated = true;}
                     }
@@ -1012,7 +1089,7 @@ namespace pleos {
                 else{
                     // Normally update the action
                     if(l_a->function_namespace.get() != 0){environment()->add_namespace_stack(l_a->function_namespace);}
-                    update_action(object, needed_function, used_delta_time);
+                    update_object_action(object, needed_function, used_delta_time);
                     if(l_a->function_namespace.get() != 0){environment()->pop_namespace_stack();}
                     if(needed_function->is_end_action()){action_terminated = true;}
                 }
@@ -1046,7 +1123,7 @@ namespace pleos {
             }
             else if(structure->next_action_type() == ACTION_LOOP) {
                 __Graphic_Object_Base::Action_Loop* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Loop*>(structure->next_action());
-                update_action(object, l_a, used_delta_time);
+                update_object_action(object, l_a, used_delta_time);
 
                 // Check repetition
                 if(l_a->is_end_action()){l_a->go_to_first_action();}
@@ -1131,46 +1208,13 @@ namespace pleos {
         for(int i = 0;i<static_cast<int>(current_objects.size());){int current_update = current_objects.at(i).get()->update(used_delta_time);if(current_update == 0){current_update=1;}i+=current_update;}
 
         // Check actions of the graphic
-        if(a_actions.get()->next_action() != 0){
-            bool action_terminated = false;
-            a_actions.get()->next_action()->passed_time += used_delta_time;
-            if(a_actions.get()->next_action_type() == ACTION_EXECUTE) {
-                // Move action
-                __Graphic_Object_Base::Action_Execute* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Execute*>(a_actions.get()->next_action());
-                __graphic_from_xml_balises(l_a->to_execute, environment_shared_ptr().get(), scls::Text_Style(), 0, 0);
-                action_terminated=true;
-            }
-            else if(a_actions.get()->next_action_type() == ACTION_MOVE) {
-                // Move action
-                scls::Point_2D mid = scls::Point_2D(a_graphic_base.get()->a_x_middle, a_graphic_base.get()->a_y_middle);
-                __Graphic_Object_Base::Action_Move* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Move*>(a_actions.get()->next_action());
-                scls::Point_2D direction_vector = (l_a->position_end() - mid).normalized();
-                direction_vector *= used_delta_time * l_a->speed;
-
-                // Do the movement
-                if(direction_vector.norm() < l_a->position_end().distance(mid)){set_middle(mid + direction_vector);}
-                else{set_middle(l_a->position_end());action_terminated=true;}
-            }
-            else if(a_actions.get()->next_action_type() == ACTION_WAIT){
-                // Wait action
-                __Graphic_Object_Base::Action_Wait* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait*>(a_actions.get()->next_action());
-                if(l_a->passed_time >= l_a->duration){action_terminated=true;}
-            }
-            else if(a_actions.get()->next_action_type() == ACTION_WAIT_UNTIL){
-                // Wait until action
-                __Graphic_Object_Base::Action_Wait_Until* l_a = reinterpret_cast<__Graphic_Object_Base::Action_Wait_Until*>(a_actions.get()->next_action());
-                if(graphic_base()->a_time.to_double() >= l_a->duration){action_terminated=true;}
-            }
-
-            // If the action is terminated
-            if(action_terminated){a_actions.get()->go_to_next_action();}
-        }
+        update_graphic_action(used_delta_time);
 
         // Check actions
         __current_deleted_object = 0;
         for(int i = 0;i<static_cast<int>(current_objects.size());i++){
             for(int j = 0;j<current_objects.at(i).get()->threads_number();j++){
-                while(update_action(current_objects.at(i).get(), current_objects.at(i).get()->thread(j), used_delta_time)){}
+                while(update_object_action(current_objects.at(i).get(), current_objects.at(i).get()->thread(j), used_delta_time)){}
             }
         }
         if(__current_deleted_object > 0){update_delete();}
@@ -1613,7 +1657,7 @@ namespace pleos {
         else if(current_balise_name == "line") {
             // Get the datas about a vector of the graphic
             scls::Color border_color = scls::Color(255, 0, 0);scls::Fraction border_radius=5;
-            std::string needed_name = std::string();double needed_proportion = 1;
+            std::string needed_name = std::string();double needed_proportion = 1;double needed_proportion_start = 0;
             double restitution = 1;bool use_collision = false;bool use_gravity = false;int use_physic = 0; // 0 = None, 1 = Static, 2 = Dynamic
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "border_color" || attributes[j].name == "color") {border_color = environment->value_color(attributes[j].value);}
@@ -1623,12 +1667,13 @@ namespace pleos {
                 else if(attributes[j].name == "physic") {if(attributes[j].value == std::string("static") || attributes[j].value == std::string("1")){use_physic = 1;}else{use_physic = 2;}}
                 else if(attributes[j].name == "proportion") {needed_proportion = scls::Fraction::from_std_string(attributes[j].value).to_double();}
                 else if(attributes[j].name == "restitution") {restitution = scls::Fraction::from_std_string(attributes[j].value).to_double();}
+                else if(attributes[j].name == "proportion_start") {needed_proportion_start = scls::Fraction::from_std_string(attributes[j].value).to_double();}
             }
 
             // Add the form
             std::shared_ptr<Form_2D> created_form = new_line_xml<Form_2D>(xml, environment);
             created_form.get()->set_border_color(border_color);created_form.get()->set_border_radius_pixel(border_radius.to_double());
-            created_form.get()->set_object_name(std::string("line"));created_form.get()->link(0).drawing_proportion = needed_proportion;
+            created_form.get()->set_object_name(std::string("line"));created_form.get()->link(0).drawing_proportion = needed_proportion;created_form.get()->link(0).drawing_proportion_start = needed_proportion_start;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_form, environment, text_style)) {}}
 
             // Handle physic
