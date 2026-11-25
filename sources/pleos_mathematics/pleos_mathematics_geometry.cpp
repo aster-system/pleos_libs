@@ -37,11 +37,11 @@ namespace pleos {
     //******************
 
     // Point_2D constructor
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D point):__Graphic_Object_Base(graphic_base, name, point){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D point):Point_2D(graphic_base, std::string(), point){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y):Point_2D(graphic_base, name, scls::Point_2D(x, y)){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, double x, double y):Point_2D(graphic_base, std::string(), x, y){};
-    Point_2D::Point_2D(std::weak_ptr<__Graphic_Base> graphic_base):Point_2D(graphic_base, std::string(), scls::Point_2D(0, 0)){};
+    Point_2D::Point_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name, scls::Point_2D point):__Graphic_Object_Base(graphic_base, name, point){};
+    Point_2D::Point_2D(std::weak_ptr<Graphic_Base> graphic_base, scls::Point_2D point):Point_2D(graphic_base, std::string(), point){};
+    Point_2D::Point_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name, double x, double y):Point_2D(graphic_base, name, scls::Point_2D(x, y)){};
+    Point_2D::Point_2D(std::weak_ptr<Graphic_Base> graphic_base, double x, double y):Point_2D(graphic_base, std::string(), x, y){};
+    Point_2D::Point_2D(std::weak_ptr<Graphic_Base> graphic_base):Point_2D(graphic_base, std::string(), scls::Point_2D(0, 0)){};
 
     // Returns the needed XML text to generate this object
     std::string Point_2D::to_displayed_text(){return std::string("point");}
@@ -432,7 +432,7 @@ namespace pleos {
     //******************
 
     // Circle constructor
-    Circle::Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y):__Graphic_Object_Base(graphic_base, name, scls::Point_2D(x, y)){set_radius_x(radius_x);set_radius_y(radius_y);}
+    Circle::Circle(std::weak_ptr<Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y):__Graphic_Object_Base(graphic_base, name, scls::Point_2D(x, y)){set_radius_x(radius_x);set_radius_y(radius_y);}
     Circle::~Circle(){}
 
     // Draws the circle on an image

@@ -50,15 +50,15 @@ namespace pleos {
     public:
 
         // Point_2D constructor
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D point);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D point);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, double x, double y);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
-        Point_2D(std::weak_ptr<__Graphic_Base> graphic_base);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name, scls::Point_2D point);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base, scls::Point_2D point);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name, double x, double y);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base, double x, double y);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name);
+        Point_2D(std::weak_ptr<Graphic_Base> graphic_base);
 
         // Returns a vector 3D from a point
-        static std::shared_ptr<Point_2D> from_point(std::shared_ptr<__Graphic_Base> graphic_base, scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(graphic_base, std::string(), needed_point->x(), needed_point->z());};
+        static std::shared_ptr<Point_2D> from_point(std::shared_ptr<Graphic_Base> graphic_base, scls::model_maker::Point* needed_point){return std::make_shared<Point_2D>(graphic_base, std::string(), needed_point->x(), needed_point->z());};
 
         // Returns the needed XML text to generate this object
         virtual std::string to_displayed_text();
@@ -97,7 +97,7 @@ namespace pleos {
         struct Link {double drawing_proportion = 1;double drawing_proportion_start = 0;};
 
         // Form_2D constructor
-        Form_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base, name){};
+        Form_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base, name){};
 
         // Draws the circle on an image
         virtual void draw_on_image(std::shared_ptr<scls::__Image_Base> image);
@@ -206,7 +206,7 @@ namespace pleos {
     public:
 
         // Arrow_2D constructor
-        Arrow_2D(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):Form_2D(graphic_base, name){};
+        Arrow_2D(std::weak_ptr<Graphic_Base> graphic_base, std::string name):Form_2D(graphic_base, name){};
         virtual ~Arrow_2D(){};
 
         // Returns a parameter by its name
@@ -252,7 +252,7 @@ namespace pleos {
         // Class representating a geometrical circle
     public:
         // Circle constructor
-        Circle(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y);
+        Circle(std::weak_ptr<Graphic_Base> graphic_base, std::string name, double x, double y, double radius_x, double radius_y);
         virtual ~Circle();
 
         // Draws the circle on an image

@@ -296,7 +296,7 @@ namespace pleos {
             inline scls::Fraction fill_area_end(int n){return a_fill_areas.at(n).area_end;};
             inline int fill_areas_number(){return a_fill_areas.size();};
             inline scls::Fraction fill_area_start(int n){return a_fill_areas.at(n).area_start;};
-            inline scls::Formula_Base& formula(){return *a_function_studied.get()->formula();};
+            inline scls::Formula_Base_Template<scls::Double>& formula(){return *a_function_studied.get()->formula();};
             inline Function_Studied* function()const{return a_function_studied.get();};
             inline int line_width() const {return a_function_studied.get()->line_width();};
             inline double middle_x() const {return a_graphic_base.get()->x_middle_in_canonical_base();};
@@ -305,7 +305,7 @@ namespace pleos {
             inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
             inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
             inline void set_end(scls::Fraction f){a_function_studied.get()->set_end(f);};
-            inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
+            inline void set_graphic_base(std::shared_ptr<Graphic_Base> base) {a_graphic_base=base;};
             inline void set_line_width(int new_line_width){a_function_studied.get()->set_line_width(new_line_width);};
 
         private:
@@ -320,7 +320,7 @@ namespace pleos {
             // Formula of the function
             std::shared_ptr<Function_Studied> a_function_studied;
             // Datas about the plane
-            std::shared_ptr<__Graphic_Base> a_graphic_base;
+            std::shared_ptr<Graphic_Base> a_graphic_base;
         };
 
         // Field in a graphic
@@ -343,21 +343,21 @@ namespace pleos {
 			inline double middle_y() const {return a_graphic_base.get()->y_middle_in_canonical_base();};
 			inline double pixel_by_case_x() const {return a_graphic_base.get()->a_pixel_by_case_x;};
 			inline double pixel_by_case_y() const {return a_graphic_base.get()->a_pixel_by_case_y;};
-			inline void set_formula_x(std::shared_ptr<scls::Formula_Base> new_formula_x){a_formula_x = new_formula_x;}
-			inline void set_formula_y(std::shared_ptr<scls::Formula_Base> new_formula_y){a_formula_y = new_formula_y;}
-			inline void set_graphic_base(std::shared_ptr<__Graphic_Base> base) {a_graphic_base=base;};
+			inline void set_formula_x(std::shared_ptr<scls::Formula_Base_Template<scls::Double>> new_formula_x){a_formula_x = new_formula_x;}
+			inline void set_formula_y(std::shared_ptr<scls::Formula_Base_Template<scls::Double>> new_formula_y){a_formula_y = new_formula_y;}
+			inline void set_graphic_base(std::shared_ptr<Graphic_Base> base) {a_graphic_base=base;};
 
 		private:
 
 			// Formula for the X and Y
-			std::shared_ptr<scls::Formula_Base> a_formula_x;
-			std::shared_ptr<scls::Formula_Base> a_formula_y;
+			std::shared_ptr<scls::Formula_Base_Template<scls::Double>> a_formula_x;
+			std::shared_ptr<scls::Formula_Base_Template<scls::Double>> a_formula_y;
 
 			// Points for the arrows
 			std::vector<scls::Point_2D> a_arrows_starts;
 
 			// Datas about the plane
-			std::shared_ptr<__Graphic_Base> a_graphic_base;
+			std::shared_ptr<Graphic_Base> a_graphic_base;
 		};
 
         // Text in a graphic
@@ -674,8 +674,8 @@ namespace pleos {
         // Adds a texture to the graphic
         void add_texture_object(std::shared_ptr<Graphic_Texture> current_texture);
         // Creates and returns a new texture object
-        template <typename T> std::shared_ptr<T> new_texture_object(std::string object_name, __Graphic_Object_Base* parent){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_namespace(environment()->create_namespace("object"));current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_name(object_name);current_texture->set_parent(parent);current_texture.get()->after_creation();return current_texture;};
-        template <typename T> std::shared_ptr<T> new_texture_object(double x, double y){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_namespace(environment()->create_namespace("object"));current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(a_unknowns);add_texture_object(current_texture);current_texture.get()->set_x(x);current_texture->set_y(y);current_texture.get()->after_creation();return current_texture;};
+        template <typename T> std::shared_ptr<T> new_texture_object(std::string object_name, __Graphic_Object_Base* parent){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_namespace(environment()->create_namespace("object"));current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(unknowns_shared_ptr());add_texture_object(current_texture);current_texture.get()->set_name(object_name);current_texture->set_parent(parent);current_texture.get()->after_creation();return current_texture;};
+        template <typename T> std::shared_ptr<T> new_texture_object(double x, double y){std::shared_ptr<T> current_texture=std::make_shared<T>(a_this_object);current_texture.get()->set_namespace(environment()->create_namespace("object"));current_texture.get()->set_this_object(current_texture);current_texture.get()->set_unknowns(unknowns_shared_ptr());add_texture_object(current_texture);current_texture.get()->set_x(x);current_texture->set_y(y);current_texture.get()->after_creation();return current_texture;};
         template <typename T> std::shared_ptr<T> new_texture_object(std::string path, double x, double y){std::shared_ptr<T> current_texture=new_texture_object<T>(x, y);current_texture.get()->set_texture(path);return current_texture;};
         // Returns a texture object by its name
         std::shared_ptr<Graphic_Texture> texture_object_by_name(std::string needed_name);
@@ -736,8 +736,8 @@ namespace pleos {
         inline pleos::Text_Environment* environment() const {return graphic_base()->a_environment.get();};
         inline std::shared_ptr<pleos::Text_Environment> environment_shared_ptr() const {return graphic_base()->a_environment;};
         inline std::vector<std::shared_ptr<Form_2D>>& forms_2d(){return a_forms_2d;};
-        inline __Graphic_Base* graphic_base() const {return a_graphic_base.get();};
-        inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
+        inline Graphic_Base* graphic_base() const {return a_graphic_base.get();};
+        inline std::shared_ptr<Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base;};
         inline double height() const {return a_graphic_base.get()->a_height;};
         inline bool height_used() const {return a_graphic_base.get()->a_height_used;};
         inline std::vector<std::shared_ptr<__Graphic_Object_Base>>& objects(){return a_objects;};
@@ -752,15 +752,14 @@ namespace pleos {
         inline void set_style(scls::Text_Style new_style) {a_style = new_style;};
         inline void set_time(scls::Fraction new_time) {graphic_base()->a_time = new_time;};
         inline void set_title(std::string new_title){a_title = new_title;};
-        inline void set_unknowns(std::shared_ptr<scls::Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;};
         inline void set_y_offset(int new_y_offset){a_graphic_base.get()->a_y_offset = new_y_offset;};
         inline scls::Text_Style style() const {return a_style;};
         inline std::vector<std::shared_ptr<Graphic_Text>>& texts(){return a_texts;};
         inline std::vector<std::shared_ptr<Graphic_Texture>>& textures(){return a_textures;};
         inline scls::Fraction time() const {return graphic_base()->a_time;};
         inline std::string title() const {return a_title;};
-        inline scls::Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
-        inline std::shared_ptr<scls::Formula_Base::Unknowns_Container> unknowns_shared_ptr() const {return a_unknowns;};
+        inline scls::Formula_Base_Template<scls::Double>::Unknowns_Container* unknowns() const {return environment()->unknowns();};
+        inline std::shared_ptr<scls::Formula_Base_Template<scls::Double>::Unknowns_Container> unknowns_shared_ptr() const {return environment()->unknowns_shared_ptr();};
         inline std::vector<std::shared_ptr<Point_2D>>& vectors(){return a_vectors;};
         inline double width() const {return a_graphic_base.get()->a_width;};
         inline bool width_used() const {return a_graphic_base.get()->a_width_used;};
@@ -916,15 +915,13 @@ namespace pleos {
         scls::Text_Style a_style = scls::Text_Style();
         // Title of the graphic
         std::string a_title = std::string();
-        // Unknowns in the graphic
-        std::shared_ptr<scls::Formula_Base::Unknowns_Container> a_unknowns;
 
         // Background texture of the graphic
         std::shared_ptr<scls::_Balise_Style_Container> a_balises = std::make_shared<scls::_Balise_Style_Container>();
         // Loaded function
         std::vector<std::shared_ptr<Graphic_Function>> a_functions;
         // Datas about the plane
-        std::shared_ptr<__Graphic_Base> a_graphic_base = std::make_shared<__Graphic_Base>();
+        std::shared_ptr<Graphic_Base> a_graphic_base = std::make_shared<Graphic_Base>();
 
         // Geometrical objects
         std::vector<std::shared_ptr<Circle>> a_circles;
@@ -1131,7 +1128,7 @@ namespace pleos {
         inline bool draw_sub_bases() const {return a_datas.get()->draw_sub_bases();};
         inline pleos::Text_Environment* environment() const {return graphic()->environment();};
         inline Graphic* graphic() const {return a_datas.get();};
-        inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() {return graphic()->graphic_base_shared_ptr();};
+        inline std::shared_ptr<Graphic_Base> graphic_base_shared_ptr() {return graphic()->graphic_base_shared_ptr();};
         inline std::shared_ptr<Graphic> graphic_shared_ptr() {return a_datas;};
         inline std::vector<std::shared_ptr<Graphic_GUI_Object>>& gui_objects(){return a_gui_objects;};
         inline scls::Fraction middle_x() const {return a_datas.get()->middle_x();};

@@ -88,7 +88,7 @@ namespace pleos {
         double a_height_in_pixel = -1;double a_width_in_pixel = -1;
         bool a_height_used = false;bool a_width_used = false;
     };
-    struct __Graphic_Base : public Plane_Base {
+    struct Graphic_Base : public Plane_Base {
         int a_function_number = 0;
 
         // If the eco-mode is activated or not
@@ -498,10 +498,10 @@ namespace pleos {
         //******************
 
         // __Graphic_Object_Base constructor
-        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position);
-        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name);
-        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position);
-        __Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base);
+        __Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, std::string name, scls::Point_2D position);
+        __Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, std::string name);
+        __Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, scls::Point_2D position);
+        __Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base);
         virtual ~__Graphic_Object_Base() = default;
 
         // Adds a tag to the object
@@ -598,8 +598,8 @@ namespace pleos {
         inline double deadline() const {return a_deadline;};
         inline double drawing_proportion() const {return a_drawing_proportion;};
         inline pleos::Text_Environment* environment() const {return graphic_base()->a_environment.get();};
-        inline __Graphic_Base* graphic_base() const {return a_graphic_base.lock().get();};
-        inline std::shared_ptr<__Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base.lock();};
+        inline Graphic_Base* graphic_base() const {return a_graphic_base.lock().get();};
+        inline std::shared_ptr<Graphic_Base> graphic_base_shared_ptr() const {return a_graphic_base.lock();};
         inline double height() const {return a_transform.get()->scale_y();};
         inline int id() const {return a_id;};
         inline int index() const {return a_index;};
@@ -643,7 +643,7 @@ namespace pleos {
         inline void set_save_to_xml_text(bool new_save_to_xml_text) {a_save_to_xml_text = new_save_to_xml_text;};
         inline void set_should_delete(bool new_should_delete){a_should_delete = new_should_delete;if(should_delete()){when_should_delete();}};
         inline void set_this_object(std::weak_ptr<__Graphic_Object_Base> new_this_object){a_this_object=new_this_object;};
-        inline void set_unknowns(std::shared_ptr<scls::Formula_Base::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
+        inline void set_unknowns(std::shared_ptr<scls::Formula_Base_Template<scls::Double>::Unknowns_Container> new_unknowns){a_unknowns = new_unknowns;a_transform.get()->set_unknowns(new_unknowns);};
         inline void set_velocity(scls::Point_2D new_velocity){a_transform.get()->set_velocity(new_velocity);};
         inline bool should_delete() const {return a_should_delete || (a_deadline != -1 && a_live_time >= a_deadline);};
         inline void set_width(double new_width){a_transform.get()->set_scale_x(new_width);};
@@ -697,7 +697,7 @@ namespace pleos {
     protected:
 
         // Returns the used unknowns
-        inline scls::Formula_Base::Unknowns_Container* unknowns() const {return a_unknowns.get();};
+        inline scls::Formula_Base_Template<scls::Double>::Unknowns_Container* unknowns() const {return a_unknowns.get();};
 
     private:
         //******************
@@ -717,7 +717,7 @@ namespace pleos {
         // Connected object to this object
         std::weak_ptr<scls::GUI_Text> a_connected_object = std::weak_ptr<scls::GUI_Text>();
         // Graphic base
-        std::weak_ptr<__Graphic_Base> a_graphic_base;
+        std::weak_ptr<Graphic_Base> a_graphic_base;
         // Transformation in the object
         std::shared_ptr<scls::Transform_Object_2D> a_transform = std::make_shared<scls::Transform_Object_2D>();
 
@@ -752,7 +752,7 @@ namespace pleos {
         // This object
         std::weak_ptr<__Graphic_Object_Base> a_this_object;
         // Unknowns in the object
-        std::shared_ptr<scls::Formula_Base::Unknowns_Container> a_unknowns;
+        std::shared_ptr<scls::Formula_Base_Template<scls::Double>::Unknowns_Container> a_unknowns;
 
         // Collisions this frame
         std::vector<scls::Collision::Collision_Event*> a_collisions_this_frame = std::vector<scls::Collision::Collision_Event*>();

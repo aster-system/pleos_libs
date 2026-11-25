@@ -72,7 +72,7 @@ namespace pleos {
             // Solve the equation
             std::string redaction = std::string();
             std::string to_solve = parameters.at(0);
-            std::shared_ptr<scls::Formula_Base> f = scls::string_to_algebra_element<scls::Formula_Base>(to_solve);
+            std::shared_ptr<scls::Formula_Base_Template<scls::Double>> f = scls::string_to_algebra_element<scls::Formula_Base_Template<scls::Double>>(to_solve);
             Function_Studied fs = Function_Studied(f);
             //solve_equation(&fs, &redaction); TEMPORARY DISABLED
 
@@ -110,7 +110,7 @@ namespace pleos {
             // Solve the equation
             std::string redaction = std::string();
             std::string to_solve = parameters.at(0);
-            std::shared_ptr<scls::Formula_Base> f = scls::string_to_algebra_element<scls::Formula_Base>(to_solve);
+            std::shared_ptr<scls::Formula_Base_Template<scls::Double>> f = scls::string_to_algebra_element<scls::Formula_Base_Template<scls::Double>>(to_solve);
             Function_Studied fs = Function_Studied(f);
             //study_function(f.get(), &redaction); TEMPORARY DISABLED
 

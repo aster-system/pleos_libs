@@ -219,7 +219,7 @@ namespace pleos {
         return current;
     }
     void Graphic::Graphic_Function::draw_on_image(std::shared_ptr<scls::__Image_Base> image) {
-    	std::shared_ptr<scls::Formula_Base> final_formula;
+    	std::shared_ptr<scls::Formula_Base_Template<scls::Double>> final_formula;
     	if(environment() != 0){final_formula = formula().replace_unknowns(environment()->unknowns());}
     	else{final_formula = formula().clone();}
 
@@ -235,7 +235,7 @@ namespace pleos {
             scls::Fraction end = function()->end();
             scls::Fraction start = function()->start();
             scls::Color needed_color = color();needed_color.set_alpha(needed_color.alpha() * opacity());
-            scls::draw_function_graph(image, formula_fraction_to_formula_double(final_formula.get()).get(), graphic_base(), needed_color, start.to_double(), end.to_double(), line_width());
+            scls::draw_function_graph(image, final_formula.get(), graphic_base(), needed_color, start.to_double(), end.to_double(), line_width());
         }
     }
 
@@ -263,20 +263,19 @@ namespace pleos {
     Graphic::Graphic_Field::Graphic_Field(std::weak_ptr<Graphic> graphic_base):Graphic_Base_Object(graphic_base){}
 
     // Draws the object on an image
-    scls::Point_2D new_position_from_field_2d_euler(double object_x, double object_y, scls::Formula_Base* formula_x, scls::Formula_Base* formula_y, double delta_time) {
+    scls::Point_2D new_position_from_field_2d_euler(double object_x, double object_y, scls::Formula_Base_Field* formula_x, scls::Formula_Base_Field* formula_y, double delta_time) {
     	// Get the needed vector
-    	scls::Fraction current_value_x = *formula_x->replace_unknowns("x", scls::Fraction::from_double(object_x)).get()->replace_unknowns("y", scls::Fraction::from_double(object_y)).get()->value<scls::Fraction>();
-    	scls::Fraction current_value_y = *formula_y->replace_unknowns("x", scls::Fraction::from_double(object_x)).get()->replace_unknowns("y", scls::Fraction::from_double(object_y)).get()->value<scls::Fraction>();
-
-    	//std::cout << "A " << object_x << " " << object_y << " " << current_value_x.to_double() << " " << current_value_y.to_double() << std::endl;
+    	scls::Double object_x_d = object_x;scls::Double object_y_d = object_y;
+    	scls::Fraction current_value_x = formula_x->replace_unknowns_formula("x", &object_x_d).get()->replace_unknowns_formula("y", &object_y_d).get()->value_to_double();
+    	scls::Fraction current_value_y = formula_y->replace_unknowns_formula("x", &object_x_d).get()->replace_unknowns_formula("y", &object_y_d).get()->value_to_double();
 
     	// Return it
     	return scls::Point_2D(object_x + current_value_x.to_double() * delta_time, object_y + current_value_y.to_double() * delta_time);
     }
 	void Graphic::Graphic_Field::draw_on_image(std::shared_ptr<scls::__Image_Base> image) {
 		// Handle the formulas
-		std::shared_ptr<scls::Formula_Base> final_formula_x;
-		std::shared_ptr<scls::Formula_Base> final_formula_y;
+		std::shared_ptr<scls::Formula_Base_Template<scls::Double>> final_formula_x;
+		std::shared_ptr<scls::Formula_Base_Template<scls::Double>> final_formula_y;
 		if(environment() != 0){final_formula_x = a_formula_x.get()->replace_unknowns(environment()->unknowns());}
 		else{final_formula_x = a_formula_x.get()->clone();}
 		if(environment() != 0){final_formula_y = a_formula_y.get()->replace_unknowns(environment()->unknowns());}
@@ -302,7 +301,7 @@ namespace pleos {
 		else if(a_arrows_starts.size() == 0) {a_arrows_starts = scls::points_grid(image.get()->width(), image.get()->height());}
 
 		// Draw the field
-		scls::vector_field_2d(image, std::vector<scls::Formula_Base*>(1, final_formula_x.get()), std::vector<scls::Formula_Base*>(1, final_formula_y.get()), graphic_base(), a_arrows_starts);
+		scls::vector_field_2d(image, std::vector<scls::Formula_Base_Template<scls::Double>*>(1, final_formula_x.get()), std::vector<scls::Formula_Base_Template<scls::Double>*>(1, final_formula_y.get()), graphic_base(), a_arrows_starts);
 	}
 
 	// Function called to update the circle
@@ -372,7 +371,7 @@ namespace pleos {
     //******************
 
     // Adds a circle to the graphic
-    void Graphic::add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);a_objects.push_back(circle_to_add);circle_to_add.get()->set_index(a_circles.size() - 1);circle_to_add.get()->set_unknowns(a_unknowns);};
+    void Graphic::add_circle(std::shared_ptr<Circle> circle_to_add){a_circles.push_back(circle_to_add);a_objects.push_back(circle_to_add);circle_to_add.get()->set_index(a_circles.size() - 1);circle_to_add.get()->set_unknowns(unknowns_shared_ptr());};
     // Returns a circle by its id / name
     Circle* Graphic::circle_by_id(int circle_id){return circle_by_id_shared_ptr(circle_id).get();};
     std::shared_ptr<Circle> Graphic::circle_by_id_shared_ptr(int circle_id){for(int i = 0;i<static_cast<int>(a_circles.size());i++){if(a_circles.at(i).get()->id() == circle_id){return a_circles.at(i);}}return std::shared_ptr<Circle>();};
@@ -797,7 +796,7 @@ namespace pleos {
     //******************
 
     // Adds a points to the graphic
-    void Graphic::add_point(std::shared_ptr<Point_2D> needed_point){bool good = true;for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points.at(i).get()==needed_point.get()){good=false;break;}}if(good){needed_point.get()->set_unknowns(a_unknowns);a_objects.push_back(needed_point);a_points.push_back(needed_point);}};
+    void Graphic::add_point(std::shared_ptr<Point_2D> needed_point){bool good = true;for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points.at(i).get()==needed_point.get()){good=false;break;}}if(good){needed_point.get()->set_unknowns(unknowns_shared_ptr());a_objects.push_back(needed_point);a_points.push_back(needed_point);}};
     // Returns a point by his name
     std::shared_ptr<Point_2D> Graphic::point_shared_ptr(std::string point_name){for(int i = 0;i<static_cast<int>(a_points.size());i++){if(a_points[i].get()->name() == point_name){return a_points[i];}}return std::shared_ptr<Point_2D>();};
     Point_2D* Graphic::point(std::string point_name){return point_shared_ptr(point_name).get();};
@@ -872,32 +871,6 @@ namespace pleos {
         //scls::draw_grid(image, a_graphic_base.get(), 5, 3, 0);
         scls::draw_grid(image, a_graphic_base.get(), 8, 8, 2);
         return;
-
-        // Horizontal lines
-        double current_y = pixel_y_to_graphic_y(0, image).to_double();
-        current_y = floor(current_y);
-        double needed_y = graphic_y_to_pixel_y(current_y, image);
-        while(needed_y < image.get()->width()) {
-            scls::Color needed_color = scls::Color(0, 0, 0);
-            int needed_height = 1;
-            if(current_y == 0){needed_height = 2;}else{needed_color=scls::Color(125, 125, 125);}
-            image.get()->fill_rect(0, image.get()->height() - needed_y, image.get()->width(), needed_height, needed_color);
-            current_y++;
-            needed_y = graphic_y_to_pixel_y(current_y, image);
-        }
-
-        // Vertical lines
-        double current_x = pixel_x_to_graphic_x(0, image).to_double();
-        current_x = ceil(current_x);
-        int needed_x = graphic_x_to_pixel_x(current_x, image);
-        while(needed_x < image.get()->width()) {
-            scls::Color needed_color = scls::Color(0, 0, 0);
-            int needed_width = 1;
-            if(current_x == 0){needed_width = 2;}else{needed_color=scls::Color(125, 125, 125);}
-            image.get()->fill_rect(needed_x, 0, needed_width, image.get()->height(), needed_color);
-            current_x++;
-            needed_x = graphic_x_to_pixel_x(current_x, image);
-        }
     }
 
     // Returns the image of the graphic
@@ -1330,7 +1303,7 @@ namespace pleos {
             std::vector<std::string> cut = scls::cut_string(attribute.value, std::string(";"));
             for(std::size_t i = 0;i<cut.size();i++) {
                 std::vector<std::string> part = scls::cut_string(cut.at(i), std::string(":"));
-                object.get()->attached_namespace()->create_unknown(part.at(0))->set_value(std::make_shared<scls::Fraction>(environment->value_number(part.at(1))));
+                object.get()->attached_namespace()->create_unknown(part.at(0))->set_value(std::make_shared<scls::Double>(environment->value_double(part.at(1))));
             }
         }
         else if(attribute.name == "width") {object.get()->set_width(environment->value_double(attribute.value));}
@@ -1355,7 +1328,7 @@ namespace pleos {
             else{physic.get()->set_static(false);}
         }
         else if(attribute.name == "restitution") {physic.get()->set_restitution(environment->value_double(attribute.value));}
-        else if(attribute.name == "velocity") {physic.get()->set_velocity(environment->value_point_2d(attribute.value).to_point_2d(0));physic.get()->set_velocity_start(physic.get()->velocity());}
+        else if(attribute.name == "velocity") {physic.get()->set_velocity(environment->value_point_2d(attribute.value));physic.get()->set_velocity_start(physic.get()->velocity());}
         else{return false;}return true;
     }
     // Balises object in the texture object
@@ -1553,11 +1526,11 @@ namespace pleos {
             std::string needed_unknown = std::string("x");
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "border_color" || attributes[j].name == "color") {needed_color = scls::Color::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == std::string_view("end")) {needed_function.get()->set_end(environment->value_number(attributes[j].value));}
+                else if(attributes[j].name == std::string_view("end")) {needed_function.get()->set_end(environment->value_fraction(attributes[j].value));}
                 else if(attributes[j].name == std::string_view("expression")) {needed_expression = attributes[j].value;}
                 else if(attributes[j].name == std::string_view("line_width")) {needed_function.get()->set_line_width(environment->value_double(attributes[j].value));}
                 else if(attributes[j].name == std::string_view("name")) {needed_name = attributes[j].value;}
-                else if(attributes[j].name == std::string_view("start")) {needed_function.get()->set_start(environment->value_number(attributes[j].value));}
+                else if(attributes[j].name == std::string_view("start")) {needed_function.get()->set_start(environment->value_fraction(attributes[j].value));}
                 else if(graphic_from_xml_balise_attribute_object(attributes[j], fun, environment, text_style)){}
             }
 
@@ -1579,7 +1552,7 @@ namespace pleos {
                         if(sub_texts_attributes[k].name == std::string_view("area_end") || sub_texts_attributes[k].name == std::string_view("end")) {area_end = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
                         else if(sub_texts_attributes[k].name == std::string_view("area_start") || sub_texts_attributes[k].name == std::string_view("start")) {area_start = scls::Fraction::from_std_string(sub_texts_attributes[k].value);}
                         else if(sub_texts_attributes[k].name == "number" || sub_texts_attributes[k].name == "rectangle_number") {rectangle_number = std::stoi(sub_texts_attributes[k].value);}
-                        else if(sub_texts_attributes[k].name == "step") {step = environment->value_number(sub_texts_attributes[k].value);}
+                        else if(sub_texts_attributes[k].name == "step") {step = environment->value_fraction(sub_texts_attributes[k].value);}
                     }
 
                     if(step != 0){fun.get()->add_curve_area(area_start, area_end, ((area_end - area_start) / step).to_double());}
@@ -1773,8 +1746,8 @@ namespace pleos {
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "background_color" || attributes[j].name == "color") {color = environment->value_color(attributes[j].value);}
                 else if(attributes[j].name == "border_color") {border_color = scls::Color::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "height") {height = environment->value_number(attributes[j].value);}
-                else if(attributes[j].name == "width") {width = environment->value_number(attributes[j].value);}
+                else if(attributes[j].name == "height") {height = environment->value_fraction(attributes[j].value);}
+                else if(attributes[j].name == "width") {width = environment->value_fraction(attributes[j].value);}
                 else if(graphic_from_xml_balise_attribute_form_2d(attributes.at(j), created_form, environment, text_style)){}
                 else if(graphic_from_xml_balise_attribute_physic(attributes.at(j), created_form, physic, environment, text_style)) {}
             }
@@ -1820,7 +1793,7 @@ namespace pleos {
                 else if(attributes[j].name == "min_y") {needed_min_y = scls::Fraction::from_std_string(attributes[j].value);}
                 else if(attributes[j].name == "number") {number = std::stoi(attributes[j].value);}
                 else if(attributes[j].name == "radius") {needed_radius = scls::Fraction::from_std_string(attributes[j].value);}
-                else if(attributes[j].name == "opacity") {needed_opacity = environment->value_number(attributes[j].value).to_double();}
+                else if(attributes[j].name == "opacity") {needed_opacity = environment->value_fraction(attributes[j].value).to_double();}
             }
 
             // Add the objects
@@ -1847,7 +1820,7 @@ namespace pleos {
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "cardinal") {needed_cardinal = environment->value_double(attributes[j].value);}
                 else if(attributes[j].name == "content") {needed_content = attributes[j].value;}
-                else if(attributes[j].name == "font_size_in_scale") {needed_font_size_in_scale = environment->value_number(attributes[j].value);}
+                else if(attributes[j].name == "font_size_in_scale") {needed_font_size_in_scale = environment->value_fraction(attributes[j].value);}
                 else if(graphic_from_xml_balise_attribute_object(attributes.at(j), parent_set, environment, current_style)){}
             }
 
@@ -1883,7 +1856,7 @@ namespace pleos {
             scls::Fraction needed_font_size_in_scale = -1;
             for(int j = 0;j<static_cast<int>(attributes.size());j++) {
                 if(attributes[j].name == "content") {needed_content = attributes[j].value;}
-                else if(attributes[j].name == "font_size_in_scale") {needed_font_size_in_scale = environment->value_number(attributes[j].value);}
+                else if(attributes[j].name == "font_size_in_scale") {needed_font_size_in_scale = environment->value_fraction(attributes[j].value);}
                 else if(scls::text_style_from_xml_attribute(&attributes.at(j), current_style)){}
                 else if(graphic_from_xml_balise_attribute_object(attributes.at(j), created_text, environment, current_style)){}
             }
@@ -1913,7 +1886,7 @@ namespace pleos {
                 else if(attributes[j].name == "font_size") {text_style.set_font_size(scls::Fraction::from_std_string(attributes[j].value).to_double());}
             }
         }
-        else if(current_balise_name == std::string("variable")) {
+        else if(current_balise_name == std::string_view("variable")) {
             // Load a variable in the environment
             std::string needed_name = std::string();
             std::string needed_value = std::string();
@@ -1925,18 +1898,18 @@ namespace pleos {
             // Add the variable
             unknowns()->create_unknown(needed_name)->value = environment->value_formula(needed_value);
         }
-        else if(current_balise_name == std::string("vector_field")) {
+        else if(current_balise_name == std::string_view("vector_field")) {
         	// Create the function
         	std::shared_ptr<Graphic::Graphic_Field> field = add_field();
-        	std::shared_ptr<scls::Formula_Base> formula_x = std::make_shared<scls::Formula_Base>(scls::Fraction(0));
-			std::shared_ptr<scls::Formula_Base> formula_y = std::make_shared<scls::Formula_Base>(scls::Fraction(0));
+        	std::shared_ptr<scls::Formula_Base_Template<scls::Double>> formula_x = std::make_shared<scls::Formula_Base_Template<scls::Double>>(scls::Double(0));
+			std::shared_ptr<scls::Formula_Base_Template<scls::Double>> formula_y = std::make_shared<scls::Formula_Base_Template<scls::Double>>(scls::Double(0));
 
 			// Get the datas about a function of the graphic
 			scls::Color needed_color = scls::Color(255, 0, 0);
 			for(int j = 0;j<static_cast<int>(attributes.size());j++) {
 				if(attributes[j].name == "border_color" || attributes[j].name == "color") {needed_color = scls::Color::from_std_string(attributes[j].value);}
-				else if(attributes[j].name == std::string_view("x") || attributes[j].name == std::string_view("formula_x")) {formula_x = scls::string_to_algebra_element<scls::Formula_Base>(attributes[j].value);}
-				else if(attributes[j].name == std::string_view("y") || attributes[j].name == std::string_view("formula_y")) {formula_y = scls::string_to_algebra_element<scls::Formula_Base>(attributes[j].value);}
+				else if(attributes[j].name == std::string_view("x") || attributes[j].name == std::string_view("formula_x")) {formula_x = scls::string_to_algebra_element<scls::Formula_Base_Template<scls::Double>>(attributes[j].value);}
+				else if(attributes[j].name == std::string_view("y") || attributes[j].name == std::string_view("formula_y")) {formula_y = scls::string_to_algebra_element<scls::Formula_Base_Template<scls::Double>>(attributes[j].value);}
 				else if(graphic_from_xml_balise_attribute_object(attributes[j], field, environment, text_style)){}
 			}
 
@@ -2343,7 +2316,10 @@ namespace pleos {
     void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, int* graphic_width_in_pixel, int* graphic_height_in_pixel){graphic_from_xml(xml, needed_style, 0, graphic_width_in_pixel, graphic_height_in_pixel);}
     void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment){int needed_height = 0;int needed_width = 0;graphic_from_xml(xml, needed_style, environment, &needed_width, &needed_height);}
     void Graphic::graphic_from_xml(std::shared_ptr<scls::XML_Text_Base> xml, scls::Text_Style needed_style, std::shared_ptr<Text_Environment> environment, int* graphic_width_in_pixel, int* graphic_height_in_pixel) {
+        // Environment
+        if(environment.get() == 0){environment = std::make_shared<Text_Environment>();}
         set_environment(environment);
+
         style().set_border_width(1);
 	    if((*graphic_height_in_pixel) <= 0){(*graphic_height_in_pixel) = 200;}bool graphic_height_in_pixel_used = false;
         if((*graphic_width_in_pixel) <= 0){(*graphic_width_in_pixel) = 200;}bool graphic_width_in_pixel_used = false;

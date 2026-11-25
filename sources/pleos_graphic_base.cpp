@@ -114,10 +114,10 @@ namespace pleos {
 
     // __Graphic_Object_Base constructor
     int __current_id = 0;
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name, scls::Point_2D position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;++__current_id;a_transform.get()->set_this_object(a_transform);};
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base,name,scls::Point_2D(0, 0)){};
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base, scls::Point_2D position):__Graphic_Object_Base(graphic_base, std::string(), position){};
-    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<__Graphic_Base> graphic_base):__Graphic_Object_Base(graphic_base, std::string(), scls::Point_2D(0, 0)){};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, std::string name, scls::Point_2D position):a_graphic_base(graphic_base),a_transform(std::make_shared<scls::Transform_Object_2D>(position)),a_name(name){a_id = __current_id;++__current_id;a_transform.get()->set_this_object(a_transform);};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, std::string name):__Graphic_Object_Base(graphic_base,name,scls::Point_2D(0, 0)){};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base, scls::Point_2D position):__Graphic_Object_Base(graphic_base, std::string(), position){};
+    __Graphic_Object_Base::__Graphic_Object_Base(std::weak_ptr<Graphic_Base> graphic_base):__Graphic_Object_Base(graphic_base, std::string(), scls::Point_2D(0, 0)){};
 
     // Adds a tag to the object
     void __Graphic_Object_Base::add_tag(std::string new_tag){if(!contains_tag(new_tag)){a_tags.push_back(new_tag);}}
@@ -239,7 +239,7 @@ namespace pleos {
             else{set_opacity(current);}
         }
         else if(parameter_name == std::string_view("height")){double start = environment()->value_double(parameter_value_start);double current = start + (scls::string_to_double(parameter_value) - start) * proportion;set_height(current);}
-        else if(parameter_name == std::string_view("velocity")){scls::Point_2D new_velocity = environment()->value_point_2d(parameter_value).to_point_2d(environment()->unknowns());attached_transform()->set_velocity(new_velocity);}
+        else if(parameter_name == std::string_view("velocity")){scls::Point_2D new_velocity = environment()->value_point_2d(parameter_value);attached_transform()->set_velocity(new_velocity);}
         else if(parameter_name == std::string_view("width")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_width(current);}
         else if(parameter_name == std::string_view("x")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_x(current);}
         else if(parameter_name == std::string_view("y")){double start = environment()->value_double(parameter_value_start);double current = start + (environment()->value_double(parameter_value) - start) * proportion;set_y(current);}

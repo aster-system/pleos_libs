@@ -364,7 +364,7 @@ namespace pleos {
 
             // Solving
             if(to_solve != std::string()) {
-                std::shared_ptr<scls::Formula_Base> formula = scls::string_to_algebra_element<scls::Formula_Base>(to_solve);
+                std::shared_ptr<scls::Formula_Base_Template<scls::Double>> formula = scls::string_to_algebra_element<scls::Formula_Base_Template<scls::Double>>(to_solve);
                 std::shared_ptr<Function_Studied> function = Function_Studied::new_function_studied_shared_ptr(formula);
                 //solve_equation(function.get(), &result); TEMPORARY DISABLED
 
