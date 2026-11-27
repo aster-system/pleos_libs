@@ -868,8 +868,8 @@ namespace pleos {
     //struct Needed_Pos {scls::__Formula pos;scls::__Formula previous_pos;bool previous_pos_used = false;};
     // Draw the bases of the image
     void Graphic::image_draw_base(std::shared_ptr<scls::__Image_Base> image) {
-        //scls::draw_grid(image, a_graphic_base.get(), 5, 3, 0);
-        scls::draw_grid(image, a_graphic_base.get(), 8, 8, 2);
+        scls::draw_grid(image, a_graphic_base.get(), 5, 3, 0);
+        //scls::draw_grid(image, a_graphic_base.get(), 8, 8, 2);
         return;
     }
 
